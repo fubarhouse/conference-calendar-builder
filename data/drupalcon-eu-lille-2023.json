@@ -1,0 +1,2576 @@
+{
+  "event": {
+    "designation": "DrupalCon Europe",
+    "location": "Lille",
+    "year": "2023",
+    "website": "https://events.drupal.org/lille2023",
+    "region": "Europe",
+    "startDate": "2023-10-17T07:00:00Z",
+    "endDate": "2023-10-20T16:00:00Z",
+    "scheduleURL": "https://events.drupal.org/lille2023/schedule",
+    "venue": "Lille Grand Palais",
+    "timezone": "Europe/Paris",
+    "columns": 3,
+    "enabled": false,
+    "logo": {
+      "image": "./img/logos/drupalcon-logo.svg",
+      "imageAlt": "DrupalCon logo"
+    }
+  },
+  "items": [
+    {
+      "startTime": "2023-10-17T07:00:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P540M",
+      "title": "General Contribution Day 1",
+      "location": "Location Contribution Room 4.1",
+      "link": "https://events.drupal.org//lille2023/session/general-contribution-day-1",
+      "track": [
+        "contribution topic"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-17T10:00:00Z",
+      "endTime": "2023-10-17T11:25:00Z",
+      "duration": "P85M",
+      "title": "Opening Ceremony + Women in Drupal Award",
+      "location": "Location Auditorium",
+      "link": "https://events.drupal.org//lille2023/session/opening-ceremony-women-drupal-award",
+      "track": [
+        "other"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-17T11:30:00Z",
+      "endTime": "2023-10-17T12:45:00Z",
+      "duration": "P75M",
+      "title": "Driesnote",
+      "location": "Location Auditorium",
+      "link": "https://events.drupal.org//lille2023/session/driesnote",
+      "track": [
+        "keynote"
+      ],
+      "speakers": [
+        "Dries Buytaert (Dries)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T12:45:00Z",
+      "endTime": "2023-10-17T12:55:00Z",
+      "duration": "P10M",
+      "title": "Group photo",
+      "location": "Location Auditorium",
+      "link": "https://events.drupal.org//lille2023/session/group-photo",
+      "track": [
+        "other"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-17T13:00:00Z",
+      "endTime": "2023-10-17T13:45:00Z",
+      "duration": "P45M",
+      "title": "Drupal Coffee Exchange",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/drupal-coffee-exchange",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "AmyJune Hineline (Volkswagenchick)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T13:00:00Z",
+      "endTime": "2023-10-17T13:45:00Z",
+      "duration": "P45M",
+      "title": "New DDEV Features",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/new-ddev-features",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Randy Fay"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T13:00:00Z",
+      "endTime": "2023-10-17T13:45:00Z",
+      "duration": "P45M",
+      "title": "Let’s work together to uncover and understand our Drupalisms",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/lets-work-together-uncover-and-understand-our-drupalisms",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Emma Horrell",
+        "Aaron McHale (AaronMcHale)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T13:00:00Z",
+      "endTime": "2023-10-17T13:45:00Z",
+      "duration": "P45M",
+      "title": "Drush fans, unite!",
+      "location": "Location Room 2.4 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/drush-fans-unite",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Moshe Weitzman"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T13:00:00Z",
+      "endTime": "2023-10-17T13:45:00Z",
+      "duration": "P45M",
+      "title": "Helping Drupal's Authors Produce Inclusive Content",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/helping-drupals-authors-produce-inclusive-content",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Mike Gifford (Mgifford)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T13:00:00Z",
+      "endTime": "2023-10-17T14:15:00Z",
+      "duration": "P75M",
+      "title": "Getting started with Drupal",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/getting-started-drupal",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Mauricio Dinarte (dinarcon)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T13:00:00Z",
+      "endTime": "2023-10-17T13:45:00Z",
+      "duration": "P45M",
+      "title": "TDD - Test-Driven Drupal: an introduction to automated testing and test-driven development in Drupal",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/tdd-test-driven-drupal-introduction-automated-testing-and-test-driven-development",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Oliver Davies (Opdavies)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T13:00:00Z",
+      "endTime": "2023-10-17T13:45:00Z",
+      "duration": "P45M",
+      "title": "Exploring Holacracy, Sociocracy, and Reinventing Organizations in a Drupal Agency",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/exploring-holacracy-sociocracy-and-reinventing-organizations-drupal-agency",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Lukas Fischer (Lukasfischer)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T13:00:00Z",
+      "endTime": "2023-10-17T13:45:00Z",
+      "duration": "P45M",
+      "title": "Project Browser Initiative: Where We're At and How You Can Help",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/project-browser-initiative-where-were-and-how-you-can-help",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Leslie Glynn (leslieg)",
+        "Chris Wells"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T13:00:00Z",
+      "endTime": "2023-10-17T13:45:00Z",
+      "duration": "P45M",
+      "title": "Drupal DXP meets AI: Unlocking the Full Potential of Digital Experiences",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/drupal-dxp-meets-ai-unlocking-full-potential-digital-experiences",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Saranya Rajaram (saranya_rajaram)",
+        "Annam Ravin (Annam_sreenivasan)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T13:45:00Z",
+      "endTime": "2023-10-17T14:15:00Z",
+      "duration": "P30M",
+      "title": "Design System in Drupal : Build your website without coding! (sponsored by Smile)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/design-system-drupal-build-your-website-without-coding-sponsored-smile",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Florent Torregrosa",
+        "Nicolas Loye (Nicoloye)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T14:15:00Z",
+      "endTime": "2023-10-17T15:00:00Z",
+      "duration": "P45M",
+      "title": "People's wisdom: crafting success one tip at a time",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/peoples-wisdom-crafting-success-one-tip-time",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Jorge Lopez-lago"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T14:15:00Z",
+      "endTime": "2023-10-17T15:00:00Z",
+      "duration": "P45M",
+      "title": "Maintainers - prepare your modules to shine in the Project Browser",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/maintainers-prepare-your-modules-shine-project-browser",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Leslie Glynn (leslieg)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T14:15:00Z",
+      "endTime": "2023-10-17T15:00:00Z",
+      "duration": "P45M",
+      "title": "Creating a DDEV Add-on",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/creating-ddev-add",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Randy Fay"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T14:15:00Z",
+      "endTime": "2023-10-17T15:00:00Z",
+      "duration": "P45M",
+      "title": "Designing for Privacy: Balancing User Needs and Data Security",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/designing-privacy-balancing-user-needs-and-data-security",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Tarkesh Deva (Tarkesh.deva)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T14:15:00Z",
+      "endTime": "2023-10-17T15:00:00Z",
+      "duration": "P45M",
+      "title": "Having your cake, and eating it too: Using Varnish to serve content from your new Drupal site alongside your Legacy platform - keeping 2 platforms live at the same time.",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/having-your-cake-and-eating-it-too-using-varnish-serve-content-your-new-drupal",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Alan Burke"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T14:15:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P105M",
+      "title": "Shaping the most easy to use enterprise CMS through Drupal Gutenberg (sponsored by Frontkom)",
+      "location": "Location Room 3.3 (7)",
+      "link": "https://events.drupal.org//lille2023/session/shaping-most-easy-use-enterprise-cms-through-drupal-gutenberg-sponsored-frontkom",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Thor Andre Gretland",
+        "Marco Fernandes"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T14:15:00Z",
+      "endTime": "2023-10-17T15:00:00Z",
+      "duration": "P45M",
+      "title": "A wartime period for Ukrainian teams: challenges of 2022 and where are we now in 2023.",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/wartime-period-ukrainian-teams-challenges-2022-and-where-are-we-now-2023",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Iryna Semenova (instagram.com/isemyonovabel)",
+        "Anastasiia Paliienko (instagram.com/ssteyci?igshid=MzMyNGUyNmU2YQ%3D%3D&utm_source=qr)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T14:15:00Z",
+      "endTime": "2023-10-17T15:00:00Z",
+      "duration": "P45M",
+      "title": "So I logged in, now what? The Dashboard initiative welcomes you",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/so-i-logged-now-what-dashboard-initiative-welcomes-you",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Christian López Espínola (Penyaskito)",
+        "Cristina Chumillas (ckrina)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T14:15:00Z",
+      "endTime": "2023-10-17T15:00:00Z",
+      "duration": "P45M",
+      "title": "Our joint sustainability journey: reducing emissions and technical learnings",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/our-joint-sustainability-journey-reducing-emissions-and-technical-learnings",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Andrew Melck (Drewmelck)",
+        "Leah Goldfarb",
+        "Jérôme Andrieux",
+        "Antonella Severo",
+        "David Fernandez"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:15:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P45M",
+      "title": "Build user friendly Drupal admin experiences using existing widgets and guidance text. Hear about how it can be done and learn from each other",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/build-user-friendly-drupal-admin-experiences-using-existing-widgets-and-guidance",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Mike Gyi"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:15:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P45M",
+      "title": "Next-generation page building experience",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/next-generation-page-building-experience",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Lauri Eskola (lauriii)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:15:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P45M",
+      "title": "Let's talk GitLab",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/lets-talk-gitlab",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Nick Veenhof (nick_vh)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:15:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P45M",
+      "title": "First-time contributor workshop 1",
+      "location": "Location Room 2.4 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/first-time-contributor-workshop-1",
+      "track": [
+        "contribution topic"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-17T15:15:00Z",
+      "endTime": "2023-10-17T15:35:00Z",
+      "duration": "P20M",
+      "title": "Accessibility for Everyone!",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/accessibility-everyone",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Daniel Angelov (danielangelov)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:15:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P45M",
+      "title": "Management lessons for small and medium-sized agencies from a fast-growing, billion-dollar business",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/management-lessons-small-and-medium-sized-agencies-fast-growing-billion-dollar",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Tamsin Fox-Davies",
+        "Elise West",
+        "Julie Sheward",
+        "Anthony Fox-Davies"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:15:00Z",
+      "endTime": "2023-10-17T15:35:00Z",
+      "duration": "P20M",
+      "title": "How can QA and DEV work together towards improving automation tests coverage",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/how-can-qa-and-dev-work-together-towards-improving-automation-tests-coverage",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Toni Kolev (toni.kolev)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:15:00Z",
+      "endTime": "2023-10-17T15:35:00Z",
+      "duration": "P20M",
+      "title": "Project First Aid: How to Respond, Recover, and Thrive in the Face of Project Failure",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/project-first-aid-how-respond-recover-and-thrive-face-project-failure",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Alice Minett"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:15:00Z",
+      "endTime": "2023-10-17T15:35:00Z",
+      "duration": "P20M",
+      "title": "Drupal 10 localization server upgrade initiative status",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/drupal-10-localization-server-upgrade-initiative-status",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Felip Manyer Ballester (FMB)",
+        "Nicolas Loye (Nicoloye)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:15:00Z",
+      "endTime": "2023-10-17T15:35:00Z",
+      "duration": "P20M",
+      "title": "Building Engaging Communities with Gamification, Commerce, and Integrations: A Success Story.",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/building-engaging-communities-gamification-commerce-and-integrations-success",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Sven Van Uytfanghe"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:40:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P20M",
+      "title": "Translation management strategy for editors in Drupal 10",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/translation-management-strategy-editors-drupal-10",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Jeremy Chinquist (Jjchinquist)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:40:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P20M",
+      "title": "Layout builder ecosystem Vol.2",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/layout-builder-ecosystem-vol2",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Boyan Borisov (Boyan.borisov)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:40:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P20M",
+      "title": "How to onboard the next generation of Drupal engineers",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/how-onboard-next-generation-drupal-engineers",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Bostjan Kovac (Boshtian)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:40:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P20M",
+      "title": "Bringing Mautic and Drupal closer together in an open DXP",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/bringing-mautic-and-drupal-closer-together-open-dxp",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Dominique De Cooman (Domidc)"
+      ]
+    },
+    {
+      "startTime": "2023-10-17T15:40:00Z",
+      "endTime": "2023-10-17T16:00:00Z",
+      "duration": "P20M",
+      "title": "Bridging the Knowledge Gap: Connecting a Global Network of Non-Profits with Drupal",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/bridging-knowledge-gap-connecting-global-network-non-profits-drupal",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Peter Pónya (pedrop)",
+        "Zsófia Alföldi (Zsofiaalfoldi)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T06:45:00Z",
+      "endTime": "2023-10-18T08:00:00Z",
+      "duration": "P75M",
+      "title": "KitKat and Jägermeister, using Drupal to bring their digital experiences to life",
+      "location": "Location Auditorium",
+      "link": "https://events.drupal.org//lille2023/session/kitkat-and-jagermeister-using-drupal-bring-their-digital-experiences-life",
+      "track": [
+        "keynote"
+      ],
+      "speakers": [
+        "Arush Kochhar",
+        "Andrea Ostheer"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T07:00:00Z",
+      "endTime": "2023-10-18T16:00:00Z",
+      "duration": "P540M",
+      "title": "General Contribution Day 2",
+      "location": "Location Contribution Room 4.1",
+      "link": "https://events.drupal.org//lille2023/session/general-contribution-day-2",
+      "track": [
+        "contribution topic"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-18T08:00:00Z",
+      "endTime": "2023-10-18T08:15:00Z",
+      "duration": "P15M",
+      "title": "UNESCO's site web factory: a Drupal Adventure ! (sponsored by Axess)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/unescos-site-web-factory-drupal-adventure-sponsored-axess",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Sylvain Moreau (Slybud)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T08:15:00Z",
+      "endTime": "2023-10-18T08:30:00Z",
+      "duration": "P15M",
+      "title": "Can Running a Fleet of Microsites Really be this Easy? (sponsored by Annertech)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/can-running-fleet-microsites-really-be-easy-sponsored-annertech",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Mark Conroy"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T08:30:00Z",
+      "endTime": "2023-10-18T09:15:00Z",
+      "duration": "P45M",
+      "title": "Finding and bringing Drupal's New Blood, What is next?",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/finding-and-bringing-drupals-new-blood-what-next",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Carlos Ospina (Camoa)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T08:30:00Z",
+      "endTime": "2023-10-18T09:15:00Z",
+      "duration": "P45M",
+      "title": "Less-known DDEV configuration",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/less-known-ddev-configuration",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Randy Fay"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T08:30:00Z",
+      "endTime": "2023-10-18T09:15:00Z",
+      "duration": "P45M",
+      "title": "Local Drupal Regions & Associations Round Table",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/local-drupal-regions-associations-round-table",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Baddy Sonja Breidert (Baddysonja)",
+        "Imre Gmelig Meijling (imre-gmelig-meijling)",
+        "Drupal Association"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T08:30:00Z",
+      "endTime": "2023-10-18T09:15:00Z",
+      "duration": "P45M",
+      "title": "First-time contributor workshop 1bis",
+      "location": "Location Room 2.4 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/first-time-contributor-workshop-1bis",
+      "track": [
+        "contribution topic"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-18T08:30:00Z",
+      "endTime": "2023-10-18T09:15:00Z",
+      "duration": "P45M",
+      "title": "Headless CMS Showdown: Live Demo and Comparison of Sanity, Strapi, Directus, and Drupal",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/headless-cms-showdown-live-demo-and-comparison-sanity-strapi-directus-and-drupal",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Lukas Fischer (Lukasfischer)",
+        "Natalia Justicia"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T08:30:00Z",
+      "endTime": "2023-10-18T10:00:00Z",
+      "duration": "P90M",
+      "title": "Technical Writing Workshop",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/technical-writing-workshop",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "AmyJune Hineline (Volkswagenchick)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T08:30:00Z",
+      "endTime": "2023-10-18T09:15:00Z",
+      "duration": "P45M",
+      "title": "How we integrated AI as a new colleague",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/how-we-integrated-ai-new-colleague",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Ulrika Mengshoel Wedelin (Ulrikamw)",
+        "David Holmlund (dholmlund)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T08:30:00Z",
+      "endTime": "2023-10-18T10:15:00Z",
+      "duration": "P105M",
+      "title": "Improving Layout Builder user experience (sponsored by Evolving Web)",
+      "location": "Location Room 3.3 (7)",
+      "link": "https://events.drupal.org//lille2023/session/improving-layout-builder-user-experience-sponsored-evolving-web",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Dharizza Espinach (dharizza)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T08:30:00Z",
+      "endTime": "2023-10-18T09:15:00Z",
+      "duration": "P45M",
+      "title": "Defend FOSS: From innovation to positive change, we need to remind the world what we're about.",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/defend-foss-innovation-positive-change-we-need-remind-world-what-were-about",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Jeffrey McGuire",
+        "Mathias Bolt Lesniak (mabolek)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T08:30:00Z",
+      "endTime": "2023-10-18T09:15:00Z",
+      "duration": "P45M",
+      "title": "Empathy-Driven Design: How Drupal Prioritizes Accessibility for End Users",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/empathy-driven-design-how-drupal-prioritizes-accessibility-end-users",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Annam Ravin (Annam_sreenivasan)",
+        "Saranya Rajaram (saranya_rajaram)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T08:30:00Z",
+      "endTime": "2023-10-18T09:15:00Z",
+      "duration": "P45M",
+      "title": "Decoupling your search solution with Drupal Search API",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/decoupling-your-search-solution-drupal-search-api",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Jose Nieves (Jnieves)",
+        "Christoph Breidert (Breidert)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T09:30:00Z",
+      "endTime": "2023-10-18T10:15:00Z",
+      "duration": "P45M",
+      "title": "Drupal's Alternate Realities",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/drupals-alternate-realities",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Panagiotis Moutsopoulos (vensires)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T09:30:00Z",
+      "endTime": "2023-10-18T10:15:00Z",
+      "duration": "P45M",
+      "title": "Beyond the code: Community engagement for non-technical Drupal enthusiasts",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/beyond-code-community-engagement-non-technical-drupal-enthusiasts",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Niklas Franke (Nick.el.diablo)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T09:30:00Z",
+      "endTime": "2023-10-18T10:15:00Z",
+      "duration": "P45M",
+      "title": "How are you using Group: What went well, what did not? Help me build the next version.",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/how-are-you-using-group-what-went-well-what-did-not-help-me-build-next-version",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Kristiaan Van den Eynde"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T09:30:00Z",
+      "endTime": "2023-10-18T10:15:00Z",
+      "duration": "P45M",
+      "title": "Drupal.org Update: Accelerating contribution",
+      "location": "Location Room 2.4 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/drupalorg-update-accelerating-contribution",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Timothy Lehnen (Hestenet)",
+        "Neil Drumm (Drumm)",
+        "Brendan Blaine",
+        "Fran Garcia-Linares (fjgarlin)",
+        "Alejandro Moreno Lopez (Alexmoreno)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T09:30:00Z",
+      "endTime": "2023-10-18T10:15:00Z",
+      "duration": "P45M",
+      "title": "From CMS to Page Builder, can Drupal do it all?",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/cms-page-builder-can-drupal-do-it-all",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Simon Georges",
+        "Alex Druhet"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T09:30:00Z",
+      "endTime": "2023-10-18T10:15:00Z",
+      "duration": "P45M",
+      "title": "Architecture Decision Records: Collaborative Decision Making that Sticks",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/architecture-decision-records-collaborative-decision-making-sticks",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Andrew Berry (deviantintegral)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T09:30:00Z",
+      "endTime": "2023-10-18T10:15:00Z",
+      "duration": "P45M",
+      "title": "How I escaped poverty using Drupal. The emancipating power of free and accessible Drupal training.",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/how-i-escaped-poverty-using-drupal-emancipating-power-free-and-accessible-drupal",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Esmeralda Braad-Tijhoff (Esmoves)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T09:30:00Z",
+      "endTime": "2023-10-18T10:15:00Z",
+      "duration": "P45M",
+      "title": "VisitBritain’s Digital Customer Experience Programme (DCXP) - how Drupal is playing a central role in a £multi-million digital transformation and new organisation-wide digital strategy",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/visitbritains-digital-customer-experience-programme-dcxp-how-drupal-playing",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Paul Johnson (Pdjohnson)",
+        "Marie Orpen"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T09:30:00Z",
+      "endTime": "2023-10-18T10:15:00Z",
+      "duration": "P45M",
+      "title": "When things take longer than you thought: Moving workloads to background processes",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/when-things-take-longer-you-thought-moving-workloads-background-processes",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Pablo López Escobés (plopesc)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T10:15:00Z",
+      "endTime": "2023-10-18T10:45:00Z",
+      "duration": "P30M",
+      "title": "Drupal Security 101 (sponsored by Platform.sh)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/drupal-security-101-sponsored-platformsh",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Nicolas Loye (Nicoloye)",
+        "Marine Gandy"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T10:15:00Z",
+      "endTime": "2023-10-18T11:30:00Z",
+      "duration": "P75M",
+      "title": "Client & Industry Track Hangout Hub",
+      "location": "Location Outside Room 1.1",
+      "link": "https://events.drupal.org//lille2023/session/client-industry-track-hangout-hub",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Client & Industry Track Chairs"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T10:45:00Z",
+      "endTime": "2023-10-18T11:15:00Z",
+      "duration": "P30M",
+      "title": "End-to-End DevOps Workflow (sponsored by Acquia)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/end-end-devops-workflow-sponsored-acquia",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Martin Anderson-Clutz (Mandclu)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T11:15:00Z",
+      "endTime": "2023-10-18T11:30:00Z",
+      "duration": "P15M",
+      "title": "Drupal editorial experience at its best (sponsored by 1xINTERNET)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/drupal-editorial-experience-its-best-sponsored-1xinternet",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Baddy Sonja Breidert (Baddysonja)",
+        "Christoph Breidert (Breidert)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T11:30:00Z",
+      "endTime": "2023-10-18T12:45:00Z",
+      "duration": "P75M",
+      "title": "Fly Higher - How to lead fearlessly",
+      "location": "Location Auditorium",
+      "link": "https://events.drupal.org//lille2023/session/fly-higher-how-lead-fearlessly",
+      "track": [
+        "keynote"
+      ],
+      "speakers": [
+        "Sarah Furness"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T13:00:00Z",
+      "endTime": "2023-10-18T13:45:00Z",
+      "duration": "P45M",
+      "title": "Contribution credits for translation activity on localize.drupal.org",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/contribution-credits-translation-activity-localizedrupalorg",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Felip Manyer Ballester (FMB)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T13:00:00Z",
+      "endTime": "2023-10-18T13:45:00Z",
+      "duration": "P45M",
+      "title": "DrupalPod for shiny happy developers",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/drupalpod-shiny-happy-developers",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Roberto Peruzzo"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T13:00:00Z",
+      "endTime": "2023-10-18T13:45:00Z",
+      "duration": "P45M",
+      "title": "DDEV Office Hours",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/ddev-office-hours",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Randy Fay"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T13:00:00Z",
+      "endTime": "2023-10-18T13:45:00Z",
+      "duration": "P45M",
+      "title": "Mentor orientation 1",
+      "location": "Location Room 2.4 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/mentor-orientation-1",
+      "track": [
+        "contribution topic"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-18T13:00:00Z",
+      "endTime": "2023-10-18T13:45:00Z",
+      "duration": "P45M",
+      "title": "Creating Accessible and Inclusive Presentations",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/creating-accessible-and-inclusive-presentations",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "AmyJune Hineline (Volkswagenchick)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T13:00:00Z",
+      "endTime": "2023-10-18T13:45:00Z",
+      "duration": "P45M",
+      "title": "api.drupal.org, a journey from Drupal 7 to Drupal 10",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/apidrupalorg-journey-drupal-7-drupal-10",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Fran Garcia-linares"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T13:00:00Z",
+      "endTime": "2023-10-18T13:45:00Z",
+      "duration": "P45M",
+      "title": "Develop, Test and Deploy at scale: quality process for deliveries, experience and tools for clients, developpers and project managers.",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/develop-test-and-deploy-scale-quality-process-deliveries-experience-and-tools",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Anne-Sophie Picot (Asplamagnifique)",
+        "Sylvain Moreau (Slybud)",
+        "Francis Lemaitre (flemaitre)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T13:00:00Z",
+      "endTime": "2023-10-18T13:45:00Z",
+      "duration": "P45M",
+      "title": "Drupal Multisite is Dead, Long Live Drupal Multisite (sponsored by FFW & Saint-Gobain)",
+      "location": "Location Room 3.3 (7)",
+      "link": "https://events.drupal.org//lille2023/session/drupal-multisite-dead-long-live-drupal-multisite-sponsored-ffw-saint-gobain",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Boyan Borisov (Boyan.borisov)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T13:00:00Z",
+      "endTime": "2023-10-18T13:45:00Z",
+      "duration": "P45M",
+      "title": "The Unique Challenges of Design Systems at Scale",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/unique-challenges-design-systems-scale",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Jen Witkowski (jwitkowski79)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T13:00:00Z",
+      "endTime": "2023-10-18T13:45:00Z",
+      "duration": "P45M",
+      "title": "Design in Figma and deploy a pixel perfect Drupal website in days, not weeks!",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/design-figma-and-deploy-pixel-perfect-drupal-website-days-not-weeks",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Akhil Bhandari"
+      ],
+      "speaker_usernames": [
+        "akhil-bhandari"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T13:00:00Z",
+      "endTime": "2023-10-18T13:45:00Z",
+      "duration": "P45M",
+      "title": "What is the secure software supply chain and the current state of the PHP and Drupal ecosystem",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/what-secure-software-supply-chain-and-current-state-php-and-drupal-ecosystem",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Paolo Mainardi"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T13:45:00Z",
+      "endTime": "2023-10-18T14:15:00Z",
+      "duration": "P30M",
+      "title": "Speed of Iteration as the foundation of Digital Success (sponsored by Pantheon)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/speed-iteration-foundation-digital-success-sponsored-pantheon",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "James Rutherford (Jamesrutherford)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T14:15:00Z",
+      "endTime": "2023-10-18T15:00:00Z",
+      "duration": "P45M",
+      "title": "Project management in the age of agile: where did everything go wrong?",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/project-management-age-agile-where-did-everything-go-wrong",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Jorge Lopez-lago"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T14:15:00Z",
+      "endTime": "2023-10-18T15:00:00Z",
+      "duration": "P45M",
+      "title": "Drupal Deliveries Acceleration — A chat among Practitioners.",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/drupal-deliveries-acceleration-chat-among-practitioners",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Rakhi Mandhania"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T14:15:00Z",
+      "endTime": "2023-10-18T15:00:00Z",
+      "duration": "P45M",
+      "title": "What can we learn from the 2023 Drupal Local Development Survey?",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/what-can-we-learn-2023-drupal-local-development-survey",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Michael Richardson (Richo_au)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T14:15:00Z",
+      "endTime": "2023-10-18T15:00:00Z",
+      "duration": "P45M",
+      "title": "From zero to a multilingual Next.js site powered by Next-drupal and Drupal Recipes with one command!",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/zero-multilingual-nextjs-site-powered-next-drupal-and-drupal-recipes-one-command",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Mario Vercellotti (Vermario)",
+        "Joshua Scott"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T14:15:00Z",
+      "endTime": "2023-10-18T15:00:00Z",
+      "duration": "P45M",
+      "title": "Managing technical debt: lessons learned and how modern Drupal helps you",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/managing-technical-debt-lessons-learned-and-how-modern-drupal-helps-you",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Dieter Blomme",
+        "Niels Aers (Nielsaers)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T14:15:00Z",
+      "endTime": "2023-10-18T15:00:00Z",
+      "duration": "P45M",
+      "title": "Drupal Association Public Board Meeting and Staff + Board + Community Q&A",
+      "location": "Location Room 3.3 (7)",
+      "link": "https://events.drupal.org//lille2023/session/drupal-association-public-board-meeting-and-staff-board-community-qa",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Timothy Lehnen (Hestenet)",
+        "Tim Doyle",
+        "Baddy Sonja Breidert (Baddysonja)",
+        "Dries Buytaert (Dries)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T14:15:00Z",
+      "endTime": "2023-10-18T15:00:00Z",
+      "duration": "P45M",
+      "title": "Only permanence is change! How to drive key technical decisions while implementing composable digital experience platforms in a constant state of flux.",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/only-permanence-change-how-drive-key-technical-decisions-while-implementing",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Tassos Koutlas (tassos)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T14:15:00Z",
+      "endTime": "2023-10-18T15:00:00Z",
+      "duration": "P45M",
+      "title": "Marketing Automation With Drupal Commerce & Mautic",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/marketing-automation-drupal-commerce-mautic",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Abhishek Dhariwal (adhariwal)",
+        "Prateek Jain (Prateekjain)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T14:15:00Z",
+      "endTime": "2023-10-18T15:00:00Z",
+      "duration": "P45M",
+      "title": "Defaults, cloning, referencing and content prototypes - editors' UX for similar content creation",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/defaults-cloning-referencing-and-content-prototypes-editors-ux-similar-content",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Simo Hellsten"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:15:00Z",
+      "endTime": "2023-10-18T16:00:00Z",
+      "duration": "P45M",
+      "title": "Polish contribution to Drupal",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/polish-contribution-drupal",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Piotr Muszyński"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:15:00Z",
+      "endTime": "2023-10-18T16:00:00Z",
+      "duration": "P45M",
+      "title": "The PHP Foundation",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/php-foundation-0",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Nils Adermann"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:15:00Z",
+      "endTime": "2023-10-18T16:00:00Z",
+      "duration": "P45M",
+      "title": "Learning Management Systems and Drupal",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/learning-management-systems-and-drupal",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Alexey Beloglazov"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:15:00Z",
+      "endTime": "2023-10-18T16:00:00Z",
+      "duration": "P45M",
+      "title": "Issue Triage",
+      "location": "Location Room 2.4 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/issue-triage",
+      "track": [
+        "contribution topic"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-18T15:15:00Z",
+      "endTime": "2023-10-18T15:35:00Z",
+      "duration": "P20M",
+      "title": "Breaking Barriers: My Inclusive Fairytale as a Tourettes-afflicted Drupal Developer",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/breaking-barriers-my-inclusive-fairytale-tourettes-afflicted-drupal-developer",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Mathieu De Meue (matdemeue)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:15:00Z",
+      "endTime": "2023-10-18T16:00:00Z",
+      "duration": "P45M",
+      "title": "A Drupal core maintainer shares peer code review best practices",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/drupal-core-maintainer-shares-peer-code-review-best-practices",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Jess xjm (xjm)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:15:00Z",
+      "endTime": "2023-10-18T15:35:00Z",
+      "duration": "P20M",
+      "title": "Transform Drupal 10 with collaborative content editing features",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/transform-drupal-10-collaborative-content-editing-features",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Piotrek Koszulinski"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:15:00Z",
+      "endTime": "2023-10-18T15:35:00Z",
+      "duration": "P20M",
+      "title": "Drupal Translate Interface on steroids",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/drupal-translate-interface-steroids",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Lyubomir Filipov (Lfilipov)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:15:00Z",
+      "endTime": "2023-10-18T15:35:00Z",
+      "duration": "P20M",
+      "title": "Module Builder should be in your developer toolkit",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/module-builder-should-be-your-developer-toolkit",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Joachim Noreiko (Joachim)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:15:00Z",
+      "endTime": "2023-10-18T15:35:00Z",
+      "duration": "P20M",
+      "title": "Using the EditorA11y module to improve accessibility in Drupal",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/using-editora11y-module-improve-accessibility-drupal",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Mark Casias (Markie)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:40:00Z",
+      "endTime": "2023-10-18T16:00:00Z",
+      "duration": "P20M",
+      "title": "How to learn Drupal 10 site building in a month?",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/how-learn-drupal-10-site-building-month",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Eduardo Telaya (Edutrul)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:40:00Z",
+      "endTime": "2023-10-18T16:00:00Z",
+      "duration": "P20M",
+      "title": "AI assisted content editing with CKEditor5 & OpenAI in Drupal 10",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/ai-assisted-content-editing-ckeditor5-openai-drupal-10",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Raffaele Chiocca (Rafuel92)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:40:00Z",
+      "endTime": "2023-10-18T16:00:00Z",
+      "duration": "P20M",
+      "title": "Automating software updates: How clients can benefit",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/automating-software-updates-how-clients-can-benefit",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Evgeniy Maslovskiy (Spleshka)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:40:00Z",
+      "endTime": "2023-10-18T16:00:00Z",
+      "duration": "P20M",
+      "title": "Security by design: protecting Drupal websites without breaking a sweat!",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/security-design-protecting-drupal-websites-without-breaking-sweat",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Bruno Carreira (bcruzcar)",
+        "Paulo Carvalho (pmaiacar)"
+      ]
+    },
+    {
+      "startTime": "2023-10-18T15:40:00Z",
+      "endTime": "2023-10-18T16:00:00Z",
+      "duration": "P20M",
+      "title": "Drupal and the DXP World",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/drupal-and-dxp-world",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Gaurav Kapoor (Gaurav.kapoor)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T07:00:00Z",
+      "endTime": "2023-10-19T16:00:00Z",
+      "duration": "P540M",
+      "title": "General Contribution Day 3",
+      "location": "Location Contribution Room 4.1",
+      "link": "https://events.drupal.org//lille2023/session/general-contribution-day-3",
+      "track": [
+        "contribution topic"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-19T07:15:00Z",
+      "endTime": "2023-10-19T08:00:00Z",
+      "duration": "P45M",
+      "title": "Shake a Li'l with VB in Lille: A Bollywood Dance Odyssey",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/shake-lil-vb-lille-bollywood-dance-odyssey",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Valuebound Consulting Services Private Limited"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T07:15:00Z",
+      "endTime": "2023-10-19T08:00:00Z",
+      "duration": "P45M",
+      "title": "How did 125.000 citizens help to improve their cities with Webform? How did they collect 60.000 points on maps about mobility, quality of life, nature? What could you do with the custom webform modules with your clients, citizens, customers?",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/how-did-125000-citizens-help-improve-their-cities-webform-how-did-they-collect",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Jan De Kezel"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T07:15:00Z",
+      "endTime": "2023-10-19T08:00:00Z",
+      "duration": "P45M",
+      "title": "Automated Acceptance testing",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/automated-acceptance-testing",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Branimir Juranic"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T07:15:00Z",
+      "endTime": "2023-10-19T08:00:00Z",
+      "duration": "P45M",
+      "title": "Black in Drupal",
+      "location": "Location Room 2.4 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/black-drupal",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Joi Garrett"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T07:15:00Z",
+      "endTime": "2023-10-19T08:00:00Z",
+      "duration": "P45M",
+      "title": "How UNESCO built and now runs a Drupal Site Factory and a design system for its Web Overhaul and what is the roadmap for the future.",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/how-unesco-built-and-now-runs-drupal-site-factory-and-design-system-its-web",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Denis Pitzalis (Denix)",
+        "Sylvain Moreau (Slybud)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T07:15:00Z",
+      "endTime": "2023-10-19T08:00:00Z",
+      "duration": "P45M",
+      "title": "Innovation and the future of Drupal",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/innovation-and-future-drupal",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Alejandro Moreno Lopez (Alexmoreno)",
+        "Scott Massey (sukotto100)",
+        "Cristina Chumillas (ckrina)",
+        "AmyJune Hineline (Volkswagenchick)",
+        "Nick Veenhof (nick_vh)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T07:15:00Z",
+      "endTime": "2023-10-19T08:00:00Z",
+      "duration": "P45M",
+      "title": "Composer Behind the Scenes",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/composer-behind-scenes",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Nils Adermann"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T07:15:00Z",
+      "endTime": "2023-10-19T08:00:00Z",
+      "duration": "P45M",
+      "title": "Single Directory Components in Core",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/single-directory-components-core",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Mike Herchel (mherchel)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T07:15:00Z",
+      "endTime": "2023-10-19T08:00:00Z",
+      "duration": "P45M",
+      "title": "The Missing Link: Taxonomists and Taxonomy Governance",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/missing-link-taxonomists-and-taxonomy-governance",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Michele Jenkins (Micheleannj)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T07:15:00Z",
+      "endTime": "2023-10-19T08:00:00Z",
+      "duration": "P45M",
+      "title": "Goodbye to traditional web agencies and management models - Welcome to common sense and collective intelligence",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/goodbye-traditional-web-agencies-and-management-models-welcome-common-sense-and",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Benoit De Vos (Bendev)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:00:00Z",
+      "endTime": "2023-10-19T08:15:00Z",
+      "duration": "P15M",
+      "title": "How Drupal with AI is a strong competitor in the DXP space (sponsored by Dropsolid)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/how-drupal-ai-strong-competitor-dxp-space-sponsored-dropsolid",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Dominique De Cooman (Domidc)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:15:00Z",
+      "endTime": "2023-10-19T08:30:00Z",
+      "duration": "P15M",
+      "title": "AI in Drupal: Evolution, Modules, and Possibilities (sponsored by FFW)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/ai-drupal-evolution-modules-and-possibilities-sponsored-ffw",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Jorge Lopez-lago"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:30:00Z",
+      "endTime": "2023-10-19T09:15:00Z",
+      "duration": "P45M",
+      "title": "AI: friend or foe",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/ai-friend-or-foe",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Jorge Lopez-lago"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:30:00Z",
+      "endTime": "2023-10-19T09:15:00Z",
+      "duration": "P45M",
+      "title": "How to organise your own Splash Awards",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/how-organise-your-own-splash-awards",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Niklas Franke (Nick.el.diablo)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:30:00Z",
+      "endTime": "2023-10-19T09:15:00Z",
+      "duration": "P45M",
+      "title": "DDEV, Drupalpod, Gitpod, and Codespaces",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/ddev-drupalpod-gitpod-and-codespaces",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Randy Fay"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:30:00Z",
+      "endTime": "2023-10-19T09:15:00Z",
+      "duration": "P45M",
+      "title": "Mentor orientation 1bis",
+      "location": "Location Room 2.4 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/mentor-orientation-1bis",
+      "track": [
+        "contribution topic"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-19T08:30:00Z",
+      "endTime": "2023-10-19T09:15:00Z",
+      "duration": "P45M",
+      "title": "Innovating personalisation with Rules as Code and Drupal",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/innovating-personalisation-rules-code-and-drupal",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Suchi Garg (Gargsuchi)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:30:00Z",
+      "endTime": "2023-10-19T10:15:00Z",
+      "duration": "P105M",
+      "title": "Behavior Driven Development: Behat and Drupal for acceptance tests",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/behavior-driven-development-behat-and-drupal-acceptance-tests",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Ricardo Sanz"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:30:00Z",
+      "endTime": "2023-10-19T09:15:00Z",
+      "duration": "P45M",
+      "title": "How we delivered a language learning website to rural internet-less schools in South Africa using Drupal",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/how-we-delivered-language-learning-website-rural-internet-less-schools-south",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Dane Rossenrode (Droces)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:30:00Z",
+      "endTime": "2023-10-19T10:15:00Z",
+      "duration": "P105M",
+      "title": "Tutorial for Integrating SearchStax on Drupal Site (sponsored by SearchStax)",
+      "location": "Location Room 3.3 (7)",
+      "link": "https://events.drupal.org//lille2023/session/tutorial-integrating-searchstax-drupal-site-sponsored-searchstax",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Tyler Huff (thuff)",
+        "Kevin Montgomery"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:30:00Z",
+      "endTime": "2023-10-19T09:15:00Z",
+      "duration": "P45M",
+      "title": "One Theme To Rule Them All: Using StarterKits to accelerate theme development and reduce technical debt",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/one-theme-rule-them-all-using-starterkits-accelerate-theme-development-and-reduce",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Andy Blum (Andy-blum)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:30:00Z",
+      "endTime": "2023-10-19T09:15:00Z",
+      "duration": "P45M",
+      "title": "Next Drupal admin UI improvements",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/next-drupal-admin-ui-improvements",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Cristina Chumillas (ckrina)",
+        "Sascha Eggenberger (saschaeggi)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T08:30:00Z",
+      "endTime": "2023-10-19T09:15:00Z",
+      "duration": "P45M",
+      "title": "For good or for worse: making happy client relationships",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/good-or-worse-making-happy-client-relationships",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Imre Gmelig Meijling (imre-gmelig-meijling)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T09:30:00Z",
+      "endTime": "2023-10-19T10:15:00Z",
+      "duration": "P45M",
+      "title": "CWG \"Office Hours\"",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/cwg-office-hours",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Mark Casias (Markie)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T09:30:00Z",
+      "endTime": "2023-10-19T10:15:00Z",
+      "duration": "P45M",
+      "title": "Hybrid work model and Agile Methodology: opportunities and challenges",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/hybrid-work-model-and-agile-methodology-opportunities-and-challenges",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Georgios Andreadis",
+        "Georgia Afioni (gafioni)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T09:30:00Z",
+      "endTime": "2023-10-19T10:15:00Z",
+      "duration": "P45M",
+      "title": "The future of frameworks and human written code",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/future-frameworks-and-human-written-code",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Jorge Lopez-lago"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T09:30:00Z",
+      "endTime": "2023-10-19T10:15:00Z",
+      "duration": "P45M",
+      "title": "Drupal Certified Partners + Supporting Partners Roundtable",
+      "location": "Location Room 2.4 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/drupal-certified-partners-supporting-partners-roundtable",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Kelly Delaney",
+        "Tim Doyle",
+        "Jitka Pilar"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T09:30:00Z",
+      "endTime": "2023-10-19T10:15:00Z",
+      "duration": "P45M",
+      "title": "Getting down to the WHAT, HOW & WHY of consumer preferences through digital transformation and tech innovations",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/getting-down-what-how-why-consumer-preferences-through-digital-transformation-and",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Ashish Goyal"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T09:30:00Z",
+      "endTime": "2023-10-19T10:15:00Z",
+      "duration": "P45M",
+      "title": "Making Drupal a Better Out-of-the-Box Product",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/making-drupal-better-out-box-product",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Lauri Eskola (lauriii)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T09:30:00Z",
+      "endTime": "2023-10-19T10:15:00Z",
+      "duration": "P45M",
+      "title": "ICT Greenhouse Gas Emissions Are Exploding – How Drupal Community Should Engage and Contribute Their Part",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/ict-greenhouse-gas-emissions-are-exploding-how-drupal-community-should-engage-and",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Janne Kalliola (Jannekalliola)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T09:30:00Z",
+      "endTime": "2023-10-19T10:15:00Z",
+      "duration": "P45M",
+      "title": "Hosted login: The future of the login",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/hosted-login-future-login",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Raul jimenez morales"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T09:30:00Z",
+      "endTime": "2023-10-19T10:15:00Z",
+      "duration": "P45M",
+      "title": "Strategies for Overcoming Common Software Development Challenges: A Management Perspective",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/strategies-overcoming-common-software-development-challenges-management",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Jorge Tutor"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T10:15:00Z",
+      "endTime": "2023-10-19T10:30:00Z",
+      "duration": "P15M",
+      "title": "A new way to search in your Drupal Site: an AI-enabled ChatBot (sponsored by Amazee IO)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/new-way-search-your-drupal-site-ai-enabled-chatbot-sponsored-amazee-io",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Michael Schmid (Schnitzel)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T11:00:00Z",
+      "endTime": "2023-10-19T11:15:00Z",
+      "duration": "P15M",
+      "title": "Live demo: How AI is transforming the Drupal Editor experience (sponsored by Dropsolid)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/live-demo-how-ai-transforming-drupal-editor-experience-sponsored-dropsolid",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Frederik Wouters (Wouters_f)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T11:30:00Z",
+      "endTime": "2023-10-19T12:45:00Z",
+      "duration": "P75M",
+      "title": "Drupal Core Initiative Leads",
+      "location": "Location Auditorium",
+      "link": "https://events.drupal.org//lille2023/session/drupal-core-initiative-leads",
+      "track": [
+        "keynote"
+      ],
+      "speakers": [
+        "Chris Wells",
+        "Fran Garcia-linares",
+        "Mike Herchel (mherchel)",
+        "Suzanne Dergacheva",
+        "Sascha Eggenberger (saschaeggi)",
+        "Felip Manyer Ballester (FMB)",
+        "Wim Leers",
+        "Gábor Hojtsy"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T13:00:00Z",
+      "endTime": "2023-10-19T13:45:00Z",
+      "duration": "P45M",
+      "title": "Games!!",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/games",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Jorge Lopez-lago"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T13:00:00Z",
+      "endTime": "2023-10-19T13:45:00Z",
+      "duration": "P45M",
+      "title": "Next4Drupal project template: questions, discussions and hands-on",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/next4drupal-project-template-questions-discussions-and-hands",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Mario Vercellotti (Vermario)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T13:00:00Z",
+      "endTime": "2023-10-19T13:45:00Z",
+      "duration": "P45M",
+      "title": "Revolutionizing Drupal with Automated Performance Testing: A Deep Dive into Gander, the New Framework",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/revolutionizing-drupal-automated-performance-testing-deep-dive-gander-new",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Janez Urevc (slashrsm)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T13:00:00Z",
+      "endTime": "2023-10-19T13:45:00Z",
+      "duration": "P45M",
+      "title": "Enhancing Application Stability, Performance, and Security: Best Practices",
+      "location": "Location Room 2.4 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/enhancing-application-stability-performance-and-security-best-practices",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Pavel Bulat"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T13:00:00Z",
+      "endTime": "2023-10-19T13:45:00Z",
+      "duration": "P45M",
+      "title": "What's Next for Drupal Autoupdates",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/whats-next-drupal-autoupdates",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Timothy Lehnen (Hestenet)",
+        "Wim Leers",
+        "Jess xjm (xjm)",
+        "Neil Drumm (Drumm)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T13:00:00Z",
+      "endTime": "2023-10-19T13:45:00Z",
+      "duration": "P45M",
+      "title": "How to use tailwind in hybrid solutions using Drupal/Twig, web components, and React",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/how-use-tailwind-hybrid-solutions-using-drupaltwig-web-components-and-react",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Jose Nieves (Jnieves)",
+        "Mónica Cárdenas (monrodcar)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T13:00:00Z",
+      "endTime": "2023-10-19T13:45:00Z",
+      "duration": "P45M",
+      "title": "Many to One; the journey to a centralized corporate communication website",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/many-one-journey-centralized-corporate-communication-website",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Marcello Angileri (Condor616)",
+        "Pierre Ukelo (pierruk)",
+        "François Weber (Weberfr8)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T13:00:00Z",
+      "endTime": "2023-10-19T13:45:00Z",
+      "duration": "P45M",
+      "title": "How JSON:API 1.1 will make Drupal better",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/how-jsonapi-11-will-make-drupal-better",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Björn Brala"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T13:00:00Z",
+      "endTime": "2023-10-19T13:45:00Z",
+      "duration": "P45M",
+      "title": "Design Systems, Documentation, and Drupal: Grow your agency and retain clients before you write a line of code",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/design-systems-documentation-and-drupal-grow-your-agency-and-retain-clients-you",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Chris Teitzel"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T13:00:00Z",
+      "endTime": "2023-10-19T13:45:00Z",
+      "duration": "P45M",
+      "title": "Next-level Contribution: Project Maintainership on Drupal.org",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/next-level-contribution-project-maintainership-drupalorg",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Chris Burge (chris-burge)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T14:00:00Z",
+      "endTime": "2023-10-19T14:15:00Z",
+      "duration": "P15M",
+      "title": "What developers really want: Uncovering the essential work benefits for software developers (sponsored by Factorial)",
+      "location": "Location Open stage",
+      "link": "https://events.drupal.org//lille2023/session/what-developers-really-want-uncovering-essential-work-benefits-software",
+      "track": [
+        "sponsored talk"
+      ],
+      "speakers": [
+        "Niklas Franke (Nick.el.diablo)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T14:15:00Z",
+      "endTime": "2023-10-19T15:00:00Z",
+      "duration": "P45M",
+      "title": "The new admin Toolbar",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/new-admin-toolbar",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Cristina Chumillas (ckrina)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T14:15:00Z",
+      "endTime": "2023-10-19T15:00:00Z",
+      "duration": "P45M",
+      "title": "Promote Drupal: Contribute to Marketing Drupal as a Product",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/promote-drupal-contribute-marketing-drupal-product",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Suzanne Dergacheva"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T14:15:00Z",
+      "endTime": "2023-10-19T15:00:00Z",
+      "duration": "P45M",
+      "title": "Lupus Decoupled Drupal - Q&A & Integrated Page Building",
+      "location": "Location Room 2.4 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/lupus-decoupled-drupal-qa-integrated-page-building",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Wolfgang Ziegler"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T14:15:00Z",
+      "endTime": "2023-10-19T15:00:00Z",
+      "duration": "P45M",
+      "title": "How Drupal builds your pages, D10 edition",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/how-drupal-builds-your-pages-d10-edition",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Luca Lusso"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T14:15:00Z",
+      "endTime": "2023-10-19T15:00:00Z",
+      "duration": "P45M",
+      "title": "Performance Audits: The Top 8 Problems We Find & How To Fix Them",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/performance-audits-top-8-problems-we-find-how-fix-them",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Janez Urevc (slashrsm)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T14:15:00Z",
+      "endTime": "2023-10-19T15:00:00Z",
+      "duration": "P45M",
+      "title": "How to manage large software projects with multiple teams, multiple stakeholders, and a heterogeneous technology stack",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/how-manage-large-software-projects-multiple-teams-multiple-stakeholders-and",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Kerstin Polte (kpolte)",
+        "Karin Herbst"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T14:15:00Z",
+      "endTime": "2023-10-19T15:00:00Z",
+      "duration": "P45M",
+      "title": "Mastering the AI Renaissance: Redefining Media Content Creation with Cutting-Edge Tools",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/mastering-ai-renaissance-redefining-media-content-creation-cutting-edge-tools",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Chris Wu (amourow)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T14:15:00Z",
+      "endTime": "2023-10-19T15:00:00Z",
+      "duration": "P45M",
+      "title": "How to sell your company",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/how-sell-your-company",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Michael Schmid (Schnitzel)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T14:15:00Z",
+      "endTime": "2023-10-19T15:00:00Z",
+      "duration": "P45M",
+      "title": "IaC with Terraform",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/iac-terraform",
+      "track": [
+        "open web & community"
+      ],
+      "speakers": [
+        "Wilfred Arambhan (Wil2091)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:15:00Z",
+      "endTime": "2023-10-19T16:00:00Z",
+      "duration": "P45M",
+      "title": "Gin Admin Theme",
+      "location": "Location Room 2.1 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/gin-admin-theme",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Sascha Eggenberger (saschaeggi)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:15:00Z",
+      "endTime": "2023-10-19T16:00:00Z",
+      "duration": "P45M",
+      "title": "Sustainability and Drupal - How can our community reduce our CO2 Footprint",
+      "location": "Location Room 2.2 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/sustainability-and-drupal-how-can-our-community-reduce-our-co2-footprint",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Mike Gifford (Mgifford)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:15:00Z",
+      "endTime": "2023-10-19T16:00:00Z",
+      "duration": "P45M",
+      "title": "Diversity & Inclusion",
+      "location": "Location Room 2.3 - BoF",
+      "link": "https://events.drupal.org//lille2023/session/diversity-inclusion",
+      "track": [
+        "bof"
+      ],
+      "speakers": [
+        "Fei Lauren"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:15:00Z",
+      "endTime": "2023-10-19T15:35:00Z",
+      "duration": "P20M",
+      "title": "Leveraging contributed modules: best practices with the EU Cookie Compliance module and web analytics tools like Google Analytics and Matomo",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/leveraging-contributed-modules-best-practices-eu-cookie-compliance-module-and-web",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "István Reszler-Fekete (reszli)",
+        "Niels Aers (Nielsaers)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:15:00Z",
+      "endTime": "2023-10-19T15:35:00Z",
+      "duration": "P20M",
+      "title": "How we integrated and scaled Opigno LMS into a global ecosystem",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/how-we-integrated-and-scaled-opigno-lms-global-ecosystem",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Enno Langelotz (Enno)",
+        "Mariana Solorzano",
+        "Antonella Severo"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:15:00Z",
+      "endTime": "2023-10-19T15:35:00Z",
+      "duration": "P20M",
+      "title": "Drupal's next leap: configuration validation",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/drupals-next-leap-configuration-validation",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Wim Leers"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:15:00Z",
+      "endTime": "2023-10-19T15:35:00Z",
+      "duration": "P20M",
+      "title": "Website Caching for Everyone",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/website-caching-everyone",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Simon Morvan (garphy)",
+        "Jesse Dyck"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:15:00Z",
+      "endTime": "2023-10-19T15:35:00Z",
+      "duration": "P20M",
+      "title": "Why a culture of open source contribution is good for your business",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/why-culture-open-source-contribution-good-your-business",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Owen Lansbury (Owenlansbury)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:15:00Z",
+      "endTime": "2023-10-19T15:35:00Z",
+      "duration": "P20M",
+      "title": "Mastering Agency Outsourcing: Strategies for Success in Government Projects",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/mastering-agency-outsourcing-strategies-success-government-projects",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Anthony Fox-Davies",
+        "Evgeniy Maslovskiy (Spleshka)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:40:00Z",
+      "endTime": "2023-10-19T16:00:00Z",
+      "duration": "P20M",
+      "title": "Why we moved the database drivers to their own modules and what we want to do next",
+      "location": "Location Room 3.1 A & B (4)",
+      "link": "https://events.drupal.org//lille2023/session/why-we-moved-database-drivers-their-own-modules-and-what-we-want-do-next",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "David Bekker"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:40:00Z",
+      "endTime": "2023-10-19T16:00:00Z",
+      "duration": "P20M",
+      "title": "Government Portal: The story of building a Drupal distribution for the Estonian government",
+      "location": "Location Room 3.1 C & 3.2 C (6)",
+      "link": "https://events.drupal.org//lille2023/session/government-portal-story-building-drupal-distribution-estonian-government",
+      "track": [
+        "clients & industry experiences"
+      ],
+      "speakers": [
+        "Ivo Nellis (picco)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:40:00Z",
+      "endTime": "2023-10-19T16:00:00Z",
+      "duration": "P20M",
+      "title": "A Drupal inspired Render API for cloud and edge computing",
+      "location": "Location Room 3.2 A & B (5)",
+      "link": "https://events.drupal.org//lille2023/session/drupal-inspired-render-api-cloud-and-edge-computing",
+      "track": [
+        "makers & builders"
+      ],
+      "speakers": [
+        "Pierre Dureau (pdureau)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:40:00Z",
+      "endTime": "2023-10-19T16:00:00Z",
+      "duration": "P20M",
+      "title": "Move contributor experience to a next level using Paragraphs, Layout Paragraphs and Paragraphs set contrib modules",
+      "location": "Location Room 3.5 & 3.6 (3)",
+      "link": "https://events.drupal.org//lille2023/session/move-contributor-experience-next-level-using-paragraphs-layout-paragraphs-and",
+      "track": [
+        "users & editors"
+      ],
+      "speakers": [
+        "Pierrick Cadet (Pierrick Cadet)",
+        "Xavier Ternisien (Javiertern)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:40:00Z",
+      "endTime": "2023-10-19T16:00:00Z",
+      "duration": "P20M",
+      "title": "UX sells: How we can all promote Drupal with an ecosystem-led, human-centred approach",
+      "location": "Location Room 3.7 The Studio (2)",
+      "link": "https://events.drupal.org//lille2023/session/ux-sells-how-we-can-all-promote-drupal-ecosystem-led-human-centred-approach",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Emma Horrell"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T15:40:00Z",
+      "endTime": "2023-10-19T16:00:00Z",
+      "duration": "P20M",
+      "title": "\"From Chaos to Calm: Managing a Marketing Team from Home When You Have ADHD\"",
+      "location": "Location Room 3.8 The Lounge (1)",
+      "link": "https://events.drupal.org//lille2023/session/chaos-calm-managing-marketing-team-home-when-you-have-adhd",
+      "track": [
+        "agency & business"
+      ],
+      "speakers": [
+        "Hadda Hreidarsdottir (Hadda)"
+      ]
+    },
+    {
+      "startTime": "2023-10-19T16:00:00Z",
+      "endTime": "2023-10-19T16:30:00Z",
+      "duration": "P30M",
+      "title": "Wrap Up Ceremony Auditorium - DrupalCon 2024 city Announcement",
+      "location": "Location Auditorium",
+      "link": "https://events.drupal.org//lille2023/session/wrap-ceremony-auditorium-drupalcon-2024-city-announcement",
+      "track": [
+        "other"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-20T07:00:00Z",
+      "endTime": "2023-10-20T16:00:00Z",
+      "duration": "P540M",
+      "title": "Contribution Day",
+      "location": "Location Contribution Room 4.1",
+      "link": "https://events.drupal.org//lille2023/session/contribution-day",
+      "track": [
+        "contribution topic"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-20T07:00:00Z",
+      "endTime": "2023-10-20T10:30:00Z",
+      "duration": "P210M",
+      "title": "First Time Contributor Workshop 1ter",
+      "location": "Location Contribution Room 4.2",
+      "link": "https://events.drupal.org//lille2023/session/first-time-contributor-workshop-1ter",
+      "track": [
+        "contribution topic"
+      ],
+      "speakers": null
+    },
+    {
+      "startTime": "2023-10-20T07:00:00Z",
+      "endTime": "2023-10-20T16:00:00Z",
+      "duration": "P540M",
+      "title": "Mentored Contribution",
+      "location": "Location Contribution Room 4.2",
+      "link": "https://events.drupal.org//lille2023/session/mentored-contribution",
+      "track": [
+        "contribution topic"
+      ],
+      "speakers": null
+    }
+  ],
+  "result": "success",
+  "url": "https://events.drupal.org/lille2023/schedule"
+}

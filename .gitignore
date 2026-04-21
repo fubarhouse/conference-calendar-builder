@@ -1,0 +1,4 @@
+.codex
+cache/*
+.idea/*
+scripts/*

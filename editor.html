@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dataset Editor - Drupal Event Schedule Builder</title>
+  <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body class="theme-dark bg-gray-100 min-h-screen">
+  <header class="header-shell text-white shadow-lg">
+    <div class="w-[94%] sm:w-[90%] mx-auto px-3 sm:px-4 py-4">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="header-logo brand-drupalcon"><i class="fas fa-pen-ruler"></i></div>
+          <div>
+            <div class="header-kicker">Local Dataset Tools</div>
+            <h1 class="header-title">
+              <span class="header-event">Dataset Editor</span>
+              <span class="header-suffix">MVP</span>
+            </h1>
+          </div>
+        </div>
+        <a href="./index.html" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-100 bg-transparent hover:bg-gray-50 transition-colors whitespace-nowrap">
+          <i class="fas fa-calendar-alt mr-2"></i>Back to schedule
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="w-[94%] sm:w-[90%] mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-4">
+    <div id="editorBlocked" class="hidden bg-white rounded-lg shadow-md p-5 text-red-300 border border-red-900/50">
+      <h2 class="text-lg font-semibold mb-2"><i class="fas fa-lock mr-2"></i>Editor locked</h2>
+      <p>This endpoint is available only on <code>localhost</code>/<code>127.0.0.1</code>/<code>::1</code>.</p>
+    </div>
+
+    <div id="editorApp" class="space-y-4">
+      <section id="editorToolbar" class="bg-white rounded-lg shadow-md p-4">
+        <div class="grid grid-cols-1 xl:grid-cols-[1fr_auto_auto_auto_auto] gap-2 items-end">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="datasetSelect">Dataset</label>
+            <select id="datasetSelect" class="w-full h-11 pr-10 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white"></select>
+          </div>
+          <button id="newDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+            <i class="fas fa-file-circle-plus mr-2"></i>New
+          </button>
+          <button id="folderConnectionToggle" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+            <i class="fas fa-link mr-2"></i>Connect Folder
+          </button>
+          <button id="saveDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+            <i class="fas fa-floppy-disk mr-2"></i>Save
+          </button>
+          <button id="saveAsDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+            <i class="fas fa-file-export mr-2"></i>Save As
+          </button>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-2 mt-2 items-end">
+          <label class="block">
+            <span class="block text-xs font-medium text-gray-400 mb-1">JSON Path</span>
+            <div class="relative">
+              <i class="fas fa-file-code absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+              <input id="currentFilenameInput" type="text" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white pl-9 pr-3" placeholder="data/new-event.json" disabled>
+            </div>
+          </label>
+          <div class="block">
+            <span class="block text-xs font-medium text-gray-400 mb-1">Status</span>
+            <div id="dirtyState" class="h-11 inline-flex items-center px-4 rounded-md border border-gray-300 text-sm text-gray-300">
+              <i class="fas fa-circle mr-2 text-xs"></i><span>No changes</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="editor-meta-accordion rounded-lg shadow-md p-4 space-y-4">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-100">Editor Sections</h2>
+            <p class="text-sm text-gray-400">Switch between event metadata, assets, sessions, and sponsors.</p>
+          </div>
+          <div class="editor-tab-row" role="tablist" aria-label="Editor sections">
+            <button id="showEventTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="eventWorkspacePanel">
+              <i class="fas fa-circle-info mr-2 text-[0.72rem]"></i>Event
+            </button>
+            <button id="showLogoTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="logoWorkspacePanel">
+              <i class="fas fa-image mr-2 text-[0.72rem]"></i>Logo
+            </button>
+            <button id="showFlickrTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="flickrWorkspacePanel">
+              <i class="fab fa-flickr mr-2 text-[0.72rem]"></i>Flickr
+            </button>
+            <button id="showSessionsTab" type="button" class="editor-tab-button is-active" role="tab" aria-selected="true" aria-controls="sessionWorkspacePanel">
+              <i class="fas fa-calendar-day mr-2 text-[0.72rem]"></i>Sessions
+            </button>
+            <button id="showSponsorsTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="sponsorWorkspacePanel">
+              <i class="fas fa-handshake mr-2 text-[0.72rem]"></i>Sponsors
+            </button>
+            <button id="showSitemapTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="sitemapWorkspacePanel">
+              <i class="fas fa-map mr-2 text-[0.72rem]"></i>Sitemap
+            </button>
+          </div>
+        </div>
+
+      <div id="eventWorkspacePanel">
+      <section class="bg-white rounded-lg shadow-md p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-100">Event Metadata</h2>
+            <p class="text-sm text-gray-400">Core event details used throughout the planner.</p>
+          </div>
+        </div>
+        <div id="eventMetaForm" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+      </section>
+      </div>
+
+      <div id="sessionWorkspacePanel">
+      <section id="sessionWorkspace" class="editor-session-workspace grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-4">
+        <div id="sessionSidebarPanel" class="bg-white rounded-lg shadow-md p-4 h-[70vh] max-h-[820px] min-h-[420px] flex flex-col">
+          <div class="flex flex-col gap-2 mb-3">
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="text-lg font-semibold text-gray-100">Sessions</h2>
+              <div class="flex items-center gap-2">
+                <button id="toggleQuickSessionEdit" type="button" class="editor-quick-edit-toggle hidden h-10 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+                  <i id="toggleQuickSessionEditIcon" class="fas fa-pen-to-square mr-1.5 text-[0.72rem]"></i><span id="toggleQuickSessionEditLabel">Quick edit</span>
+                </button>
+                <button id="toggleSessionWorkspace" type="button" class="h-10 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                  <i id="toggleSessionWorkspaceIcon" class="fas fa-expand-alt mr-1.5 text-[0.72rem]"></i><span id="toggleSessionWorkspaceLabel">Expand list</span>
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
+              <button id="addSession" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+                <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add
+              </button>
+              <button id="saveSession" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+                <i class="fas fa-floppy-disk mr-1.5 text-[0.72rem]"></i><span id="saveSessionLabel">Save</span>
+              </button>
+              <button id="deleteSession" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+                <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete
+              </button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400 mb-2">Drag rows to reorder.</p>
+          <div class="relative mb-2">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+            <input id="sessionSearchInput" type="text" placeholder="Search session titles..." class="w-full h-9 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white pl-8 pr-3">
+          </div>
+          <ul id="sessionList" class="space-y-2 overflow-y-auto pr-1 flex-1 min-h-0"></ul>
+        </div>
+
+        <div id="sessionEditorPanel" class="bg-white rounded-lg shadow-md p-4 min-h-[500px]">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-gray-100">Session Editor</h2>
+            <div class="flex items-center gap-2">
+              <span id="sessionIndexBadge" class="h-8 inline-flex items-center px-3 rounded-md border border-gray-600 text-xs text-gray-300">No session selected</span>
+              <span id="sessionDirtyState" class="h-8 inline-flex items-center px-3 rounded-md border border-gray-300 text-xs text-gray-300">
+                <i class="fas fa-circle mr-2 text-[0.55rem] text-emerald-300"></i><span>No changes</span>
+              </span>
+            </div>
+          </div>
+          <div id="sessionForm" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+      </section>
+      </div>
+
+      <div id="logoWorkspacePanel" class="hidden">
+      <section class="bg-white rounded-lg shadow-md p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-100">Event Logo</h2>
+            <p class="text-sm text-gray-400">Manage the logo shown in the public event header.</p>
+          </div>
+        </div>
+        <div id="logoForm" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </section>
+      </div>
+
+      <div id="flickrWorkspacePanel" class="hidden">
+      <section class="bg-white rounded-lg shadow-md p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-100">Flickr Block</h2>
+            <p class="text-sm text-gray-400">Manage the optional photo-sharing block shown on the public event page.</p>
+          </div>
+        </div>
+        <div id="flickrForm" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </section>
+      </div>
+
+      <div id="sponsorWorkspacePanel" class="hidden">
+      <section id="sponsorWorkspace" class="editor-session-workspace grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-4">
+        <div id="sponsorSidebarPanel" class="bg-white rounded-lg shadow-md p-4 h-[60vh] max-h-[760px] min-h-[360px] flex flex-col">
+          <div class="flex flex-col gap-2 mb-3">
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <h2 class="text-lg font-semibold text-gray-100">Sponsors</h2>
+                <p class="text-sm text-gray-400">Manage sponsor assets, placement metadata, and session associations.</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="toggleQuickSponsorEdit" type="button" class="editor-quick-edit-toggle hidden h-10 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+                  <i id="toggleQuickSponsorEditIcon" class="fas fa-pen-to-square mr-1.5 text-[0.72rem]"></i><span id="toggleQuickSponsorEditLabel">Quick edit</span>
+                </button>
+                <button id="toggleSponsorWorkspace" type="button" class="h-10 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                  <i id="toggleSponsorWorkspaceIcon" class="fas fa-expand-alt mr-1.5 text-[0.72rem]"></i><span id="toggleSponsorWorkspaceLabel">Expand list</span>
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
+              <button id="addSponsor" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+                <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add
+              </button>
+              <button id="saveSponsor" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+                <i class="fas fa-floppy-disk mr-1.5 text-[0.72rem]"></i><span id="saveSponsorLabel">Save</span>
+              </button>
+              <button id="deleteSponsor" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+                <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete
+              </button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400 mb-2">Drag rows to reorder.</p>
+          <ul id="sponsorList" class="space-y-2 overflow-y-auto pr-1 flex-1 min-h-0"></ul>
+        </div>
+
+        <div id="sponsorEditorPanel" class="bg-white rounded-lg shadow-md p-4 min-h-[420px]">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-gray-100">Sponsor Editor</h2>
+            <div class="flex items-center gap-2">
+              <span id="sponsorIndexBadge" class="h-8 inline-flex items-center px-3 rounded-md border border-gray-600 text-xs text-gray-300">No sponsor selected</span>
+              <span id="sponsorDirtyState" class="h-8 inline-flex items-center px-3 rounded-md border border-gray-300 text-xs text-gray-300">
+                <i class="fas fa-circle mr-2 text-[0.55rem] text-emerald-300"></i><span>No changes</span>
+              </span>
+            </div>
+          </div>
+          <div id="sponsorForm" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+        </div>
+      </section>
+      </div>
+
+      <div id="sitemapWorkspacePanel" class="hidden">
+      <section class="bg-white rounded-lg shadow-md p-4">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-100">Sitemap</h2>
+            <p class="text-sm text-gray-400">Known URLs for this event's domain, derived from the dataset.</p>
+          </div>
+        </div>
+        <div id="sitemapContent"></div>
+      </section>
+      </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="sponsorSessionPickerModal" class="session-modal-overlay hidden" aria-hidden="true">
+    <div class="session-modal-card" role="dialog" aria-modal="true" aria-labelledby="sponsorSessionPickerTitle">
+      <div class="session-modal-header">
+        <button id="closeSponsorSessionPickerBack" type="button" class="session-modal-back">
+          <i class="fas fa-arrow-left"></i><span>Back to sponsor</span>
+        </button>
+        <button id="closeSponsorSessionPicker" type="button" class="session-modal-close" aria-label="Close linked session picker">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="session-modal-body">
+        <div class="speaker-modal-head">
+          <h2 id="sponsorSessionPickerTitle" class="session-modal-title">Add linked session</h2>
+          <span id="sponsorSessionPickerCount" class="speaker-modal-count-badge">0 available</span>
+        </div>
+        <p class="session-modal-meta">
+          <span class="session-modal-meta-label">Selection</span>
+          <span class="session-modal-meta-value">Choose one session to associate with the selected sponsor for this event.</span>
+        </p>
+        <div id="sponsorSessionPickerList" class="speaker-session-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/editor.js"></script>
+</body>
+</html>

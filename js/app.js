@@ -1,0 +1,36 @@
+import { init, toggleEventSelectionPublic, wireStatsHandlers } from './modules/events.js';
+import { updateSelectionOverview, updateStageStats, setupStatsDelegation } from './modules/stats.js';
+import { setupEventsDelegation, setToggleSelectionFn } from './modules/render.js';
+
+wireStatsHandlers(updateSelectionOverview, updateStageStats);
+setToggleSelectionFn(toggleEventSelectionPublic);
+
+function hideLoadingOverlay() {
+  const overlay = document.getElementById('pageLoadingOverlay');
+  if (!overlay || overlay.classList.contains('is-hidden')) return;
+  overlay.classList.add('is-hidden');
+}
+
+function setupMobileAccordion(toggleId, contentId) {
+  const toggle = document.getElementById(toggleId);
+  const content = document.getElementById(contentId);
+  if (!toggle || !content) return;
+
+  toggle.addEventListener('click', () => {
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+    content.classList.toggle('hidden', expanded);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    setupEventsDelegation();
+    setupStatsDelegation();
+    await init();
+    setupMobileAccordion('usageInstructionsToggle', 'usageInstructionsContent');
+    setupMobileAccordion('sessionFiltersToggle', 'sessionFiltersContent');
+  } finally {
+    hideLoadingOverlay();
+  }
+});
