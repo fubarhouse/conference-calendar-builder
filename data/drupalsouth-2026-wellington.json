@@ -172,7 +172,7 @@
         "id": "sponsor-12",
         "title": "Ackama",
         "tier": "Silver",
-        "row": 3,
+        "row": 4,
         "priority": 5,
         "image": "./img/sponsors/drupalsouth/2026-wellington/sponsor-12.png",
         "imageAlt": "Ackama logo",
@@ -185,7 +185,7 @@
         "id": "sponsor-13",
         "title": "Skpr",
         "tier": "Silver",
-        "row": 3,
+        "row": 4,
         "priority": 6,
         "image": "./img/sponsors/drupalsouth/2026-wellington/sponsor-13.png",
         "imageAlt": "Skpr logo",
@@ -198,7 +198,7 @@
         "id": "sponsor-14",
         "title": "Pragma Partners",
         "tier": "Silver",
-        "row": 3,
+        "row": 4,
         "priority": 7,
         "image": "./img/sponsors/drupalsouth/2026-wellington/sponsor-14.png",
         "imageAlt": "Pragma Partners logo",
@@ -211,7 +211,7 @@
         "id": "sponsor-15",
         "title": "Fastly",
         "tier": "Silver",
-        "row": 3,
+        "row": 4,
         "priority": 8,
         "image": "./img/sponsors/drupalsouth/2026-wellington/sponsor-15.png",
         "imageAlt": "Fastly logo",
@@ -224,7 +224,7 @@
         "id": "sponsor-16",
         "title": "Hyperkind",
         "tier": "Silver",
-        "row": 3,
+        "row": 4,
         "priority": 9,
         "image": "./img/sponsors/drupalsouth/2026-wellington/sponsor-16.jpg",
         "imageAlt": "Hyperkind logo",
@@ -310,7 +310,7 @@
       "endTime": "2026-05-12T22:10:00Z",
       "duration": "P40M",
       "title": "Death to the Black Box: Winning in 2026 through personal agency, financial prudence and community",
-      "location": "Main Room",
+      "location": "Te Aro",
       "link": "",
       "track": [
         "Keynote"
@@ -776,7 +776,7 @@
       "endTime": "2026-05-13T04:30:00Z",
       "duration": "P30M",
       "title": "Try Government Again, We've Redecorated",
-      "location": "Main Room",
+      "location": "Te Aro",
       "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4481",
       "track": [
         "Keynote"
@@ -892,14 +892,14 @@
       "startTime": "2026-05-13T21:00:00Z",
       "endTime": "2026-05-13T21:30:00Z",
       "duration": "P30M",
-      "title": "Keynote (TBA)",
-      "location": "Main Room",
+      "title": "The Case for Drupal CMS",
+      "location": "Te Aro",
       "link": "",
       "track": [
         "Keynote"
       ],
-      "speakers": [],
-      "full_description": "",
+      "speakers": "Pamela Barone",
+      "full_description": "When Drupal CMS was announced almost two years ago, the focus on user experience for less technical users may have felt like a pivot for a project that has largely prioritised developers in recent years. But rather than changing the focus, the introduction of a product-ised release is all about growing adoption by expanding Drupal's reach. This is more than just marketing -- although that's important too! -- and the convergence of new developments in the last year or so does feel like the start of a new era for Drupal, not only for newbies but for all of us.\n\nNow that we are a few months on from the release of Drupal CMS 2.0, it's a good time to reflect on the initiative and see where things stand. In this session, I will:\n\nRevisit the strategy for Drupal CMS and how fits in with the larger project\nExplain what Drupal CMS actually is and touch on some of the highlights from the latest release\nProvide some observations about outcomes so far\nLook ahead to what's coming up",
       "video_url": "",
       "sponsorIds": ""
     },
@@ -1024,7 +1024,7 @@
       "duration": "P30M",
       "title": "Building the right thing is a team sport",
       "location": "Loft",
-      "link": "",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4473",
       "track": [
         "Sponsor"
       ],
@@ -1091,16 +1091,16 @@
       "startTime": "2026-05-13T23:10:00Z",
       "endTime": "2026-05-13T23:40:00Z",
       "duration": "P30M",
-      "title": "Title to be announced (Xequals)",
+      "title": "Eventa: The Drupal based ticketing platform that you used to get here",
       "location": "Loft",
-      "link": "",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4473",
       "track": [
         "Sponsor"
       ],
       "speakers": [
         "Rox Flame"
       ],
-      "full_description": "Rox Flame is presenting an Eventa-related session (Drupal-based ticketing platform with biometric/QR check-in capabilities).",
+      "full_description": "Learn all about Eventa, a Drupal commerce based ticketing platform with support for complex seated events and fast check-ins,\n\nI'll take you through a tour of all our favorite features, from biometric check-ins, to advanced seating plans and fast check-ins, and show you how we made it and share stories of some of our biggest challenges including scaling for thousands of ticket sales and check-ins fo the World-press photo exhibit and meeting complex needs across a variety of event clients.\n\nWhether you want to know more about the ways Drupal can meet commerce and ticketing needs, or interested in hearing a story success overcoming on-the-ground challenges with event ticketing, or, if you just want to make sense of the process in which you purchased your own conference ticket, this talk is for you!",
       "video_url": "",
       "sponsorIds": "sponsor-5"
     },
@@ -1159,7 +1159,7 @@
       "duration": "P30M",
       "title": "Drupal and the quest to win hearts and minds",
       "location": "Loft",
-      "link": "",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4475",
       "track": [
         "Sponsor"
       ],
@@ -1208,14 +1208,14 @@
       "duration": "P30M",
       "title": "Vibe Coding - Introducing vulnerabilities at pace to your clients",
       "location": "Waterfront",
-      "link": "",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4493",
       "track": [
         "Other"
       ],
       "speakers": [
         "Simon Howard"
       ],
-      "full_description": "",
+      "full_description": "This presentation won’t just cover how to copy and paste code snippets out of ChatGPT, I will address the following topics:\n\nThe use of agentic coding assistants and their implications for testing, security holes, data breach and malicious actors\nA breakdown of The types of security issues they introduce\nA series of case studies highlighting things have gone terribly wrong for people using this technology\nProcesses to help teams produce secure, reliable code.",
       "video_url": "",
       "sponsorIds": ""
     },
@@ -1289,14 +1289,19 @@
       "startTime": "2026-05-14T02:00:00Z",
       "endTime": "2026-05-14T02:30:00Z",
       "duration": "P30M",
-      "title": "Title to be announced (Upsun)",
+      "title": "DrupalSouth Steering Committee Panel",
       "location": "Loft",
       "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4476",
       "track": [
         "Sponsor"
       ],
-      "speakers": [],
-      "full_description": "The session details are still being finalized. Organizers promise \"a deep dive into the Drupal ecosystem\" featuring real-world case studies, technical explorations of modules and architectures, and insights on Drupal's enterprise applications.",
+      "speakers": [
+        "Julia Topliss",
+        "Chris Burgess",
+        "Margery Tongway",
+        "Vladimir Roudakov"
+      ],
+      "full_description": "The DrupalSouth Steering Committee serves as a vital standing sub-committee of Linux Australia. Our primary mission is to provide stable, long-term governance and oversight for the DrupalSouth conferences - the premier events for the Drupal community in Australia and New Zealand.\n\nWhy This Session Matters\nAs the digital landscape evolves, so must our community. This panel is not just a reporting session; it is an open forum about leadership and the community. We are at a point where the roadmap for future conferences, local community engagement, and the regional health of the Drupal ecosystem are being redefined.\n\nWhat We Will Discuss\n💧 The Conference Roadmap: Insights into how we select locations, manage budgets, and maintain the high standard of DrupalSouth events.\n💧 Sustainability & Growth: How we can better support local meetups and sprints between the big annual gatherings.\n💧 Community Governance: Understanding the relationship between DrupalSouth, Linux Australia, and the global Drupal Association.\n💧 General Drupal Trends: An open-mic environment to discuss the technical and professional future of Drupal in our region.\n💧 Upcoming DrupalSouth committee elections",
       "video_url": "",
       "sponsorIds": "sponsor-6"
     },
@@ -1404,7 +1409,7 @@
       "duration": "P30M",
       "title": "It Worked in the Demo: Web Components, SDC, and What Happened Next",
       "location": "Waterfront",
-      "link": "",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4281",
       "track": [
         "Web Tools & Complementary Technologies"
       ],
@@ -1437,7 +1442,7 @@
       "endTime": "2026-05-14T04:30:00Z",
       "duration": "P30M",
       "title": "📣 Closing Remarks",
-      "location": "Main Room",
+      "location": "",
       "link": "",
       "track": [
         "Other"
