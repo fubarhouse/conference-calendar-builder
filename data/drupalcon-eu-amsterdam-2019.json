@@ -2003,9 +2003,7 @@
       "track": [
         "BoFs"
       ],
-      "speakers": [
-        "Description"
-      ]
+      "speakers": null
     },
     {
       "startTime": "2019-10-30T15:25:00Z",
