@@ -258,6 +258,19 @@
         "bgStyle": "auto",
         "aspect": "auto",
         "enabled": true
+      },
+      {
+        "id": "sponsor-19",
+        "title": "Creative HQ",
+        "tier": "Industry Connect",
+        "row": 6,
+        "priority": 190,
+        "image": "./img/sponsors/drupalsouth/2026-wellington/sponsor-19.png",
+        "imageAlt": "Creative HQ logo",
+        "link": "https://drupalsouth.org/sponsors/creativehq",
+        "bgStyle": "auto",
+        "aspect": "auto",
+        "enabled": true
       }
     ]
   },
