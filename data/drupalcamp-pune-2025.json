@@ -1,0 +1,541 @@
+{
+  "event": {
+    "designation": "DrupalCamp",
+    "location": "Pune",
+    "year": "2025",
+    "website": "https://www.drupalpune.in",
+    "region": "India",
+    "startDate": "2025-09-13T03:00:00Z",
+    "endDate": "2025-09-14T11:30:00Z",
+    "scheduleURL": "https://www.drupalpune.in/schedule",
+    "venue": "YASHADA, Pune",
+    "timezone": "Asia/Kolkata",
+    "enabled": true,
+    "flickr": {
+      "enabled": true,
+      "groupUrl": "",
+      "image": "",
+      "imageAlt": ""
+    },
+    "logo": {
+      "image": "./img/logos/drupalcamp/2025-pune.svg",
+      "imageAlt": "DrupalCamp logo",
+      "usePlate": false
+    },
+    "sponsors": [
+      {
+        "id": "sponsor-1",
+        "title": "MiniOrange",
+        "tier": "Platinum",
+        "row": 1,
+        "priority": 1,
+        "image": "./img/sponsors/drupalcamp/2025-pune/sponsor-1.png",
+        "imageAlt": "MiniOrange logo",
+        "link": "https://www.miniorange.com/",
+        "bgStyle": "light-plate",
+        "aspect": "auto",
+        "enabled": true
+      },
+      {
+        "id": "sponsor-2",
+        "title": "Reading Room",
+        "tier": "Platinum",
+        "row": 1,
+        "priority": 2,
+        "image": "./img/sponsors/drupalcamp/2025-pune/sponsor-2.png",
+        "imageAlt": "Reading Room logo",
+        "link": "https://www.readingroom.com/",
+        "bgStyle": "light-plate",
+        "aspect": "auto",
+        "enabled": true
+      },
+      {
+        "id": "sponsor-3",
+        "title": "QED42",
+        "tier": "Gold",
+        "row": 2,
+        "priority": 1,
+        "image": "./img/sponsors/drupalcamp/2025-pune/sponsor-3.png",
+        "imageAlt": "QED42 logo",
+        "link": "https://www.qed42.com/",
+        "bgStyle": "light-plate",
+        "aspect": "auto",
+        "enabled": true
+      },
+      {
+        "id": "sponsor-4",
+        "title": "Axelerant",
+        "tier": "Exhibitor",
+        "row": 3,
+        "priority": 1,
+        "image": "./img/sponsors/drupalcamp/2025-pune/sponsor-4.png",
+        "imageAlt": "Axelerant logo",
+        "link": "https://www.axelerant.com/",
+        "bgStyle": "light-plate",
+        "aspect": "auto",
+        "enabled": true
+      },
+      {
+        "id": "sponsor-5",
+        "title": "Open Sense Labs",
+        "tier": "Module",
+        "row": 4,
+        "priority": 1,
+        "image": "./img/sponsors/drupalcamp/2025-pune/sponsor-5.png",
+        "imageAlt": "Open Sense Labs logo",
+        "link": "https://opensenselabs.com/",
+        "bgStyle": "light-plate",
+        "aspect": "auto",
+        "enabled": true,
+        "subtitle": "Lanyard Sponsor"
+      },
+      {
+        "id": "sponsor-6",
+        "title": "Syngenta",
+        "tier": "Module",
+        "row": 4,
+        "priority": 1,
+        "image": "./img/sponsors/drupalcamp/2025-pune/sponsor-6.png",
+        "imageAlt": "Syngenta logo",
+        "link": "https://www.syngenta.com/en",
+        "bgStyle": "light-plate",
+        "aspect": "auto",
+        "enabled": true,
+        "subtitle": "Goodie Bag"
+      },
+      {
+        "id": "sponsor-7",
+        "title": "Acquia",
+        "tier": "Module",
+        "row": 4,
+        "priority": 2,
+        "image": "./img/sponsors/drupalcamp/2025-pune/sponsor-7.png",
+        "imageAlt": "Acquia logo",
+        "link": "https://www.acquia.com/",
+        "bgStyle": "light-plate",
+        "aspect": "auto",
+        "enabled": true,
+        "subtitle": "Drupal Certification Partner"
+      },
+      {
+        "id": "sponsor-9",
+        "title": "The Drop Times",
+        "tier": "Media Partner",
+        "row": 5,
+        "priority": 4,
+        "image": "./img/sponsors/drupalcamp/2025-pune/sponsor-9.png",
+        "imageAlt": "The Drop Times logo",
+        "link": "https://www.thedroptimes.com/",
+        "bgStyle": "light-plate",
+        "aspect": "auto",
+        "enabled": true
+      },
+      {
+        "id": "sponsor-8",
+        "title": "Drupal Forge",
+        "tier": "Workshop Platform Sponsor",
+        "row": 6,
+        "priority": 3,
+        "image": "./img/sponsors/drupalcamp/2025-pune/sponsor-8.png",
+        "imageAlt": "Drupal Forge logo",
+        "link": "https://www.drupalforge.org/",
+        "bgStyle": "light-plate",
+        "aspect": "auto",
+        "enabled": true
+      }
+    ],
+    "columns": 3
+  },
+  "items": [
+    {
+      "startTime": "2025-09-13T03:00:00Z",
+      "endTime": "2025-09-13T04:00:00Z",
+      "duration": "P60M",
+      "title": "Registration",
+      "location": "Entry Gate",
+      "link": "",
+      "track": [
+        "Other"
+      ],
+      "speakers": null,
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T04:00:00Z",
+      "endTime": "2025-09-13T04:30:00Z",
+      "duration": "P30M",
+      "title": "Prenote and Welcome",
+      "location": "Auditorium",
+      "link": "",
+      "track": [
+        "Other"
+      ],
+      "speakers": null,
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T04:30:00Z",
+      "endTime": "2025-09-13T05:15:00Z",
+      "duration": "P45M",
+      "title": "Keynote: Smart Strategies, Lean Budgets: Empowering Non-Profits for Impact",
+      "location": "Auditorium",
+      "link": "",
+      "track": [
+        "Keynote"
+      ],
+      "speakers": [
+        "Jayalakshmi Jayanth"
+      ],
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T05:15:00Z",
+      "endTime": "2025-09-13T05:30:00Z",
+      "duration": "P15M",
+      "title": "Group photo + refreshments",
+      "location": "Auditorium",
+      "link": "",
+      "track": [
+        "Other"
+      ],
+      "speakers": null,
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T05:30:00Z",
+      "endTime": "2025-09-13T06:15:00Z",
+      "duration": "P45M",
+      "title": "ChatGPT - Digital Nagasaki",
+      "location": "Classroom 04",
+      "link": "https://www.drupalpune.in/session/chatgpt-digital-nagasaki",
+      "track": [
+        "Drupal & AI"
+      ],
+      "speakers": [
+        "Rahul Kolhatkar"
+      ],
+      "full_description": "The speaker explores concerning trends in internet culture, referencing theories like \"Dead Internet Theory\" and \"Dark Forest Theory.\" The presenter argues that AI's public emergence has fundamentally transformed online spaces negatively. Key points include the internet's decline since widespread AI adoption; users pursuing instant gratification over meaningful engagement, likened to \"rats in the medical experiment, who chose instant gratification and pleasure over sustenance and survival\"; over-reliance on AI compared to unhealthy patterns in child-rearing; and often-ignored downsides of artificial intelligence.",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T05:30:00Z",
+      "endTime": "2025-09-13T06:15:00Z",
+      "duration": "P45M",
+      "title": "Level Up Your Accessibility: Migrating from WCAG 2.0 to 2.2",
+      "location": "Classroom 05",
+      "link": "https://www.drupalpune.in/session/level-your-accessibility-migrating-wcag-20-22",
+      "track": [
+        "Site Building & Development"
+      ],
+      "speakers": [
+        "Ambuj Gupta"
+      ],
+      "full_description": "Accessibility ensures that your website is usable by everyone, including people with disabilities, and it's more relevant than ever. The session explores three key areas: standards overview covering WCAG 2.0, 2.1, and 2.2 with emphasis on how updates address mobile usability and cognitive disabilities; migration strategy including planning and executing an upgrade, understanding new requirements, estimating effort, conducting automated and manual testing, prioritizing fixes, and coordinating across development and design teams; and implementation insights sharing common mistakes teams make while implementing accessibility and actionable strategies to avoid them. Targets developers, testers, designers, and project managers seeking to enhance website inclusivity and compliance.",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T05:30:00Z",
+      "endTime": "2025-09-13T07:30:00Z",
+      "duration": "P120M",
+      "title": "Unlocking AI Capabilities in Drupal (Part 1)",
+      "location": "Classroom",
+      "link": "https://www.drupalpune.in/workshop/2025/unlocking-ai-capabilities-drupal",
+      "track": [
+        "Workshop"
+      ],
+      "speakers": [
+        "Akhil Babu",
+        "Piyuesh Kumar"
+      ],
+      "full_description": "Dive deep into the Drupal AI module to integrate powerful AI-driven features, enhancing content creation, search experiences, automation, and user interaction on your site. This hands-on workshop covers AI/ML/LLM fundamentals and RAG systems; module setup and service provider configuration; AI-powered editorial tools and CKEditor enhancements; automated workflows using AI rules; context-aware search and chatbot implementation; and agent configuration for complex interactions. Instructors: Akhil Babu (Senior Backend Developer at QED42, 6+ years Drupal expertise, active contributor to Drupal's AI initiatives) and Piyuesh Kumar (Director of Technology at QED42, DAP co-organizer).",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T06:20:00Z",
+      "endTime": "2025-09-13T07:05:00Z",
+      "duration": "P45M",
+      "title": "Design Tokens in Action: Shaping the Future of Front-End Collaboration",
+      "location": "Classroom 04",
+      "link": "https://www.drupalpune.in/session/design-tokens-action-shaping-future-front-end-collaboration",
+      "track": [
+        "UI & Design"
+      ],
+      "speakers": [
+        "Prashant Kumar"
+      ],
+      "full_description": "This session explores how design tokens can transform front-end workflows by serving as a unified reference for design decisions. The presenter demonstrates integrating design tokens with Storybook, Figma, and Drupal to create collaborative, scalable design systems. Key topics include leveraging Storybook's interactive environment to bridge design-development gaps and examining real-world applications. Core takeaways: establishing uniform design language across projects, improving designer-developer communication, extending systems while maintaining coherence, reducing workflow time through reusable components, responding quickly to design modifications, and simplifying design system updates.",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T06:20:00Z",
+      "endTime": "2025-09-13T07:05:00Z",
+      "duration": "P45M",
+      "title": "Everything AI in Drupal: Past, Present, and What's Next",
+      "location": "Classroom 05",
+      "link": "https://www.drupalpune.in/session/everything-ai-drupal-past-present-and-whats-next",
+      "track": [
+        "Drupal & AI"
+      ],
+      "speakers": [
+        "Vighnesh Sadagopal",
+        "Ruturaj Chaubey"
+      ],
+      "full_description": "This session covers AI integration in Drupal across five key areas: origins and evolution of the Drupal AI ecosystem including early experiments and community-driven efforts; current AI modules for content creation, auto-tagging, personalization, and connecting with external AI services like OpenAI and HuggingFace; AI agents including ready-made agents for content support and custom agents built for specific workflows; Model Context Protocol (MCP) technology that enables AI systems to leverage Drupal context dynamically, covering both pre-built and custom implementations; and the future direction introducing the latest community and product-level AI efforts with a vision for modular, decoupled, and context-aware Drupal + AI systems.",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T07:10:00Z",
+      "endTime": "2025-09-13T07:30:00Z",
+      "duration": "P20M",
+      "title": "Speaking Tech Without Being a Dev: How to Effectively Communicate with Developers and Clients",
+      "location": "Classroom 04",
+      "link": "https://www.drupalpune.in/session/speaking-tech-without-being-dev-how-effectively-communicate-developers-and-clients-0",
+      "track": [
+        "Leadership/Business"
+      ],
+      "speakers": [
+        "Sakshi Patel"
+      ],
+      "full_description": "Non-technical professionals can lead Drupal projects successfully by understanding technical concepts well enough to communicate between developers and clients. Topics include understanding technical constraints without coding knowledge, effective communication strategies with developers including relevant terminology and building trust, explaining complex concepts to clients without oversimplification, identifying warning signs in project communications, managing handoffs and cross-functional collaboration, and creating documentation accessible to non-technical stakeholders. Designed for project managers and client-facing roles, using real-world examples to demonstrate how to become a better translator, facilitator, and leader—without ever touching a line of code.",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T07:10:00Z",
+      "endTime": "2025-09-13T07:30:00Z",
+      "duration": "P20M",
+      "title": "\"What Did We Sell?\" to \"Here's the Plan\": Building a Zero-Chaos Presales-to-Delivery Hand-off Framework",
+      "location": "Classroom 05",
+      "link": "https://www.drupalpune.in/session/what-did-we-sell-heres-plan-building-zero-chaos-presales-delivery-hand-framework",
+      "track": [
+        "Leadership/Business"
+      ],
+      "speakers": [
+        "Chintamani Umarani"
+      ],
+      "full_description": "This presentation outlines a structured framework for managing the transition from sales to project delivery using a four-phase approach (intake, initiation, planning, execution) supported by automation tools. The framework integrates HubSpot and Jira through Zapier to flag promising deals and generate project epics automatically, preventing losses during handoffs. Critical deliverables—SOW, ProjectId, and Project Charter—establish clarity across teams. A focused 30-minute coordination huddle involves presales, operations, and delivery personnel to align expectations and eliminate misunderstandings. Attendees will acquire a replicable four-phase handoff structure, a meeting template with defined agenda items, automation strategies for reducing manual work, and clarified role definitions from sales through project completion.",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T07:30:00Z",
+      "endTime": "2025-09-13T08:30:00Z",
+      "duration": "P60M",
+      "title": "Lunch",
+      "location": "Hallway",
+      "link": "",
+      "track": [
+        "Other"
+      ],
+      "speakers": null,
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T08:30:00Z",
+      "endTime": "2025-09-13T09:15:00Z",
+      "duration": "P45M",
+      "title": "Drupal-Powered Client-Server DAM for Multi-Site Media",
+      "location": "Classroom 04",
+      "link": "https://www.drupalpune.in/session/drupal-powered-client-server-dam-multi-site-media",
+      "track": [
+        "Drupal Showcase"
+      ],
+      "speakers": [
+        "Madhavi Malgaonkar"
+      ],
+      "full_description": "This session addresses the challenges of managing media across multiple Drupal installations by introducing a centralized DAM architecture using a parent/consumer model that resolves issues like unnecessary duplication, inconsistent metadata, and editorial hand-offs that slow teams down. Covers: centralized DAM benefits eliminating siloed media problems; the drupal_dam module for parent site setup including JSON:API configuration and secure REST endpoints; the drupal_dam_client module for child site integration with configuration forms and \"Upload to Parent DAM\" functionality; field definitions via JSON:API for auto-building entity reference and list fields dynamically; media library integration adding browsable tabs for centralized asset selection; and future enhancements including performance optimization, scalability strategies, and AI-powered duplicate detection plus semantic search capabilities.",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T08:30:00Z",
+      "endTime": "2025-09-13T09:15:00Z",
+      "duration": "P45M",
+      "title": "Simplifying Drupal Development with SDC",
+      "location": "Classroom 05",
+      "link": "https://www.drupalpune.in/session/simplifying-drupal-development-sdc",
+      "track": [
+        "Site Building"
+      ],
+      "speakers": [
+        "Chetan Sonawane",
+        "Avani Bhut"
+      ],
+      "full_description": "Single Directory Components (SDC) are transforming the way developers build themes in Drupal. This session explores how SDC consolidates multiple development elements—templates, styles, scripts, and configuration—into unified, self-contained folders. Topics include modern component-based theming methodology, benefits such as improved project organization, accelerated development, and component reusability, plus practical demonstrations showing how this approach streamlines frontend work and aligns with contemporary web standards.",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T08:30:00Z",
+      "endTime": "2025-09-13T11:15:00Z",
+      "duration": "P165M",
+      "title": "Unlocking AI Capabilities in Drupal (Part 2)",
+      "location": "Classroom",
+      "link": "https://www.drupalpune.in/workshop/2025/unlocking-ai-capabilities-drupal",
+      "track": [
+        "Workshop"
+      ],
+      "speakers": [
+        "Akhil Babu",
+        "Piyuesh Kumar"
+      ],
+      "full_description": "Dive deep into the Drupal AI module to integrate powerful AI-driven features, enhancing content creation, search experiences, automation, and user interaction on your site. This hands-on workshop covers AI/ML/LLM fundamentals and RAG systems; module setup and service provider configuration; AI-powered editorial tools and CKEditor enhancements; automated workflows using AI rules; context-aware search and chatbot implementation; and agent configuration for complex interactions. Instructors: Akhil Babu (Senior Backend Developer at QED42, 6+ years Drupal expertise, active contributor to Drupal's AI initiatives) and Piyuesh Kumar (Director of Technology at QED42, DAP co-organizer).",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T09:20:00Z",
+      "endTime": "2025-09-13T10:05:00Z",
+      "duration": "P45M",
+      "title": "From Static to Dynamic: Next.js Rendering Patterns with Drupal CMS",
+      "location": "Classroom 04",
+      "link": "https://www.drupalpune.in/session/static-dynamic-nextjs-rendering-patterns-drupal-cms",
+      "track": [
+        "Beyond Drupal"
+      ],
+      "speakers": [
+        "Ruturaj Chaubey"
+      ],
+      "full_description": "This session explores integrating Drupal as a headless CMS with Next.js App Router, discussing modern rendering strategies—Server-Side Rendering, Static Site Generation, and Incremental Static Regeneration—and their application to Drupal's content model. Key topics include practical differences between SSR, SSG, ISR, and dynamic rendering in the App Router; integration using the Next-Drupal client library; implementation of functions like generateStaticParams and revalidatePath; SEO optimization for decoupled architectures; and performance optimization strategies. Includes a live demonstration showing a single Drupal node rendered using three different approaches, with analysis of performance, content freshness, and implementation complexity trade-offs.",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T09:20:00Z",
+      "endTime": "2025-09-13T10:05:00Z",
+      "duration": "P45M",
+      "title": "How to commit to an open-source community",
+      "location": "Classroom 05",
+      "link": "https://www.drupalpune.in/session/how-commit-open-source-community",
+      "track": [
+        "Open Web & Community"
+      ],
+      "speakers": [
+        "Abhisek Mazumdar"
+      ],
+      "full_description": "This beginner-level session introduces contributors to open-source participation, focusing on Drupal and Mautic with WordPress insights. Covers contribution methods: Drupal manages contributions through issue queues and patch reviews, Mautic's GitHub pull request workflow, and WordPress collaboration approaches. Emphasizes that users and contributors have a responsibility to give back when encountering software issues, and stresses the importance of empathy and respectful communication in building inclusive communities. Participants will understand what open-source contribution means, why it benefits both individuals and communities, and gain confidence to start contributing to Drupal, Mautic, or similar projects.",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T10:05:00Z",
+      "endTime": "2025-09-13T10:30:00Z",
+      "duration": "P25M",
+      "title": "Tea/Coffee break",
+      "location": "",
+      "link": "",
+      "track": [
+        "Other"
+      ],
+      "speakers": null,
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T10:30:00Z",
+      "endTime": "2025-09-13T11:15:00Z",
+      "duration": "P45M",
+      "title": "Panel Discussion: AI + Drupal",
+      "location": "Auditorium",
+      "link": "",
+      "track": [
+        "Drupal & AI"
+      ],
+      "speakers": null,
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T11:20:00Z",
+      "endTime": "2025-09-13T12:10:00Z",
+      "duration": "P50M",
+      "title": "Panel Discussion (Workshops closing)",
+      "location": "Auditorium",
+      "link": "",
+      "track": [
+        "Other"
+      ],
+      "speakers": null,
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-13T11:30:00Z",
+      "endTime": "2025-09-13T12:30:00Z",
+      "duration": "P60M",
+      "title": "Closing ceremony & awards",
+      "location": "Auditorium",
+      "link": "",
+      "track": [
+        "Other"
+      ],
+      "speakers": null,
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-14T05:00:00Z",
+      "endTime": "2025-09-14T07:30:00Z",
+      "duration": "P150M",
+      "title": "Contribution sprint",
+      "location": "",
+      "link": "",
+      "track": [
+        "Contribution"
+      ],
+      "speakers": null,
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-14T07:30:00Z",
+      "endTime": "2025-09-14T08:30:00Z",
+      "duration": "P60M",
+      "title": "Lunch",
+      "location": "",
+      "link": "",
+      "track": [
+        "Other"
+      ],
+      "speakers": null,
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    },
+    {
+      "startTime": "2025-09-14T08:30:00Z",
+      "endTime": "2025-09-14T11:30:00Z",
+      "duration": "P180M",
+      "title": "Contribution sprint",
+      "location": "",
+      "link": "",
+      "track": [
+        "Contribution"
+      ],
+      "speakers": null,
+      "full_description": "",
+      "video_url": "",
+      "sponsorIds": ""
+    }
+  ]
+}
