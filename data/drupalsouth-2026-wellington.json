@@ -806,7 +806,7 @@
       "startTime": "2026-05-13T04:30:00Z",
       "endTime": "2026-05-13T04:40:00Z",
       "location": "",
-      "duration": "",
+      "duration": "P10M",
       "track": "",
       "speakers": "",
       "speaker_usernames": "",
@@ -1317,7 +1317,7 @@
       ],
       "full_description": "The DrupalSouth Steering Committee serves as a vital standing sub-committee of Linux Australia. Our primary mission is to provide stable, long-term governance and oversight for the DrupalSouth conferences - the premier events for the Drupal community in Australia and New Zealand.\n\nWhy This Session Matters\nAs the digital landscape evolves, so must our community. This panel is not just a reporting session; it is an open forum about leadership and the community. We are at a point where the roadmap for future conferences, local community engagement, and the regional health of the Drupal ecosystem are being redefined.\n\nWhat We Will Discuss\n💧 The Conference Roadmap: Insights into how we select locations, manage budgets, and maintain the high standard of DrupalSouth events.\n💧 Sustainability & Growth: How we can better support local meetups and sprints between the big annual gatherings.\n💧 Community Governance: Understanding the relationship between DrupalSouth, Linux Australia, and the global Drupal Association.\n💧 General Drupal Trends: An open-mic environment to discuss the technical and professional future of Drupal in our region.\n💧 Upcoming DrupalSouth committee elections",
       "video_url": "",
-      "sponsorIds": "sponsor-6"
+      "sponsorIds": ""
     },
     {
       "startTime": "2026-05-14T02:30:00Z",
