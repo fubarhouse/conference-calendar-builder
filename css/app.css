@@ -258,6 +258,82 @@
             border-radius: 0.25rem;
             padding: 0.05rem 0.25rem;
         }
+        .url-multifield-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-top: auto;
+        }
+        .url-multifield-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .url-multifield-input {
+            flex: 1;
+            height: 2.75rem;
+            padding: 0 0.75rem;
+            border: 1px solid rgba(100, 140, 180, 0.5);
+            border-radius: 0.45rem;
+            background: var(--surface-1, #fff);
+            color: var(--text-0, inherit);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .url-multifield-input:hover {
+            border-color: rgba(100, 160, 220, 0.75);
+        }
+        .url-multifield-input:focus {
+            outline: none;
+            border-color: rgba(0, 115, 182, 0.75);
+            box-shadow: 0 0 0 3px rgba(0, 115, 182, 0.18);
+        }
+        .url-multifield-remove {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.75rem;
+            height: 2.75rem;
+            flex-shrink: 0;
+            border: 1px solid rgba(200, 80, 80, 0.4);
+            border-radius: 0.45rem;
+            background: transparent;
+            color: rgba(220, 100, 100, 0.85);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+        }
+        .url-multifield-remove:hover {
+            background: rgba(200, 50, 50, 0.15);
+            border-color: rgba(220, 80, 80, 0.7);
+            color: #f87171;
+        }
+        .url-multifield-add {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-top: 0.45rem;
+            height: 2.2rem;
+            padding: 0 0.75rem;
+            border: 1px solid rgba(100, 155, 200, 0.4);
+            border-radius: 0.4rem;
+            background: rgba(30, 70, 110, 0.2);
+            color: var(--text-1, #ccc);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.12s ease, border-color 0.12s ease;
+        }
+        .url-multifield-add:hover {
+            background: rgba(40, 90, 140, 0.35);
+            border-color: rgba(120, 170, 220, 0.55);
+        }
+        .url-multifield-empty {
+            font-size: 0.8rem;
+            color: var(--text-2, #888);
+            margin: 0.2rem 0;
+        }
         #sessionList,
         #sponsorList {
             list-style: none;
