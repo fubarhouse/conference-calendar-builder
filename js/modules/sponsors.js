@@ -1,6 +1,7 @@
 import state from './state.js';
 import { loadEventCatalog } from './eventCatalog.js';
 import { escapeHtml, parseSponsorIds, getFocusableElements, deriveOfficialWebsite, once } from './utils.js';
+import { icon } from './icons.js';
 
 const SPONSOR_MODAL_ID = 'sponsorHistoryModal';
 let lastFocusedElementBeforeSponsorModal = null;
@@ -47,10 +48,10 @@ function ensureSponsorModal() {
     <div class="session-modal-card" role="dialog" aria-modal="true" aria-labelledby="sponsorModalTitle">
       <div class="session-modal-header">
         <button id="sponsorModalBack" type="button" class="session-modal-back">
-          <i class="fas fa-arrow-left"></i><span>Back to sponsors</span>
+          ${icon('arrow-left')}<span>Back to sponsors</span>
         </button>
         <button id="sponsorModalClose" type="button" class="session-modal-close" aria-label="Close sponsor history">
-          <i class="fas fa-times"></i>
+          ${icon('times')}
         </button>
       </div>
       <div class="session-modal-body" id="sponsorModalBody"></div>
@@ -190,7 +191,7 @@ function renderSponsorHistoryModalContent(currentSponsor, entries) {
 
   if (currentSponsor.link) {
     primaryActions.push(
-      `<a class="session-modal-link" href="${escapeHtml(currentSponsor.link)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-circle-info"></i><span>Sponsor information</span></a>`
+      `<a class="session-modal-link" href="${escapeHtml(currentSponsor.link)}" target="_blank" rel="noopener noreferrer">${icon('circle-info')}<span>Sponsor information</span></a>`
     );
   }
 
@@ -200,12 +201,12 @@ function renderSponsorHistoryModalContent(currentSponsor, entries) {
       const actions = [];
       if (entry.sponsorLink) {
         actions.push(
-          `<a class="session-modal-link" href="${escapeHtml(entry.sponsorLink)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-circle-info"></i><span>Sponsor information</span></a>`
+          `<a class="session-modal-link" href="${escapeHtml(entry.sponsorLink)}" target="_blank" rel="noopener noreferrer">${icon('circle-info')}<span>Sponsor information</span></a>`
         );
       }
       if (entry.eventWebsite) {
         actions.push(
-          `<a class="session-modal-link" href="${escapeHtml(entry.eventWebsite)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-calendar-alt"></i><span>Event website</span></a>`
+          `<a class="session-modal-link" href="${escapeHtml(entry.eventWebsite)}" target="_blank" rel="noopener noreferrer">${icon('calendar-alt')}<span>Event website</span></a>`
         );
       }
       const logoSurface = entry.sponsorImage

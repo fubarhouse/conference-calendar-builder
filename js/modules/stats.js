@@ -1,5 +1,6 @@
 import state from './state.js';
 import { getLocalDate, normalizeTracks, formatHoursDuration } from './utils.js';
+import { icon } from './icons.js';
 
 function parseDurationHours(duration = '') {
   const hoursMatch = String(duration).match(/(\d+)H/);
@@ -107,7 +108,7 @@ function renderTrackSectionHtml(trackStats) {
       return `
         <tr class="selection-stats-row cursor-pointer hover:bg-gray-700 hover:bg-opacity-30 transition-colors" data-track-id="track-${index}">
           <td class="selection-stats-cell pr-3">
-            <i id="track-${index}-icon" class="fas fa-chevron-right mr-2 text-xs transition-transform"></i>
+            ${icon('chevron-right', 'mr-2 text-xs transition-transform', `track-${index}-icon`)}
             ${track}
           </td>
           <td class="selection-stats-cell selection-stats-value pr-3 font-mono text-right">${durationText}</td>
@@ -144,7 +145,7 @@ function renderDaySectionHtml(sortedDates, dailyStats) {
       return `
         <tr class="selection-stats-row cursor-pointer hover:bg-gray-700 hover:bg-opacity-30 transition-colors" data-day-id="day-${index}">
           <td class="selection-stats-cell pr-3">
-            <i id="day-${index}-icon" class="fas fa-chevron-right mr-2 text-xs transition-transform"></i>
+            ${icon('chevron-right', 'mr-2 text-xs transition-transform', `day-${index}-icon`)}
             ${formattedDate}
           </td>
           <td class="selection-stats-cell selection-stats-value pr-3 font-mono text-right">${formatHoursDuration(stats.duration)}</td>

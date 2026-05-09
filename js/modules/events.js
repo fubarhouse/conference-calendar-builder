@@ -2,6 +2,8 @@ import state, { getStorageKey } from './state.js';
 import { loadEventCatalog } from './eventCatalog.js';
 import { getLocalDate, announceStatus, normalizeTracks, escapeHtml, isLocalhost, parseSponsorIds, getFocusableElements, slugify, deriveOfficialWebsite } from './utils.js';
 import { renderSponsors } from './sponsors.js';
+import { icon, setIcon } from './icons.js';
+import { configureEventSearch, openEventSearchModal } from './eventSearch.js';
 import {
   applyFilters,
   debouncedFilterEvents,
@@ -168,6 +170,10 @@ async function hydrateManifestMetaForItem(item) {
 async function hydrateManifestCategories() {
   eventCatalog = await loadEventCatalog();
   await Promise.all(eventCatalog.map((item) => hydrateManifestMetaForItem(item)));
+  configureEventSearch({
+    getEvents: getSearchableEvents,
+    onSelect: async (item) => selectEventFromSearch(item.category, item.file),
+  });
 }
 
 export function getEventCategory(eventManifestItem) {
@@ -197,6 +203,53 @@ export function getManifestForCategory(category) {
       const labelB = getCatalogLabel(b).toLowerCase();
       return labelB.localeCompare(labelA);
     });
+}
+
+export function getSearchableEvents() {
+  return eventCatalog
+    .filter((item) => manifestVisibleByFile.get(item.file) ?? true)
+    .map((item) => {
+      const meta = manifestEventMetaByFile.get(item.file) || {};
+      return {
+        file: item.file,
+        category: manifestCategoryByFile.get(item.file) || 'Other',
+        designation: String(meta.designation || '').trim(),
+        location: String(meta.location || '').trim(),
+        year: String(meta.year || '').trim(),
+        region: String(meta.region || '').trim(),
+        venue: String(meta.venue || '').trim(),
+        startDate: String(meta.startDate || '').trim(),
+        endDate: String(meta.endDate || '').trim(),
+        timezone: String(meta.timezone || '').trim(),
+        label: getCatalogLabel(item),
+      };
+    })
+    .sort((a, b) => {
+      const dateA = a.endDate || a.startDate;
+      const dateB = b.endDate || b.startDate;
+      if (dateA && dateB) return dateB.localeCompare(dateA);
+      if (dateA) return -1;
+      if (dateB) return 1;
+      return b.year.localeCompare(a.year);
+    });
+}
+
+export async function selectEventFromSearch(category, file) {
+  if (category) {
+    const eventCategorySelect = document.getElementById('eventCategorySelect');
+    if (eventCategorySelect && eventCategorySelect.value !== category) {
+      eventCategorySelect.value = category;
+      state.currentEventCategory = category;
+      setActiveTab(category);
+      const eventSelector = document.getElementById('eventSelector');
+      populateEventSelector(category, file);
+      if (eventSelector) eventSelector.value = file;
+    }
+  }
+  if (file) {
+    localStorage.setItem('selectedEventFile', file);
+    await loadEvent(file);
+  }
 }
 
 function getAvailableEnabledCategories() {
@@ -234,7 +287,7 @@ export function getHeaderBranding(category, eventMeta = null) {
   if (isCommunityDay) {
     return {
       kicker: 'DrupalSouth Community Day',
-      iconClass: 'fas fa-users',
+      iconName: 'users',
       brandClass: 'brand-community',
       logoUrl: String(eventMeta?.logo?.image || '').trim(),
       logoAlt: String(eventMeta?.logo?.imageAlt || '').trim()
@@ -244,7 +297,7 @@ export function getHeaderBranding(category, eventMeta = null) {
     if (isDrupalGov) {
       return {
         kicker: 'DrupalGov Schedule',
-        iconClass: 'fas fa-landmark',
+        iconName: 'landmark',
         brandClass: 'brand-drupalsouth',
         logoUrl: String(eventMeta?.logo?.image || '').trim(),
         logoAlt: String(eventMeta?.logo?.imageAlt || '').trim()
@@ -252,7 +305,7 @@ export function getHeaderBranding(category, eventMeta = null) {
     }
     return {
       kicker: 'DrupalSouth Schedule',
-      iconClass: 'fas fa-water',
+      iconName: 'water',
       brandClass: 'brand-drupalsouth',
       logoUrl: String(eventMeta?.logo?.image || '').trim(),
       logoAlt: String(eventMeta?.logo?.imageAlt || '').trim()
@@ -261,7 +314,7 @@ export function getHeaderBranding(category, eventMeta = null) {
   if (isDrupalGov) {
     return {
       kicker: 'DrupalGovAU Schedule',
-      iconClass: 'fas fa-landmark',
+      iconName: 'landmark',
       brandClass: 'brand-drupalsouth',
       logoUrl: String(eventMeta?.logo?.image || '').trim(),
       logoAlt: String(eventMeta?.logo?.imageAlt || '').trim()
@@ -270,7 +323,7 @@ export function getHeaderBranding(category, eventMeta = null) {
   if (!isDrupalCon) {
     return {
       kicker: `${category || 'Conference'} Schedule`,
-      iconClass: 'fas fa-calendar-alt',
+      iconName: 'calendar-alt',
       brandClass: 'brand-drupalcon',
       logoUrl: String(eventMeta?.logo?.image || '').trim(),
       logoAlt: String(eventMeta?.logo?.imageAlt || '').trim()
@@ -278,7 +331,7 @@ export function getHeaderBranding(category, eventMeta = null) {
   }
   return {
     kicker: 'DrupalCon Schedule',
-    iconClass: 'fas fa-globe',
+    iconName: 'globe',
     brandClass: 'brand-drupalcon',
     logoUrl: String(eventMeta?.logo?.image || '').trim(),
     logoAlt: String(eventMeta?.logo?.imageAlt || '').trim()
@@ -298,7 +351,7 @@ export function updateHeaderBranding(category) {
   logo.classList.remove('brand-drupalsouth', 'brand-community', 'brand-drupalcon');
   logo.classList.add(branding.brandClass);
   logo.classList.toggle('header-logo-use-plate', useLogoPlate);
-  logoIcon.className = branding.iconClass;
+  setIcon(logoIcon, branding.iconName);
   kicker.textContent = branding.kicker;
 
   if (branding.logoUrl) {
@@ -689,7 +742,7 @@ function setShareButtonCopiedState() {
   const button = document.getElementById('shareSchedule');
   if (!button) return;
   const previous = button.innerHTML;
-  button.innerHTML = '<i class="fas fa-check mr-2"></i>Link copied';
+  button.innerHTML = `${icon('check', 'mr-2')}Link copied`;
   window.setTimeout(() => {
     button.innerHTML = previous;
   }, 1600);
@@ -724,11 +777,11 @@ function ensureShareModal() {
     <div class="session-modal-card" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
       <div class="session-modal-header">
         <button id="shareModalBack" type="button" class="session-modal-back">
-          <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          ${icon('arrow-left')}
           <span>Back</span>
         </button>
         <button id="shareModalClose" type="button" class="session-modal-close" aria-label="Close share options">
-          <i class="fas fa-times" aria-hidden="true"></i>
+          ${icon('times')}
         </button>
       </div>
       <div id="shareModalBody" class="session-modal-body"></div>
@@ -986,7 +1039,7 @@ export function setupEventListeners() {
 
   document.getElementById('toggleDetails').addEventListener('click', () => {
     const detailsSection = document.getElementById('stageDetails');
-    const toggleIcon = document.querySelector('#toggleDetails i');
+    const toggleIcon = document.querySelector('#toggleDetails .svg-icon');
     if (detailsSection.classList.contains('hidden')) {
       window.sa_event?.('selection_details_opened');
       detailsSection.classList.remove('hidden');
@@ -1001,6 +1054,11 @@ export function setupEventListeners() {
   const shareButton = document.getElementById('shareSchedule');
   if (shareButton) {
     shareButton.addEventListener('click', () => openShareModal());
+  }
+
+  const searchButton = document.getElementById('searchEvents');
+  if (searchButton) {
+    searchButton.addEventListener('click', () => openEventSearchModal());
   }
 }
 

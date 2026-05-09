@@ -1,4 +1,5 @@
 import state, { ENABLE_SPEAKER_SESSION_DRILLDOWN } from './state.js';
+import { icon } from './icons.js';
 import {
   getLocalDate,
   formatDuration,
@@ -132,10 +133,10 @@ function ensureSessionModal() {
     <div class="session-modal-card" role="dialog" aria-modal="true" aria-labelledby="sessionModalTitle">
       <div class="session-modal-header">
         <button id="sessionModalBack" type="button" class="session-modal-back">
-          <i class="fas fa-arrow-left"></i><span>Back to schedule</span>
+          ${icon('arrow-left')}<span>Back to schedule</span>
         </button>
         <button id="sessionModalClose" type="button" class="session-modal-close" aria-label="Close session details">
-          <i class="fas fa-times"></i>
+          ${icon('times')}
         </button>
       </div>
       <div class="session-modal-body" id="sessionModalBody"></div>
@@ -191,10 +192,10 @@ function ensureSpeakerModal() {
     <div class="session-modal-card" role="dialog" aria-modal="true" aria-labelledby="speakerModalTitle">
       <div class="session-modal-header">
         <button id="speakerModalBack" type="button" class="session-modal-back">
-          <i class="fas fa-arrow-left"></i><span>Back to session</span>
+          ${icon('arrow-left')}<span>Back to session</span>
         </button>
         <button id="speakerModalClose" type="button" class="session-modal-close" aria-label="Close speaker sessions">
-          <i class="fas fa-times"></i>
+          ${icon('times')}
         </button>
       </div>
       <div class="session-modal-body" id="speakerModalBody"></div>
@@ -285,7 +286,7 @@ function renderSpeakerModalContent(speaker, talks, selectedTalkRef = null) {
           ${isCurrentSession ? '<div class="speaker-session-current-badge">Current session</div>' : ''}
           <h3 class="speaker-session-title">${escapeHtml(talk.title || 'Session')}</h3>
           <p class="speaker-session-meta"><strong>${escapeHtml(talk.eventLabel || '')}</strong></p>
-          <p class="speaker-session-meta"><i class="far fa-clock mr-1" aria-hidden="true"></i>${escapeHtml(formatTalkWhen(talk))}</p>
+          <p class="speaker-session-meta">${icon('clock', 'mr-1')}${escapeHtml(formatTalkWhen(talk))}</p>
           ${trackText ? `<p class="speaker-session-meta">${escapeHtml(trackText)}</p>` : ''}
           ${summary ? `<p class="speaker-session-summary">${escapeHtml(summary)}</p>` : ''}
           ${
@@ -301,12 +302,12 @@ function renderSpeakerModalContent(speaker, talks, selectedTalkRef = null) {
               ? `<div class="session-modal-links">
                   ${
                     talk.link
-                      ? `<a class="session-modal-link" href="${escapeHtml(talk.link)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i><span>Session page</span></a>`
+                      ? `<a class="session-modal-link" href="${escapeHtml(talk.link)}" target="_blank" rel="noopener noreferrer">${icon('external-link-alt')}<span>Session page</span></a>`
                       : ''
                   }
                   ${
                     talk.video_url
-                      ? `<a class="session-modal-link" href="${escapeHtml(talk.video_url)}" target="_blank" rel="noopener noreferrer"><i class="fab fa-youtube"></i><span>Watch recording</span></a>`
+                      ? `<a class="session-modal-link" href="${escapeHtml(talk.video_url)}" target="_blank" rel="noopener noreferrer">${icon('youtube')}<span>Watch recording</span></a>`
                       : ''
                   }
                 </div>`
@@ -396,7 +397,7 @@ function buildSponsorBlock(sessionSponsors) {
         <p class="session-sponsor-name">${escapeHtml(sponsor.title)}</p>
         <p class="session-sponsor-tier">${escapeHtml(sponsor.tier)}</p>
       </div>
-      ${sponsor.link ? `<div class="session-sponsor-actions"><a class="session-modal-link" href="${escapeHtml(sponsor.link)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-circle-info"></i><span>Sponsor information</span></a></div>` : ''}
+      ${sponsor.link ? `<div class="session-sponsor-actions"><a class="session-modal-link" href="${escapeHtml(sponsor.link)}" target="_blank" rel="noopener noreferrer">${icon('circle-info')}<span>Sponsor information</span></a></div>` : ''}
     </article>`).join('');
   return `
     <section class="session-sponsor-block" aria-label="Sponsored by">
@@ -431,7 +432,7 @@ function renderSessionModalContent(event) {
   const hasDescription = hasSessionDescription(event);
   const speakerEntries = getSpeakerEntries(event);
   const speakersInfo = getSpeakersInfo(speakerEntries.map((entry) => entry.name));
-  const speakersIcon = speakersInfo.isMultiple ? 'fa-users' : 'fa-user';
+  const speakerIconHtml = icon(speakersInfo.isMultiple ? 'users' : 'user', 'mr-1');
   const whenValue = `${escapeHtml(dayDate)}, ${escapeHtml(startTime)} - ${escapeHtml(endTime)}`;
   const trackValues = normalizeTracks(event.track);
   const trackText = trackValues.join(', ');
@@ -442,7 +443,7 @@ function renderSessionModalContent(event) {
     <h2 id="sessionModalTitle" class="session-modal-title">${escapeHtml(event.title || 'Session')}</h2>
     ${
       speakersInfo.text
-        ? `<p class="session-modal-meta"><span class="session-modal-meta-label">Speakers</span><span class="session-modal-meta-value"><i class="fas ${speakersIcon} mr-1" aria-hidden="true"></i>${
+        ? `<p class="session-modal-meta"><span class="session-modal-meta-label">Speakers</span><span class="session-modal-meta-value">${speakerIconHtml}${
           isSpeakerSessionDrilldownEnabled()
               ? `<span class="session-speaker-links">${speakerEntries
                   .map(
@@ -454,15 +455,15 @@ function renderSessionModalContent(event) {
           }</span></p>`
         : ''
     }
-    <p class="session-modal-meta"><span class="session-modal-meta-label">When</span><span class="session-modal-meta-value"><i class="far fa-clock mr-1" aria-hidden="true"></i>${whenValue}</span></p>
+    <p class="session-modal-meta"><span class="session-modal-meta-label">When</span><span class="session-modal-meta-value">${icon('clock', 'mr-1')}${whenValue}</span></p>
     ${event.location ? `<p class="session-modal-meta"><span class="session-modal-meta-label">Location</span><span class="session-modal-meta-value">${escapeHtml(event.location)}</span></p>` : ''}
     ${trackText ? `<p class="session-modal-meta"><span class="session-modal-meta-label">Track</span><span class="session-modal-meta-value">${escapeHtml(trackText)}</span></p>` : ''}
     ${event.duration ? `<p class="session-modal-meta"><span class="session-modal-meta-label">Duration</span><span class="session-modal-meta-value">${escapeHtml(formatDuration(event, event.duration))}</span></p>` : ''}
     ${
       event.video_url || (event.link && hasDescription)
         ? `<div class="session-modal-links">
-            ${event.link && hasDescription ? `<a class="session-modal-link" href="${event.link}" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i><span>Session page</span></a>` : ''}
-            ${event.video_url ? `<a class="session-modal-link" href="${event.video_url}" target="_blank" rel="noopener noreferrer"><i class="fab fa-youtube"></i><span>Watch recording</span></a>` : ''}
+            ${event.link && hasDescription ? `<a class="session-modal-link" href="${event.link}" target="_blank" rel="noopener noreferrer">${icon('external-link-alt')}<span>Session page</span></a>` : ''}
+            ${event.video_url ? `<a class="session-modal-link" href="${event.video_url}" target="_blank" rel="noopener noreferrer">${icon('youtube')}<span>Watch recording</span></a>` : ''}
           </div>`
         : ''
     }
@@ -619,7 +620,7 @@ function renderEventCard(event, { keywordsFilter, isDrupalConDesign, timeSlotBgC
   const highlightedSummary = highlightKeywords(event.title, keywordsFilter);
   const speakersInfo = getSpeakersInfo(event.speakers);
   const highlightedSpeakers = speakersInfo.text ? highlightKeywords(speakersInfo.text, keywordsFilter) : '';
-  const speakersIcon = speakersInfo.isMultiple ? 'fa-users' : 'fa-user';
+  const speakerIconHtml = icon(speakersInfo.isMultiple ? 'users' : 'user', 'mr-1');
   const highlightedLocation = event.location ? highlightKeywords(event.location, keywordsFilter) : '';
   const descriptionText = getCardSummary(event);
   const hasDescription = hasSessionDescription(event);
@@ -656,14 +657,14 @@ function renderEventCard(event, { keywordsFilter, isDrupalConDesign, timeSlotBgC
       <div class="flex items-start space-x-3 flex-1 self-stretch">
         <div class="flex-1 flex flex-col h-full pr-16">
           <h3 class="text-[0.96rem] leading-[1.32] font-medium text-gray-900 mb-1">${highlightedSummary}</h3>
-          ${speakersInfo.text ? `<p class="text-sm text-gray-700 mb-1"><i class="fas ${speakersIcon} mr-1" aria-hidden="true"></i>${highlightedSpeakers}</p>` : ''}
-          ${event.location ? `<p class="text-sm text-gray-500 mb-1"><i class="fas fa-map-marker-alt mr-1"></i>${highlightedLocation}</p>` : ''}
+          ${speakersInfo.text ? `<p class="text-sm text-gray-700 mb-1">${speakerIconHtml}${highlightedSpeakers}</p>` : ''}
+          ${event.location ? `<p class="text-sm text-gray-500 mb-1">${icon('map-marker-alt', 'mr-1')}${highlightedLocation}</p>` : ''}
           ${isDrupalConDesign
-            ? `<p class="text-xs text-gray-500 mb-1"><i class="far fa-clock mr-1" aria-hidden="true"></i>${timelineTime}</p>`
-            : `<p class="text-sm text-gray-600 mb-1"><i class="far fa-clock mr-1" aria-hidden="true"></i>${fullDateTime}</p>`}
+            ? `<p class="text-xs text-gray-500 mb-1">${icon('clock', 'mr-1')}${timelineTime}</p>`
+            : `<p class="text-sm text-gray-600 mb-1">${icon('clock', 'mr-1')}${fullDateTime}</p>`}
           ${descriptionText ? `<div class="session-description-preview text-sm text-gray-700 mb-1">${highlightedDescription}</div>` : '<div class="mb-1"></div>'}
-          ${event.link && hasDescription ? `<p class="text-sm mb-1"><a href="${event.link}" target="_blank" class="schedule-link"><span>View Session Details</span> <i class="fas fa-external-link-alt ml-1"></i></a></p>` : ''}
-          ${event.video_url ? `<p class="text-sm mb-1"><a href="${event.video_url}" target="_blank" class="schedule-link inline-flex items-center"><i class="fab fa-youtube mr-1"></i><span>Watch recording</span></a></p>` : ''}
+          ${event.link && hasDescription ? `<p class="text-sm mb-1"><a href="${event.link}" target="_blank" class="schedule-link"><span>View Session Details</span> ${icon('external-link-alt', 'ml-1')}</a></p>` : ''}
+          ${event.video_url ? `<p class="text-sm mb-1"><a href="${event.video_url}" target="_blank" class="schedule-link inline-flex items-center">${icon('youtube', 'mr-1')}<span>Watch recording</span></a></p>` : ''}
           ${trackLabels.length > 0 ? `<div class="mt-auto pt-[5px] flex flex-wrap gap-1">${highlightedTrack}</div>` : ''}
         </div>
       </div>

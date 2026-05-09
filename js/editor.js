@@ -1,6 +1,8 @@
 import { loadEventCatalog } from './modules/eventCatalog.js';
 import { formatTextBlock } from './modules/markdown.js';
 import { isLocalhost, slugify } from './modules/utils.js';
+import { icon, setIcon } from './modules/icons.js';
+import { configureEventSearch, openEventSearchModal } from './modules/eventSearch.js';
 
 const state = {
   dataset: null,
@@ -236,7 +238,8 @@ const els = {
   sponsorSessionPickerList: document.getElementById('sponsorSessionPickerList'),
   sponsorSessionPickerCount: document.getElementById('sponsorSessionPickerCount'),
   closeSponsorSessionPicker: document.getElementById('closeSponsorSessionPicker'),
-  closeSponsorSessionPickerBack: document.getElementById('closeSponsorSessionPickerBack')
+  closeSponsorSessionPickerBack: document.getElementById('closeSponsorSessionPickerBack'),
+  editorSearchEvents: document.getElementById('editorSearchEvents')
 };
 
 
@@ -399,6 +402,8 @@ async function connectProjectFolder() {
       // Ignore if file does not exist at selected folder path.
     }
   }
+
+  await refreshEditorSearch();
 }
 
 function disconnectProjectFolder() {
@@ -436,6 +441,7 @@ function disconnectProjectFolder() {
   markSessionDirty(false);
   markSponsorDirty(false);
   setFolderConnectionButtonState();
+  void refreshEditorSearch();
 }
 
 function setCurrentFilenameLabel() {
@@ -484,8 +490,7 @@ function syncQuickSessionEditToggle() {
     els.toggleQuickSessionEditLabel.textContent = 'Quick edit';
   }
   if (els.toggleQuickSessionEditIcon) {
-    els.toggleQuickSessionEditIcon.classList.toggle('fa-pen-to-square', !active);
-    els.toggleQuickSessionEditIcon.classList.toggle('fa-pen', active);
+    setIcon(els.toggleQuickSessionEditIcon, active ? 'pen' : 'pen-to-square');
   }
 }
 
@@ -519,8 +524,7 @@ function syncQuickSponsorEditToggle() {
     els.toggleQuickSponsorEditLabel.textContent = 'Quick edit';
   }
   if (els.toggleQuickSponsorEditIcon) {
-    els.toggleQuickSponsorEditIcon.classList.toggle('fa-pen-to-square', !active);
-    els.toggleQuickSponsorEditIcon.classList.toggle('fa-pen', active);
+    setIcon(els.toggleQuickSponsorEditIcon, active ? 'pen' : 'pen-to-square');
   }
 }
 
@@ -535,9 +539,9 @@ function setQuickSponsorEditEnabled(enabled) {
 function setFolderConnectionButtonState() {
   if (!els.folderConnectionToggle) return;
   if (state.folderConnectedInSession && state.projectDirHandle) {
-    els.folderConnectionToggle.innerHTML = '<i class="fas fa-unlink mr-2"></i>Disconnect Folder';
+    els.folderConnectionToggle.innerHTML = `${icon('unlink', 'mr-2')}Disconnect Folder`;
   } else {
-    els.folderConnectionToggle.innerHTML = '<i class="fas fa-link mr-2"></i>Connect Folder';
+    els.folderConnectionToggle.innerHTML = `${icon('link', 'mr-2')}Connect Folder`;
   }
 }
 
@@ -597,7 +601,7 @@ function markDirty(nextDirty = true) {
   state.dirty = nextDirty;
   const color = state.dirty ? 'text-amber-300' : 'text-emerald-300';
   const label = state.dirty ? 'Unsaved changes' : 'No changes';
-  els.dirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-xs ${color}"></i><span>${label}</span>`;
+  els.dirtyState.innerHTML = `${icon('circle', `mr-2 text-xs ${color}`)}<span>${label}</span>`;
 }
 
 function markSessionDirty(nextDirty = true) {
@@ -614,7 +618,7 @@ function markSessionDirty(nextDirty = true) {
   } else if (state.sessionDirty || hasQuickChanges) {
     label = 'Unsaved changes';
   }
-  els.sessionDirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-[0.55rem] ${color}"></i><span>${label}</span>`;
+  els.sessionDirtyState.innerHTML = `${icon('circle', `mr-2 text-[0.55rem] ${color}`)}<span>${label}</span>`;
   syncSessionSaveButton();
 }
 
@@ -632,7 +636,7 @@ function markSponsorDirty(nextDirty = true) {
   } else if (state.sponsorDirty || hasQuickChanges) {
     label = 'Unsaved changes';
   }
-  els.sponsorDirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-[0.55rem] ${color}"></i><span>${label}</span>`;
+  els.sponsorDirtyState.innerHTML = `${icon('circle', `mr-2 text-[0.55rem] ${color}`)}<span>${label}</span>`;
   syncSponsorSaveButton();
 }
 
@@ -1108,6 +1112,71 @@ async function loadDatasetMetaForGrouping(files) {
   return records;
 }
 
+async function buildEditorSearchCatalog() {
+  const files = await listDatasetFilesFromConnectedFolder();
+  if (files.length === 0) return [];
+  const dataDir = await getDataDirectoryHandle(false);
+  if (!dataDir) return [];
+  const records = await Promise.all(
+    files.map(async (file) => {
+      try {
+        const handle = await dataDir.getFileHandle(file);
+        const blob = await handle.getFile();
+        const text = await blob.text();
+        const parsed = JSON.parse(text);
+        const eventMeta = (parsed && typeof parsed === 'object' ? parsed.event : null) || {};
+        return {
+          file,
+          category: getDatasetGroupName(eventMeta),
+          label: buildDatasetOptionLabel(file, eventMeta),
+          designation: String(eventMeta.designation || '').trim(),
+          location: String(eventMeta.location || '').trim(),
+          year: String(eventMeta.year || '').trim(),
+          startDate: String(eventMeta.startDate || '').trim(),
+          endDate: String(eventMeta.endDate || '').trim(),
+          timezone: String(eventMeta.timezone || '').trim(),
+        };
+      } catch {
+        return {
+          file, category: 'Other', label: getManifestLabelByFile(file),
+          designation: '', location: '', year: '', startDate: '', endDate: '', timezone: '',
+        };
+      }
+    })
+  );
+  return records.sort((a, b) => {
+    const dateA = a.endDate || a.startDate;
+    const dateB = b.endDate || b.startDate;
+    if (dateA && dateB) return dateB.localeCompare(dateA);
+    if (dateA) return -1;
+    if (dateB) return 1;
+    return b.year.localeCompare(a.year);
+  });
+}
+
+async function refreshEditorSearch() {
+  if (!state.projectDirHandle || !state.folderConnectedInSession) {
+    if (els.editorSearchEvents) els.editorSearchEvents.disabled = true;
+    configureEventSearch({ getEvents: () => [], onSelect: async () => {} });
+    return;
+  }
+  const catalog = await buildEditorSearchCatalog();
+  configureEventSearch({
+    getEvents: () => catalog,
+    onSelect: async ({ file }) => {
+      const selectedFile = String(els.datasetSelect.value || '').trim();
+      if (file === selectedFile) return;
+      if (!(await confirmDiscardPendingChanges(`dataset ${file}`))) return;
+      try {
+        await loadDataset(file);
+      } catch (error) {
+        window.alert(`Could not load dataset: ${error.message}`);
+      }
+    },
+  });
+  if (els.editorSearchEvents) els.editorSearchEvents.disabled = catalog.length === 0;
+}
+
 async function renderDatasetOptionsFromConnectedFolder(preferred = '') {
   if (!state.projectDirHandle || !state.folderConnectedInSession) {
     els.datasetSelect.innerHTML = '<option value="">Connect folder to load datasets</option>';
@@ -1502,7 +1571,7 @@ function renderFlickrBlock(flickr) {
   return `
     <fieldset class="editor-flickr-block md:col-span-2 xl:col-span-3">
       <legend>
-        <span class="editor-flickr-title"><i class="fab fa-flickr" aria-hidden="true"></i> Flickr block</span>
+        <span class="editor-flickr-title">${icon('flickr')} Flickr block</span>
         <span class="editor-flickr-summary">Optional photo-sharing callout shown at the bottom of the event page.</span>
       </legend>
       <label class="editor-toggle-row">
@@ -1556,7 +1625,7 @@ function renderFlickrBlock(flickr) {
             slugify(state.dataset?.event?.designation || 'event') || 'event'
           )}</code> and stores a relative path.</span>
           <button id="flickrImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-image mr-2"></i>Upload 250x250 Image
+            ${icon('image', 'mr-2')}Upload 250x250 Image
           </button>
         </div>
       </div>
@@ -1568,7 +1637,7 @@ function renderLogoBlock(logo) {
   return `
     <fieldset class="editor-flickr-block md:col-span-2 xl:col-span-3">
       <legend>
-        <span class="editor-flickr-title"><i class="fas fa-image" aria-hidden="true"></i> Event logo</span>
+        <span class="editor-flickr-title">${icon('image')} Event logo</span>
         <span class="editor-flickr-summary">Controls the header logo shown on the public event page.</span>
       </legend>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
@@ -1604,7 +1673,7 @@ function renderLogoBlock(logo) {
             slugify(state.dataset?.event?.designation || 'event') || 'event'
           )}</code> and stores a relative path.</span>
           <button id="logoImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-upload mr-2"></i>Upload Logo
+            ${icon('upload', 'mr-2')}Upload Logo
           </button>
         </div>
       </div>
@@ -1793,8 +1862,7 @@ function renderEventMetaForm() {
 function setEventMetaCollapsed(collapsed) {
   if (!els.eventMetaBody || !els.toggleEventMetaIcon) return;
   els.eventMetaBody.classList.toggle('hidden', collapsed);
-  els.toggleEventMetaIcon.classList.toggle('fa-chevron-up', !collapsed);
-  els.toggleEventMetaIcon.classList.toggle('fa-chevron-down', collapsed);
+  setIcon(els.toggleEventMetaIcon, collapsed ? 'chevron-down' : 'chevron-up');
 }
 
 function syncSessionEditorPanelVisibility() {
@@ -1829,8 +1897,7 @@ function setSessionWorkspaceExpanded(expanded) {
   els.sessionEditorPanel.classList.toggle('xl:col-span-2', state.sessionListExpanded);
 
   if (els.toggleSessionWorkspaceIcon) {
-    els.toggleSessionWorkspaceIcon.classList.toggle('fa-expand-alt', !state.sessionListExpanded);
-    els.toggleSessionWorkspaceIcon.classList.toggle('fa-compress-alt', state.sessionListExpanded);
+    setIcon(els.toggleSessionWorkspaceIcon, state.sessionListExpanded ? 'compress-alt' : 'expand-alt');
   }
   if (els.toggleSessionWorkspaceLabel) {
     els.toggleSessionWorkspaceLabel.textContent = state.sessionListExpanded ? 'Collapse list' : 'Expand list';
@@ -1860,8 +1927,7 @@ function setSponsorWorkspaceExpanded(expanded) {
   els.sponsorEditorPanel.classList.toggle('xl:col-span-2', state.sponsorListExpanded);
 
   if (els.toggleSponsorWorkspaceIcon) {
-    els.toggleSponsorWorkspaceIcon.classList.toggle('fa-expand-alt', !state.sponsorListExpanded);
-    els.toggleSponsorWorkspaceIcon.classList.toggle('fa-compress-alt', state.sponsorListExpanded);
+    setIcon(els.toggleSponsorWorkspaceIcon, state.sponsorListExpanded ? 'compress-alt' : 'expand-alt');
   }
   if (els.toggleSponsorWorkspaceLabel) {
     els.toggleSponsorWorkspaceLabel.textContent = state.sponsorListExpanded ? 'Collapse list' : 'Expand list';
@@ -2052,7 +2118,7 @@ function renderSessionList() {
           <li draggable="true" data-session-index="${rowIndex}" class="session-row session-row-expanded cursor-move px-3 py-3 border rounded-md ${active}">
             <div class="session-row-expanded-grid">
               <div class="session-row-handle text-gray-500">
-                <i class="fas fa-grip-vertical"></i>
+                ${icon('grip-vertical')}
               </div>
               <div class="min-w-0">
                 <label class="session-inline-field">
@@ -2096,7 +2162,7 @@ function renderSessionList() {
                   data-open-session-form="${rowIndex}"
                   class="editor-inline-open h-10 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap"
                 >
-                  <i class="fas fa-up-right-from-square mr-1.5 text-[0.72rem]"></i><span>Open</span>
+                  ${icon('up-right-from-square', 'mr-1.5 text-[0.72rem]')}<span>Open</span>
                 </button>
                 ${state.sessionListExpanded ? `
                 <button type="button" data-move-top="${rowIndex}" title="Send to top"
@@ -2127,7 +2193,7 @@ function renderSessionList() {
               <button type="button" data-move-to="${rowIndex}" title="Send to position…"
                 class="text-xs px-1 py-0.5 rounded text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 bg-gray-900/50">#</button>
               ` : ''}
-              <i class="fas fa-grip-vertical text-gray-500 ml-1"></i>
+              ${icon('grip-vertical', 'text-gray-500 ml-1')}
             </div>
           </div>
         </li>
@@ -2369,7 +2435,7 @@ function renderSessionForm() {
           <div class="text-sm font-semibold text-gray-100 mb-2">${escapeHtml(item?.title || '(Untitled session)')}</div>
           <p class="text-sm text-gray-400 mb-4">This row is selected in quick edit. Open it to switch back to the full form.</p>
           <button type="button" id="openSelectedSessionForm" class="h-10 inline-flex items-center justify-center px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-up-right-from-square mr-2 text-[0.72rem]"></i>Open session
+            ${icon('up-right-from-square', 'mr-2 text-[0.72rem]')}Open session
           </button>
         </div>
       </div>
@@ -2479,7 +2545,7 @@ function renderSponsorList() {
           <li draggable="true" data-sponsor-index="${index}" class="sponsor-row session-row-expanded cursor-move px-3 py-3 border rounded-md ${active}">
             <div class="sponsor-row-grid">
               <div class="session-row-handle text-gray-500">
-                <i class="fas fa-grip-vertical"></i>
+                ${icon('grip-vertical')}
               </div>
               <div class="min-w-0">
                 <label class="session-inline-field">
@@ -2536,7 +2602,7 @@ function renderSponsorList() {
                 data-open-sponsor-form="${index}"
                 class="editor-inline-open h-10 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap"
               >
-                <i class="fas fa-up-right-from-square mr-1.5 text-[0.72rem]"></i><span>Open</span>
+                ${icon('up-right-from-square', 'mr-1.5 text-[0.72rem]')}<span>Open</span>
               </button>
             </div>
           </li>
@@ -2549,7 +2615,7 @@ function renderSponsorList() {
               <div class="text-sm font-medium text-gray-100 truncate">${escapeHtml(getSponsorListLabel(sponsor, index))}</div>
               <div class="text-xs text-gray-400 truncate">${escapeHtml([sponsor?.id || '', sponsor?.link || ''].filter(Boolean).join(' | '))}</div>
             </div>
-            <i class="fas fa-grip-vertical text-gray-500 mt-1"></i>
+            ${icon('grip-vertical', 'text-gray-500 mt-1')}
           </div>
         </li>
       `;
@@ -2732,7 +2798,7 @@ function renderSponsorForm() {
           <div class="text-sm font-semibold text-gray-100 mb-2">${escapeHtml(getSponsorListLabel(sponsor, state.selectedSponsorIndex))}</div>
           <p class="text-sm text-gray-400 mb-4">This row is selected in quick edit. Open it to switch back to the full sponsor form.</p>
           <button type="button" id="openSelectedSponsorForm" class="h-10 inline-flex items-center justify-center px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-up-right-from-square mr-2 text-[0.72rem]"></i>Open sponsor
+            ${icon('up-right-from-square', 'mr-2 text-[0.72rem]')}Open sponsor
           </button>
         </div>
       </div>
@@ -2764,7 +2830,7 @@ function renderSponsorForm() {
       )}</code> and stores a relative path.</span>
       <div class="flex flex-wrap items-center gap-2">
         <button id="sponsorImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-          <i class="fas fa-upload mr-2"></i>Upload Sponsor Image
+          ${icon('upload', 'mr-2')}Upload Sponsor Image
         </button>
         <span class="text-xs text-gray-400">${escapeHtml(getSponsorListLabel(sponsor, state.selectedSponsorIndex))}</span>
       </div>
@@ -2776,7 +2842,7 @@ function renderSponsorForm() {
         <div class="flex flex-wrap items-center justify-between gap-2">
           <span class="text-xs text-gray-400">${linkedSessions.length ? `${linkedSessions.length} linked session${linkedSessions.length === 1 ? '' : 's'}` : 'No sessions linked yet.'}</span>
           <button id="addLinkedSponsorSession" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add session
+            ${icon('plus', 'mr-1.5 text-[0.72rem]')}Add session
           </button>
         </div>
         <div class="space-y-2">
@@ -2790,7 +2856,7 @@ function renderSponsorForm() {
                       <div class="editor-linked-item-meta">${escapeHtml(formatSponsorLinkedSessionMeta(item, index))}</div>
                     </div>
                     <button type="button" class="editor-linked-item-action" data-remove-linked-session="${index}" aria-label="Remove linked session ${escapeAttr(item?.title || '(Untitled session)')}">
-                      <i class="fas fa-trash"></i><span>Remove</span>
+                      ${icon('trash')}<span>Remove</span>
                     </button>
                   </div>
                 `)
@@ -2928,7 +2994,7 @@ function openSponsorSessionPicker() {
           </div>
           <div class="session-modal-links">
             <button type="button" class="session-modal-link" data-add-linked-session="${index}">
-              <i class="fas fa-plus"></i><span>Add session</span>
+              ${icon('plus')}<span>Add session</span>
             </button>
           </div>
         </article>
@@ -3268,10 +3334,10 @@ function renderSitemap() {
 
   container.innerHTML = `
     <div class="sitemap-toolbar">
-      <span class="sitemap-domain"><i class="fas fa-globe mr-1.5"></i>${escapeHtml(domain)}</span>
+      <span class="sitemap-domain">${icon('globe', 'mr-1.5')}${escapeHtml(domain)}</span>
       <span class="sitemap-total">${total} URL${total !== 1 ? 's' : ''}</span>
       <button id="sitemapCopyAll" type="button" class="sitemap-copy-btn">
-        <i class="fas fa-copy mr-1.5 text-[0.72rem]"></i>Copy all
+        ${icon('copy', 'mr-1.5 text-[0.72rem]')}Copy all
       </button>
     </div>
     ${eventUrls.length ? `
@@ -3295,7 +3361,7 @@ function renderSitemap() {
   document.getElementById('sitemapCopyAll')?.addEventListener('click', () => {
     navigator.clipboard.writeText(allUrls).then(() => {
       const btn = document.getElementById('sitemapCopyAll');
-      if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy mr-1.5 text-[0.72rem]"></i>Copy all'; }, 1800); }
+      if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.innerHTML = `${icon('copy', 'mr-1.5 text-[0.72rem]')}Copy all`; }, 1800); }
     });
   });
 }
@@ -3332,6 +3398,8 @@ function bindEvents() {
     if (!pathValue) return;
     createDatasetScaffold(pathValue);
   });
+
+  els.editorSearchEvents?.addEventListener('click', () => openEventSearchModal());
 
   els.folderConnectionToggle.addEventListener('click', async () => {
     if (state.folderConnectedInSession && state.projectDirHandle) {
