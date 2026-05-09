@@ -19,6 +19,7 @@ import {
   addSelectedEventsToGoogleCalendar,
   toggleEventSelection
 } from './calendar.js';
+import { configureEventSearch, openEventSearchModal } from './eventSearch.js';
 
 const DESIGN_STORAGE_KEY = 'scheduleDesignMode';
 const THEME_STORAGE_KEY = 'scheduleThemeMode';
@@ -168,6 +169,7 @@ async function hydrateManifestMetaForItem(item) {
 async function hydrateManifestCategories() {
   eventCatalog = await loadEventCatalog();
   await Promise.all(eventCatalog.map((item) => hydrateManifestMetaForItem(item)));
+  configureEventSearch({ getEvents: getSearchableEvents, onSelect: selectEventFromSearch });
 }
 
 export function getEventCategory(eventManifestItem) {
@@ -197,6 +199,40 @@ export function getManifestForCategory(category) {
       const labelB = getCatalogLabel(b).toLowerCase();
       return labelB.localeCompare(labelA);
     });
+}
+
+export function getSearchableEvents() {
+  return eventCatalog
+    .filter((item) => manifestVisibleByFile.get(item.file) ?? true)
+    .map((item) => {
+      const meta = manifestEventMetaByFile.get(item.file) || {};
+      return {
+        file: item.file,
+        category: manifestCategoryByFile.get(item.file) || 'Other',
+        designation: String(meta.designation || '').trim(),
+        location: String(meta.location || '').trim(),
+        year: String(meta.year || '').trim(),
+        region: String(meta.region || '').trim(),
+        venue: String(meta.venue || '').trim(),
+        label: getCatalogLabel(item),
+      };
+    })
+    .sort((a, b) => {
+      const yearA = Number.parseInt(a.year, 10);
+      const yearB = Number.parseInt(b.year, 10);
+      if (Number.isFinite(yearA) && Number.isFinite(yearB) && yearA !== yearB) {
+        return yearB - yearA;
+      }
+      return a.label.localeCompare(b.label);
+    });
+}
+
+export async function selectEventFromSearch(category, file) {
+  state.currentEventCategory = category;
+  setActiveTab(category);
+  populateEventSelector(category, file);
+  localStorage.setItem('selectedEventFile', file);
+  await loadEvent(file);
 }
 
 function getAvailableEnabledCategories() {
@@ -1001,6 +1037,11 @@ export function setupEventListeners() {
   const shareButton = document.getElementById('shareSchedule');
   if (shareButton) {
     shareButton.addEventListener('click', () => openShareModal());
+  }
+
+  const searchEventsButton = document.getElementById('searchEvents');
+  if (searchEventsButton) {
+    searchEventsButton.addEventListener('click', () => openEventSearchModal());
   }
 }
 
