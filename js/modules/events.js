@@ -25,6 +25,7 @@ const DESIGN_STORAGE_KEY = 'scheduleDesignMode';
 const THEME_STORAGE_KEY = 'scheduleThemeMode';
 const SHARE_MODAL_ID = 'shareScheduleModal';
 const SHARE_CURRENT_SCHEDULE_PARAM = 'currentSchedule';
+const MOBILE_VIEWPORT_MEDIA_QUERY = '(max-width: 639px)';
 // Hard-coded default layout mode. Toggle this between 'drupalsouth' and 'drupalcon'.
 const DEFAULT_DESIGN_MODE = 'drupalcon';
 
@@ -34,6 +35,8 @@ const manifestEventMetaByFile = new Map();
 const manifestCategoryByFile = new Map();
 const manifestVisibleByFile = new Map();
 let eventCatalog = [];
+let mobileViewportMediaQuery = null;
+let hasBoundViewportScheduleLockUi = false;
 
 function parseModeFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -70,6 +73,25 @@ function applyDesignClass(designMode) {
 function applyThemeClass(themeMode) {
   const body = document.body;
   body.classList.toggle('theme-dark', themeMode === 'dark');
+}
+
+function isMobileViewport() {
+  mobileViewportMediaQuery ||= window.matchMedia(MOBILE_VIEWPORT_MEDIA_QUERY);
+  return mobileViewportMediaQuery.matches;
+}
+
+function bindViewportScheduleLockUi() {
+  if (hasBoundViewportScheduleLockUi) return;
+  mobileViewportMediaQuery ||= window.matchMedia(MOBILE_VIEWPORT_MEDIA_QUERY);
+
+  const handleViewportChange = () => applyScheduleLockUi();
+  if (typeof mobileViewportMediaQuery.addEventListener === 'function') {
+    mobileViewportMediaQuery.addEventListener('change', handleViewportChange);
+  } else if (typeof mobileViewportMediaQuery.addListener === 'function') {
+    mobileViewportMediaQuery.addListener(handleViewportChange);
+  }
+
+  hasBoundViewportScheduleLockUi = true;
 }
 
 
@@ -853,15 +875,18 @@ function applyScheduleLockUi() {
   const categoryWrap = document.getElementById('eventCategorySelectWrap');
   const selectorLabel = document.getElementById('eventSelectorLabel');
   const selectorWrap = document.getElementById('eventSelectorWrap');
+  const searchButton = document.getElementById('searchEvents');
   const shareButton = document.getElementById('shareSchedule');
+  const hideEventSelectors = state.scheduleLockedToCurrentEvent || isMobileViewport();
   const toggleVisibility = (element, hidden) => {
     if (!element) return;
     element.classList.toggle('hidden', hidden);
   };
 
-  toggleVisibility(categoryWrap, state.scheduleLockedToCurrentEvent);
-  toggleVisibility(selectorLabel, state.scheduleLockedToCurrentEvent);
-  toggleVisibility(selectorWrap, state.scheduleLockedToCurrentEvent);
+  toggleVisibility(categoryWrap, hideEventSelectors);
+  toggleVisibility(selectorLabel, hideEventSelectors);
+  toggleVisibility(selectorWrap, hideEventSelectors);
+  toggleVisibility(searchButton, state.scheduleLockedToCurrentEvent);
 
   if (shareButton) {
     shareButton.style.width = state.scheduleLockedToCurrentEvent ? '100%' : '';
@@ -1087,6 +1112,7 @@ function wireEventListeners(eventSelector) {
 
 export async function init() {
   setupEditorAccessButton();
+  bindViewportScheduleLockUi();
   const urlModes = parseModeFromUrl();
   parseAndApplyStartupModes(urlModes);
   await hydrateManifestCategories();
