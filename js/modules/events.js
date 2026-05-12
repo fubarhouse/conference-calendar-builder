@@ -19,11 +19,13 @@ import {
   addSelectedEventsToGoogleCalendar,
   toggleEventSelection
 } from './calendar.js';
+import { configureEventSearch, openEventSearchModal } from './eventSearch.js';
 
 const DESIGN_STORAGE_KEY = 'scheduleDesignMode';
 const THEME_STORAGE_KEY = 'scheduleThemeMode';
 const SHARE_MODAL_ID = 'shareScheduleModal';
 const SHARE_CURRENT_SCHEDULE_PARAM = 'currentSchedule';
+const MOBILE_VIEWPORT_MEDIA_QUERY = '(max-width: 639px)';
 // Hard-coded default layout mode. Toggle this between 'drupalsouth' and 'drupalcon'.
 const DEFAULT_DESIGN_MODE = 'drupalcon';
 
@@ -33,6 +35,8 @@ const manifestEventMetaByFile = new Map();
 const manifestCategoryByFile = new Map();
 const manifestVisibleByFile = new Map();
 let eventCatalog = [];
+let mobileViewportMediaQuery = null;
+let hasBoundViewportScheduleLockUi = false;
 
 function parseModeFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -69,6 +73,25 @@ function applyDesignClass(designMode) {
 function applyThemeClass(themeMode) {
   const body = document.body;
   body.classList.toggle('theme-dark', themeMode === 'dark');
+}
+
+function isMobileViewport() {
+  mobileViewportMediaQuery ||= window.matchMedia(MOBILE_VIEWPORT_MEDIA_QUERY);
+  return mobileViewportMediaQuery.matches;
+}
+
+function bindViewportScheduleLockUi() {
+  if (hasBoundViewportScheduleLockUi) return;
+  mobileViewportMediaQuery ||= window.matchMedia(MOBILE_VIEWPORT_MEDIA_QUERY);
+
+  const handleViewportChange = () => applyScheduleLockUi();
+  if (typeof mobileViewportMediaQuery.addEventListener === 'function') {
+    mobileViewportMediaQuery.addEventListener('change', handleViewportChange);
+  } else if (typeof mobileViewportMediaQuery.addListener === 'function') {
+    mobileViewportMediaQuery.addListener(handleViewportChange);
+  }
+
+  hasBoundViewportScheduleLockUi = true;
 }
 
 
@@ -168,6 +191,7 @@ async function hydrateManifestMetaForItem(item) {
 async function hydrateManifestCategories() {
   eventCatalog = await loadEventCatalog();
   await Promise.all(eventCatalog.map((item) => hydrateManifestMetaForItem(item)));
+  configureEventSearch({ getEvents: getSearchableEvents, onSelect: selectEventFromSearch });
 }
 
 export function getEventCategory(eventManifestItem) {
@@ -197,6 +221,40 @@ export function getManifestForCategory(category) {
       const labelB = getCatalogLabel(b).toLowerCase();
       return labelB.localeCompare(labelA);
     });
+}
+
+export function getSearchableEvents() {
+  return eventCatalog
+    .filter((item) => manifestVisibleByFile.get(item.file) ?? true)
+    .map((item) => {
+      const meta = manifestEventMetaByFile.get(item.file) || {};
+      return {
+        file: item.file,
+        category: manifestCategoryByFile.get(item.file) || 'Other',
+        designation: String(meta.designation || '').trim(),
+        location: String(meta.location || '').trim(),
+        year: String(meta.year || '').trim(),
+        region: String(meta.region || '').trim(),
+        venue: String(meta.venue || '').trim(),
+        label: getCatalogLabel(item),
+      };
+    })
+    .sort((a, b) => {
+      const yearA = Number.parseInt(a.year, 10);
+      const yearB = Number.parseInt(b.year, 10);
+      if (Number.isFinite(yearA) && Number.isFinite(yearB) && yearA !== yearB) {
+        return yearB - yearA;
+      }
+      return a.label.localeCompare(b.label);
+    });
+}
+
+export async function selectEventFromSearch(category, file) {
+  state.currentEventCategory = category;
+  setActiveTab(category);
+  populateEventSelector(category, file);
+  localStorage.setItem('selectedEventFile', file);
+  await loadEvent(file);
 }
 
 function getAvailableEnabledCategories() {
@@ -817,15 +875,18 @@ function applyScheduleLockUi() {
   const categoryWrap = document.getElementById('eventCategorySelectWrap');
   const selectorLabel = document.getElementById('eventSelectorLabel');
   const selectorWrap = document.getElementById('eventSelectorWrap');
+  const searchButton = document.getElementById('searchEvents');
   const shareButton = document.getElementById('shareSchedule');
+  const hideEventSelectors = state.scheduleLockedToCurrentEvent || isMobileViewport();
   const toggleVisibility = (element, hidden) => {
     if (!element) return;
     element.classList.toggle('hidden', hidden);
   };
 
-  toggleVisibility(categoryWrap, state.scheduleLockedToCurrentEvent);
-  toggleVisibility(selectorLabel, state.scheduleLockedToCurrentEvent);
-  toggleVisibility(selectorWrap, state.scheduleLockedToCurrentEvent);
+  toggleVisibility(categoryWrap, hideEventSelectors);
+  toggleVisibility(selectorLabel, hideEventSelectors);
+  toggleVisibility(selectorWrap, hideEventSelectors);
+  toggleVisibility(searchButton, state.scheduleLockedToCurrentEvent);
 
   if (shareButton) {
     shareButton.style.width = state.scheduleLockedToCurrentEvent ? '100%' : '';
@@ -1002,6 +1063,11 @@ export function setupEventListeners() {
   if (shareButton) {
     shareButton.addEventListener('click', () => openShareModal());
   }
+
+  const searchEventsButton = document.getElementById('searchEvents');
+  if (searchEventsButton) {
+    searchEventsButton.addEventListener('click', () => openEventSearchModal());
+  }
 }
 
 function parseAndApplyStartupModes(urlModes) {
@@ -1046,6 +1112,7 @@ function wireEventListeners(eventSelector) {
 
 export async function init() {
   setupEditorAccessButton();
+  bindViewportScheduleLockUi();
   const urlModes = parseModeFromUrl();
   parseAndApplyStartupModes(urlModes);
   await hydrateManifestCategories();

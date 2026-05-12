@@ -63,8 +63,11 @@
                     <select id="eventSelector" class="w-full h-11 pr-12 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base sm:text-lg font-semibold">
                     </select>
                 </div>
-                <button id="shareSchedule" type="button" class="w-full sm:w-auto h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-                    <i class="fas fa-link"></i><span class="ml-2">Share schedule</span>
+                <button id="searchEvents" type="button" class="w-full sm:w-auto h-11 inline-flex items-center justify-center px-5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                    <i class="fas fa-search mr-2" aria-hidden="true"></i>Find event
+                </button>
+                <button id="shareSchedule" type="button" class="w-full sm:w-auto h-11 inline-flex items-center justify-center px-5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                    <i class="fas fa-link mr-2" aria-hidden="true"></i>Share schedule
                 </button>
             </div>
             <div id="eventMediaPromo" class="hidden mt-4"></div>
@@ -142,13 +145,13 @@
                 
                 <!-- Action buttons -->
                 <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
-                    <button id="resetFilters" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                    <button id="resetFilters" class="h-11 inline-flex items-center justify-center px-5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
                         <i class="fas fa-redo mr-2"></i>Reset filters
                     </button>
-                    <button id="selectAllDisplayed" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                    <button id="selectAllDisplayed" class="h-11 inline-flex items-center justify-center px-5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
                         <i class="fas fa-check-square mr-2"></i>Select all
                     </button>
-                    <button id="deselectAllDisplayed" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                    <button id="deselectAllDisplayed" class="h-11 inline-flex items-center justify-center px-5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
                         <i class="fas fa-square mr-2"></i>Deselect all
                     </button>
                 </div>

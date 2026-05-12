@@ -1,6 +1,7 @@
 import { loadEventCatalog } from './modules/eventCatalog.js';
 import { formatTextBlock } from './modules/markdown.js';
 import { isLocalhost, slugify } from './modules/utils.js';
+import { configureEventSearch, openEventSearchModal } from './modules/eventSearch.js';
 
 const state = {
   dataset: null,
@@ -172,6 +173,7 @@ const els = {
   blocked: document.getElementById('editorBlocked'),
   app: document.getElementById('editorApp'),
   datasetSelect: document.getElementById('datasetSelect'),
+  editorSearchEvents: document.getElementById('editorSearchEvents'),
   folderConnectionToggle: document.getElementById('folderConnectionToggle'),
   newDataset: document.getElementById('newDataset'),
   saveDataset: document.getElementById('saveDataset'),
@@ -371,6 +373,7 @@ async function connectProjectFolder() {
   await renderDatasetOptionsFromConnectedFolder();
   setDatasetLoadingEnabled(true);
   setFolderConnectionButtonState();
+  void refreshEditorSearch();
 
   const selectedFile = String(els.datasetSelect.value || '').trim();
   if (selectedFile) {
@@ -436,6 +439,7 @@ function disconnectProjectFolder() {
   markSessionDirty(false);
   markSponsorDirty(false);
   setFolderConnectionButtonState();
+  void refreshEditorSearch();
 }
 
 function setCurrentFilenameLabel() {
@@ -3540,6 +3544,80 @@ function bindEvents() {
   });
 }
 
+async function buildConnectedFolderSearchCatalog() {
+  const files = await listDatasetFilesFromConnectedFolder();
+  const dataDir = await getDataDirectoryHandle(false);
+  if (!dataDir || files.length === 0) return [];
+
+  const entries = await Promise.all(
+    files.map(async (file) => {
+      try {
+        const handle = await dataDir.getFileHandle(file);
+        const blob = await handle.getFile();
+        const text = await blob.text();
+        const parsed = JSON.parse(text);
+        const meta = parsed?.event || {};
+        const designation = String(meta.designation || '').trim();
+        const year = String(meta.year || '').trim();
+        const location = String(meta.location || '').trim();
+        const label =
+          designation && year && location
+            ? `${designation} ${year}: ${location}`
+            : [designation, year, location].filter(Boolean).join(' ') ||
+              file.replace(/\.json$/i, '');
+        return {
+          file,
+          category: designation || 'Other',
+          designation,
+          location,
+          year,
+          region: String(meta.region || '').trim(),
+          venue: String(meta.venue || '').trim(),
+          label,
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return entries
+    .filter(Boolean)
+    .sort((a, b) => {
+      const ya = Number.parseInt(a.year, 10);
+      const yb = Number.parseInt(b.year, 10);
+      if (Number.isFinite(ya) && Number.isFinite(yb) && ya !== yb) return yb - ya;
+      return a.label.localeCompare(b.label);
+    });
+}
+
+async function refreshEditorSearch() {
+  if (!state.projectDirHandle || !state.folderConnectedInSession) {
+    configureEventSearch({ getEvents: () => [], onSelect: async () => {} });
+    if (els.editorSearchEvents) els.editorSearchEvents.disabled = true;
+    return;
+  }
+
+  const searchableEvents = await buildConnectedFolderSearchCatalog();
+
+  configureEventSearch({
+    getEvents: () => searchableEvents,
+    onSelect: async (_category, file) => {
+      if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${file}`))) {
+        try {
+          els.datasetSelect.value = file;
+          await loadDataset(file);
+        } catch (error) {
+          els.datasetSelect.value = state.lastDatasetSelectValue || '';
+          window.alert(`Could not load dataset: ${error.message}`);
+        }
+      }
+    },
+  });
+
+  if (els.editorSearchEvents) els.editorSearchEvents.disabled = false;
+}
+
 async function init() {
   if (!isLocalhost()) {
     els.blocked.classList.remove('hidden');
@@ -3549,6 +3627,9 @@ async function init() {
 
   eventCatalog = await loadEventCatalog().catch(() => []);
   buildTimezoneList();
+  if (els.editorSearchEvents) {
+    els.editorSearchEvents.addEventListener('click', openEventSearchModal);
+  }
   // Require explicit "Connect Folder" each session before loading datasets.
   // We keep stored handles for save-linking, but do not auto-activate folder loading.
   await renderDatasetOptionsFromConnectedFolder();
