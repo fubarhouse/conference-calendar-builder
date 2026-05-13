@@ -10,7 +10,7 @@
     "scheduleURL": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule",
     "venue": "Harbourside Function Venue",
     "timezone": "Pacific/Auckland",
-    "sourceCache": "manual/2026-05-01/drupalsouth-wellington-2026",
+    "sourceCache": "manual/2026-05-13/drupalsouth-wellington-2026",
     "columns": 3,
     "enabled": true,
     "flickr": {
@@ -739,16 +739,19 @@
       "startTime": "2026-05-13T03:10:00Z",
       "endTime": "2026-05-13T03:40:00Z",
       "duration": "P30M",
-      "title": "Drupal CMS2: What's in the box?",
+      "title": "DrupalSouth Steering Committee Panel",
       "location": "Waterfront",
-      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4311",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4496",
       "track": [
-        "Drupal Development"
+        "People & Culture"
       ],
       "speakers": [
-        "Stewart West"
+        "Julia Topliss",
+        "Chris Burgess",
+        "Margery Tongway",
+        "Vladimir Roudakov"
       ],
-      "full_description": "A brief presentation introducing Drupal CMS 2.0 features, including the installation process and new Site Templates. The session covers Canvas with its drag-and-drop capabilities, AI assistants and tools within CKEditor, and using an AI Builder agent to create Canvas layouts. Described as \"a very quick exposé for those who haven't tried it yet.\"",
+      "full_description": "The DrupalSouth Steering Committee serves as a vital standing sub-committee of Linux Australia. Our primary mission is to provide stable, long-term governance and oversight for the DrupalSouth conferences - the premier events for the Drupal community in Australia and New Zealand.\n\nWhy This Session Matters\nAs the digital landscape evolves, so must our community. This panel is not just a reporting session; it is an open forum about leadership and the community. We are at a point where the roadmap for future conferences, local community engagement, and the regional health of the Drupal ecosystem are being redefined.\n\nWhat We Will Discuss\n💧 The Conference Roadmap: Insights into how we select locations, manage budgets, and maintain the high standard of DrupalSouth events.\n💧 Sustainability & Growth: How we can better support local meetups and sprints between the big annual gatherings.\n💧 Community Governance: Understanding the relationship between DrupalSouth, Linux Australia, and the global Drupal Association.\n💧 General Drupal Trends: An open-mic environment to discuss the technical and professional future of Drupal in our region.\n💧 Upcoming DrupalSouth committee elections",
       "video_url": "",
       "sponsorIds": ""
     },
@@ -1223,7 +1226,7 @@
       "location": "Waterfront",
       "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4493",
       "track": [
-        "Other"
+        "People & Culture"
       ],
       "speakers": [
         "Simon Howard"
@@ -1302,20 +1305,16 @@
       "startTime": "2026-05-14T02:00:00Z",
       "endTime": "2026-05-14T02:30:00Z",
       "duration": "P30M",
-      "title": "DrupalSouth Steering Committee Panel",
+      "title": "Engineering for the Agentic Web When 50% of Your Traffic is Robots",
       "location": "Loft",
-      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4476",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4483",
       "track": [
-        "Sponsor"
+        "Web Tools & Complementary Technologies"
       ],
       "speakers": [
-        "Julia Topliss",
-        "Chris Burgess",
-        "Margery Tongway",
-        "Ashleigh King",
-        "Vladimir Roudakov"
+        "Janna Malikova"
       ],
-      "full_description": "The DrupalSouth Steering Committee serves as a vital standing sub-committee of Linux Australia. Our primary mission is to provide stable, long-term governance and oversight for the DrupalSouth conferences - the premier events for the Drupal community in Australia and New Zealand.\n\nWhy This Session Matters\nAs the digital landscape evolves, so must our community. This panel is not just a reporting session; it is an open forum about leadership and the community. We are at a point where the roadmap for future conferences, local community engagement, and the regional health of the Drupal ecosystem are being redefined.\n\nWhat We Will Discuss\n💧 The Conference Roadmap: Insights into how we select locations, manage budgets, and maintain the high standard of DrupalSouth events.\n💧 Sustainability & Growth: How we can better support local meetups and sprints between the big annual gatherings.\n💧 Community Governance: Understanding the relationship between DrupalSouth, Linux Australia, and the global Drupal Association.\n💧 General Drupal Trends: An open-mic environment to discuss the technical and professional future of Drupal in our region.\n💧 Upcoming DrupalSouth committee elections",
+      "full_description": "The presentation addresses how organizations must adapt their web infrastructure as AI agents comprise approximately half of incoming traffic. Rather than traditional SEO practices, the focus shifts toward presenting content in machine-readable formats suitable for autonomous systems and language models. Key topics include distinguishing agent traffic, restructuring content delivery, supporting dual experiences for human users versus data streams, and strategic decisions around embracing AI agent access. The four main discussion points: (1) identifying and separating agent traffic, (2) balancing website modifications with structured markdown and specialized endpoints, (3) creating parallel experiences for humans and machines, (4) deciding whether to block or welcome agent traffic.",
       "video_url": "",
       "sponsorIds": ""
     },
@@ -1404,16 +1403,16 @@
       "startTime": "2026-05-14T03:30:00Z",
       "endTime": "2026-05-14T04:00:00Z",
       "duration": "P30M",
-      "title": "Engineering for the Agentic Web When 50% of Your Traffic is Robots",
+      "title": "Back to the Future: A look at web development around the millenium",
       "location": "Te Aro",
-      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4483",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4219",
       "track": [
         "Web Tools & Complementary Technologies"
       ],
       "speakers": [
-        "Janna Malikova"
+        "Alistair O'Neill"
       ],
-      "full_description": "The presentation addresses how organizations must adapt their web infrastructure as AI agents comprise approximately half of incoming traffic. Rather than traditional SEO practices, the focus shifts toward presenting content in machine-readable formats suitable for autonomous systems and language models. Key topics include distinguishing agent traffic, restructuring content delivery, supporting dual experiences for human users versus data streams, and strategic decisions around embracing AI agent access. The four main discussion points: (1) identifying and separating agent traffic, (2) balancing website modifications with structured markdown and specialized endpoints, (3) creating parallel experiences for humans and machines, (4) deciding whether to block or welcome agent traffic.",
+      "full_description": "The presenter plans to explore vintage web development by utilizing \"a virtualised old school Windows setup\" to demonstrate how the web functioned in earlier eras. Key questions addressed include whether legacy tools remain functional, how older browsers interact with contemporary websites, and whether historical hard drives can be recovered or require virtual recreation.",
       "video_url": "",
       "sponsorIds": ""
     },
@@ -1431,23 +1430,6 @@
         "Yi Jiang"
       ],
       "full_description": "Yi Jiang explores Web Components and Single Directory Components (SDC), examining how \"reusable, tested components help site builders safely create richer pages.\" The session examines what occurs when demonstration code meets production environments.",
-      "video_url": "",
-      "sponsorIds": ""
-    },
-    {
-      "startTime": "2026-05-14T03:30:00Z",
-      "endTime": "2026-05-14T04:00:00Z",
-      "duration": "P30M",
-      "title": "Back to the Future: A look at web development around the millenium",
-      "location": "Loft",
-      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4219",
-      "track": [
-        "Web Tools & Complementary Technologies"
-      ],
-      "speakers": [
-        "Alistair O'Neill"
-      ],
-      "full_description": "The presenter plans to explore vintage web development by utilizing \"a virtualised old school Windows setup\" to demonstrate how the web functioned in earlier eras. Key questions addressed include whether legacy tools remain functional, how older browsers interact with contemporary websites, and whether historical hard drives can be recovered or require virtual recreation.",
       "video_url": "",
       "sponsorIds": ""
     },
