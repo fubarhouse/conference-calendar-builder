@@ -1,6 +1,6 @@
 import state, { getStorageKey } from './state.js';
 import { loadEventCatalog } from './eventCatalog.js';
-import { getLocalDate, announceStatus, normalizeTracks, escapeHtml, isLocalhost, parseSponsorIds, getFocusableElements, slugify, deriveOfficialWebsite } from './utils.js';
+import { getLocalDate, announceStatus, normalizeTracks, escapeHtml, isLocalhost, parseSponsorIds, getFocusableElements, slugify, deriveOfficialWebsite, once } from './utils.js';
 import { renderSponsors } from './sponsors.js';
 import {
   applyFilters,
@@ -123,8 +123,34 @@ export function wireStatsHandlers(selectionOverviewFn, stageStatsFn) {
   setSelectionOverviewUpdater((events) => selectionOverviewFn(events, stageStatsFn));
 }
 
-function getEventCategoryFallback() {
+function getCategoryFromFilename(file = '') {
+  if (file.startsWith('drupalsouth')) return 'DrupalSouth';
+  if (file.startsWith('drupalcon')) return 'DrupalCon';
+  if (file.startsWith('drupalgovau')) return 'DrupalGovAU';
+  if (file.startsWith('ddd')) return 'Drupal Dev Days';
   return 'Other';
+}
+
+function parseMetaFromFilename(file = '') {
+  const parts = file.replace('.json', '').split('-');
+  const yearIdx = parts.findIndex((p) => /^20\d{2}$/.test(p));
+  if (yearIdx === -1) return { designation: getCategoryFromFilename(file), year: '', location: '' };
+  const designation = getCategoryFromFilename(file);
+  const year = parts[yearIdx];
+  const afterYear = parts.slice(yearIdx + 1);
+  let locationParts;
+  if (afterYear.length > 0) {
+    locationParts = afterYear;
+  } else {
+    // Year is last (e.g. drupalcon-eu-barcelona-2024): skip designation slug (1 part) + region (1 part)
+    locationParts = parts.slice(file.startsWith('drupalcon-') ? 2 : 1, yearIdx);
+  }
+  const location = locationParts.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  return { designation, year, location };
+}
+
+function getEventCategoryFallback(item = null) {
+  return getCategoryFromFilename(item?.file || '');
 }
 
 function normalizeCategoryName(value, fallback = 'Other') {
@@ -168,30 +194,40 @@ function isEventVisibleByConfig(item = null, eventMeta = null) {
   return metaEnabled === true;
 }
 
-async function hydrateManifestMetaForItem(item) {
-  if (!item?.file) return;
-  if (manifestCategoryByFile.has(item.file)) return;
-  try {
-    const response = await fetch(`./data/${item.file}`);
-    if (!response.ok) throw new Error(`Failed to load metadata for ${item.file}`);
-    const data = await response.json();
-    const eventMeta = data?.event || {};
-    const category = resolveEffectiveCategory(item, eventMeta);
-    manifestEventMetaByFile.set(item.file, eventMeta);
-    manifestCategoryByFile.set(item.file, category);
-    manifestVisibleByFile.set(item.file, isEventVisibleByConfig(item, eventMeta));
-  } catch (error) {
-    manifestEventMetaByFile.set(item.file, {});
-    manifestCategoryByFile.set(item.file, 'Other');
-    manifestVisibleByFile.set(item.file, false);
-    console.warn(`Skipping unavailable event data: ${item.file}`, error);
-  }
-}
+const hydrateAllEventMeta = once(async () => {
+  await Promise.all(
+    eventCatalog.map(async (item) => {
+      if (!item?.file) return;
+      try {
+        const response = await fetch(`./data/${item.file}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const eventMeta = data?.event || {};
+        manifestEventMetaByFile.set(item.file, eventMeta);
+        manifestCategoryByFile.set(item.file, resolveEffectiveCategory(item, eventMeta));
+        manifestVisibleByFile.set(item.file, isEventVisibleByConfig(item, eventMeta));
+      } catch {
+        // keep filename-based defaults
+      }
+    })
+  );
+});
 
 async function hydrateManifestCategories() {
   eventCatalog = await loadEventCatalog();
-  await Promise.all(eventCatalog.map((item) => hydrateManifestMetaForItem(item)));
-  configureEventSearch({ getEvents: getSearchableEvents, onSelect: selectEventFromSearch });
+  for (const item of eventCatalog) {
+    if (!item?.file) continue;
+    manifestEventMetaByFile.set(item.file, parseMetaFromFilename(item.file));
+    manifestCategoryByFile.set(item.file, getCategoryFromFilename(item.file));
+    manifestVisibleByFile.set(item.file, item.enabled !== false && item.hidden !== true);
+  }
+  configureEventSearch({
+    getEvents: async () => {
+      await hydrateAllEventMeta();
+      return getSearchableEvents();
+    },
+    onSelect: selectEventFromSearch
+  });
 }
 
 export function getEventCategory(eventManifestItem) {
@@ -948,7 +984,17 @@ function inferFlagFromMeta(meta = {}) {
   return null;
 }
 
+function showLoadingOverlay() {
+  document.getElementById('pageLoadingOverlay')?.classList.remove('is-hidden');
+}
+
+function hideLoadingOverlay() {
+  document.getElementById('pageLoadingOverlay')?.classList.add('is-hidden');
+}
+
 export async function loadEvent(filename) {
+  showLoadingOverlay();
+  try {
   state.currentEventFile = filename;
   updateBrowserUrlForEvent(filename);
   const manifestItem = getManifestItemByFile(filename);
@@ -1022,6 +1068,9 @@ export async function loadEvent(filename) {
   document.getElementById('keywordsFilter').value = '';
   document.getElementById('selectionFilter').value = 'all';
   toggleClearButton();
+  } finally {
+    hideLoadingOverlay();
+  }
 }
 
 export function setupEventListeners() {

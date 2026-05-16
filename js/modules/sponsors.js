@@ -5,6 +5,28 @@ import { escapeHtml, parseSponsorIds, getFocusableElements, deriveOfficialWebsit
 const SPONSOR_MODAL_ID = 'sponsorHistoryModal';
 let lastFocusedElementBeforeSponsorModal = null;
 
+const loadSponsorAliases = once(async () => {
+  try {
+    const res = await fetch('./data/sponsors.json');
+    if (!res.ok) return new Map();
+    const data = await res.json();
+    const map = new Map();
+    for (const [canonical, entry] of Object.entries(data)) {
+      const canonicalKey = normalizeSponsorTitle(canonical);
+      for (const alias of (entry.aliases || [])) {
+        map.set(normalizeSponsorTitle(alias), canonicalKey);
+      }
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+});
+
+function resolveCanonicalKey(normalizedTitle, aliasMap) {
+  return aliasMap.get(normalizedTitle) ?? normalizedTitle;
+}
+
 function normalizeSponsors(eventMeta = null) {
   if (!Array.isArray(eventMeta?.sponsors)) return [];
   return eventMeta.sponsors
@@ -111,7 +133,7 @@ function renderSponsorModalLoading(title) {
 }
 
 const loadAllSponsorHistory = once(async () => {
-  const catalog = await loadEventCatalog();
+  const [catalog, aliasMap] = await Promise.all([loadEventCatalog(), loadSponsorAliases()]);
   const files = [...new Set(catalog.map((item) => item.file).filter(Boolean))];
   const entries = [];
 
@@ -154,7 +176,7 @@ const loadAllSponsorHistory = once(async () => {
             eventTier: sponsor.tier || 'Sponsors',
             sponsorTitle: sponsor.title,
             sponsorSubtitle: sponsor.subtitle,
-            sponsorTitleKey: normalizeSponsorTitle(sponsor.title),
+            sponsorTitleKey: resolveCanonicalKey(normalizeSponsorTitle(sponsor.title), aliasMap),
             sponsorLink: sponsor.link,
             sponsorImage: sponsor.image,
             sponsorImageAlt: sponsor.imageAlt,
@@ -269,8 +291,9 @@ async function openSponsorHistoryModal(sponsor) {
   document.body.classList.add('session-modal-open');
   renderSponsorModalLoading(sponsor.title);
 
-  const entries = await loadAllSponsorHistory();
-  const matchingEntries = entries.filter((entry) => entry.sponsorTitleKey === normalizeSponsorTitle(sponsor.title));
+  const [entries, aliasMap] = await Promise.all([loadAllSponsorHistory(), loadSponsorAliases()]);
+  const titleKey = resolveCanonicalKey(normalizeSponsorTitle(sponsor.title), aliasMap);
+  const matchingEntries = entries.filter((entry) => entry.sponsorTitleKey === titleKey);
   renderSponsorHistoryModalContent(sponsor, matchingEntries);
   const closeButton = modal.querySelector('#sponsorModalClose');
   if (closeButton) closeButton.focus();

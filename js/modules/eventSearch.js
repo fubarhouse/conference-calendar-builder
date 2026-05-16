@@ -17,8 +17,8 @@ function closeEventSearchModal() {
   document.body.classList.remove('session-modal-open');
 }
 
-function renderResults(query, container) {
-  const events = _getEvents();
+async function renderResults(query, container) {
+  const events = await Promise.resolve(_getEvents());
   const q = query.toLowerCase().trim();
 
   const filtered = !q
@@ -104,13 +104,13 @@ function ensureEventSearchModal() {
   input.addEventListener('input', () => {
     const hasValue = input.value.length > 0;
     clearBtn.classList.toggle('hidden', !hasValue);
-    renderResults(input.value, resultsContainer);
+    void renderResults(input.value, resultsContainer);
   });
 
   clearBtn.addEventListener('click', () => {
     input.value = '';
     clearBtn.classList.add('hidden');
-    renderResults('', resultsContainer);
+    void renderResults('', resultsContainer);
     input.focus();
   });
 
@@ -158,10 +158,11 @@ export function openEventSearchModal() {
 
   input.value = '';
   clearBtn.classList.add('hidden');
-  renderResults('', resultsContainer);
+  resultsContainer.innerHTML = '<p class="event-search-empty">Loading events…</p>';
 
   modal.classList.remove('hidden');
   document.body.classList.add('session-modal-open');
 
+  void renderResults('', resultsContainer);
   requestAnimationFrame(() => input.focus());
 }
