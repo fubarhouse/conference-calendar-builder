@@ -169,12 +169,18 @@ const dtfCache = new Map();
 let fileLinkDbPromise = null;
 let eventCatalog = [];
 
+function hasFsApi() {
+  return typeof window.showDirectoryPicker === 'function';
+}
+
 const els = {
   blocked: document.getElementById('editorBlocked'),
   app: document.getElementById('editorApp'),
   datasetSelect: document.getElementById('datasetSelect'),
   editorSearchEvents: document.getElementById('editorSearchEvents'),
   folderConnectionToggle: document.getElementById('folderConnectionToggle'),
+  openFileDataset: document.getElementById('openFileDataset'),
+  openFileInput: document.getElementById('openFileInput'),
   newDataset: document.getElementById('newDataset'),
   saveDataset: document.getElementById('saveDataset'),
   saveAsDataset: document.getElementById('saveAsDataset'),
@@ -1043,7 +1049,11 @@ function getDatasetGroupName(eventMeta = null) {
 
 function isEditorDatasetFile(name) {
   const normalized = String(name || '').trim().toLowerCase();
-  return normalized.endsWith('.json') && normalized !== 'index.json';
+  return (
+    normalized.endsWith('.json') &&
+    normalized !== 'index.json' &&
+    normalized !== 'sponsors.json'
+  );
 }
 
 function validateDatasetSchema(dataset, file = 'dataset') {
@@ -1112,10 +1122,26 @@ async function loadDatasetMetaForGrouping(files) {
   return records;
 }
 
+async function renderDatasetOptionsFromCatalog(preferred = '') {
+  const files = eventCatalog.map((item) => item.file).filter((f) => isEditorDatasetFile(f));
+  if (files.length === 0) {
+    els.datasetSelect.innerHTML = '<option value="">No datasets available</option>';
+    els.datasetSelect.value = '';
+    return;
+  }
+
+  els.datasetSelect.innerHTML = [...files]
+    .sort((a, b) => a.localeCompare(b))
+    .map((file) => `<option value="${escapeAttr(file)}">${escapeHtml(getManifestLabelByFile(file))}</option>`)
+    .join('');
+
+  const target = preferred || eventCatalog.find((i) => i.default)?.file || files[0];
+  if (target) els.datasetSelect.value = target;
+}
+
 async function renderDatasetOptionsFromConnectedFolder(preferred = '') {
   if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    els.datasetSelect.innerHTML = '<option value="">Connect folder to load datasets</option>';
-    els.datasetSelect.value = '';
+    await renderDatasetOptionsFromCatalog(preferred);
     return;
   }
 
@@ -1191,6 +1217,25 @@ function normalizeDatasetShape() {
   });
 }
 
+function finalizeDatasetLoad(file) {
+  markDirty(false);
+  markSessionDirty(false);
+  markSponsorDirty(false);
+  capturePersistedSnapshot();
+  setCurrentFilenameLabel();
+  renderEventMetaForm();
+  renderLogoForm();
+  renderFlickrForm();
+  renderSessionList();
+  renderSessionForm();
+  renderSponsorList();
+  renderSponsorForm();
+  if (state.activeEditorTab === 'sitemap') renderSitemap();
+  setEditorButtonsEnabled(true);
+  if (els.datasetSelect.value !== file) els.datasetSelect.value = file;
+  if (els.sessionSearchInput) els.sessionSearchInput.value = '';
+}
+
 async function loadDataset(file) {
   if (!state.projectDirHandle || !state.folderConnectedInSession) {
     throw new Error('Connect folder first.');
@@ -1225,26 +1270,48 @@ async function loadDataset(file) {
       // Keep fallback behavior.
     }
   }
-  markDirty(false);
-  markSessionDirty(false);
-  markSponsorDirty(false);
-  capturePersistedSnapshot();
-  setCurrentFilenameLabel();
-  renderEventMetaForm();
-  renderLogoForm();
-  renderFlickrForm();
-  renderSessionList();
-  renderSessionForm();
-  renderSponsorList();
-  renderSponsorForm();
-  if (state.activeEditorTab === 'sitemap') renderSitemap();
-  setEditorButtonsEnabled(true);
-  if (els.datasetSelect.value !== file) {
-    els.datasetSelect.value = file;
+  finalizeDatasetLoad(file);
+}
+
+async function loadDatasetFromUrl(file) {
+  if (!isEditorDatasetFile(file)) throw new Error(`${file} is not an editable dataset.`);
+  const response = await fetch(`./data/${file}`);
+  if (!response.ok) throw new Error(`Could not load ${file} (${response.status})`);
+  const parsed = await response.json();
+  validateDatasetSchema(parsed, file);
+  state.dataset = parsed;
+  state.file = file;
+  state.outputPath = normalizeOutputPath(`data/${file}`);
+  state.lastDatasetSelectValue = file;
+  state.fileHandle = null;
+  state.selectedIndex = -1;
+  state.selectedSponsorIndex = -1;
+  state.sessionSearchQuery = '';
+  normalizeDatasetShape();
+  finalizeDatasetLoad(file);
+}
+
+async function loadDatasetFromFileObject(fileObj) {
+  const content = await fileObj.text();
+  const parsed = JSON.parse(content);
+  validateDatasetSchema(parsed, fileObj.name);
+  const file = fileObj.name;
+  state.dataset = parsed;
+  state.file = file;
+  state.outputPath = normalizeOutputPath(`data/${file}`);
+  state.lastDatasetSelectValue = file;
+  state.fileHandle = null;
+  state.selectedIndex = -1;
+  state.selectedSponsorIndex = -1;
+  state.sessionSearchQuery = '';
+  normalizeDatasetShape();
+  if (!els.datasetSelect.querySelector(`option[value=${JSON.stringify(file)}]`)) {
+    const opt = document.createElement('option');
+    opt.value = file;
+    opt.textContent = file;
+    els.datasetSelect.prepend(opt);
   }
-  if (els.sessionSearchInput) {
-    els.sessionSearchInput.value = '';
-  }
+  finalizeDatasetLoad(file);
 }
 
 function createDatasetScaffold(pathValue) {
@@ -3160,7 +3227,7 @@ async function saveDataset() {
     }
   }
   if (!state.fileHandle) {
-    window.alert('No linked save target for this dataset path. Click Connect Folder once or use Save As.');
+    await saveAsDataset();
     return;
   }
   if (typeof state.fileHandle.queryPermission === 'function') {
@@ -3323,7 +3390,11 @@ function bindEvents() {
     }
 
     try {
-      await loadDataset(nextFile);
+      if (state.projectDirHandle && state.folderConnectedInSession) {
+        await loadDataset(nextFile);
+      } else {
+        await loadDatasetFromUrl(nextFile);
+      }
     } catch (error) {
       els.datasetSelect.value = previousValue;
       window.alert(`Could not load dataset: ${error.message}`);
@@ -3336,6 +3407,23 @@ function bindEvents() {
     if (!pathValue) return;
     createDatasetScaffold(pathValue);
   });
+
+  if (els.openFileDataset) {
+    els.openFileDataset.addEventListener('click', () => els.openFileInput?.click());
+  }
+  if (els.openFileInput) {
+    els.openFileInput.addEventListener('change', async () => {
+      const file = els.openFileInput.files?.[0];
+      if (!file) return;
+      els.openFileInput.value = '';
+      if (!(await confirmDiscardPendingChanges(`file ${file.name}`))) return;
+      try {
+        await loadDatasetFromFileObject(file);
+      } catch (error) {
+        window.alert(`Could not load file: ${error.message}`);
+      }
+    });
+  }
 
   els.folderConnectionToggle.addEventListener('click', async () => {
     if (state.folderConnectedInSession && state.projectDirHandle) {
@@ -3627,13 +3715,14 @@ async function init() {
 
   eventCatalog = await loadEventCatalog().catch(() => []);
   buildTimezoneList();
+  if (!hasFsApi() && els.folderConnectionToggle) {
+    els.folderConnectionToggle.classList.add('hidden');
+  }
   if (els.editorSearchEvents) {
     els.editorSearchEvents.addEventListener('click', openEventSearchModal);
   }
-  // Require explicit "Connect Folder" each session before loading datasets.
-  // We keep stored handles for save-linking, but do not auto-activate folder loading.
   await renderDatasetOptionsFromConnectedFolder();
-  setDatasetLoadingEnabled(false);
+  setDatasetLoadingEnabled(true);
   bindEvents();
   markDirty(false);
   resetSessionQuickEditState();
@@ -3647,13 +3736,10 @@ async function init() {
   setSponsorWorkspaceExpanded(false);
   setActiveEditorTab('event');
   setFolderConnectionButtonState();
-  if (els.logoForm) {
-    els.logoForm.innerHTML = '<p class="text-sm text-gray-400">Connect folder to begin.</p>';
-  }
-  if (els.flickrForm) {
-    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Connect folder to begin.</p>';
-  }
-  els.sponsorList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Connect folder to begin.</li>';
+  const idleMsg = hasFsApi() ? 'Connect folder to begin.' : 'Load a dataset to begin.';
+  if (els.logoForm) els.logoForm.innerHTML = `<p class="text-sm text-gray-400">${idleMsg}</p>`;
+  if (els.flickrForm) els.flickrForm.innerHTML = `<p class="text-sm text-gray-400">${idleMsg}</p>`;
+  els.sponsorList.innerHTML = `<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">${idleMsg}</li>`;
   els.sponsorForm.innerHTML = '<p class="text-sm text-gray-400">Select a sponsor row to edit it.</p>';
 }
 
