@@ -1,14 +1,16 @@
 // Drag-and-drop timeline editor for event session JSON.
 // Renders a calendar grid per day; sessions are draggable/resizable blocks.
 
-const ROW_H = 48;      // px per 30-minute slot
+const ROW_H = 48;        // minimum px per 30-minute slot
 const SNAP_MINS = 30;
+const MIN_SESSION_PX = 32; // minimum rendered height for any session
 
 let _el = null;
 let _dataset = null;
 let _cbs = null;
 let _activeDay = null;
 let _drag = null;
+let _rowH = ROW_H;      // dynamic slot height, recalculated each render
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -19,7 +21,7 @@ export function renderTimeline(container, dataset, callbacks) {
   _redraw();
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Time helpers ───────────────────────────────────────────────────────────
 
 function _tz() { return _cbs.getEventTimezone(); }
 function _localStr(isoUtc) { return _cbs.utcIsoToLocalInput(isoUtc, _tz()) || ''; }
@@ -46,22 +48,176 @@ function _minsToUtc(datePart, totalMins) {
 
 function esc(str) {
   return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function extractDays(items) {
+// ── Day extraction (event range + session dates) ───────────────────────────
+
+function extractDays(dataset) {
   const days = new Set();
-  for (const item of items) {
+
+  const { startDate, endDate } = dataset.event || {};
+  if (startDate && endDate) {
+    const start = _localDate(startDate);
+    const end = _localDate(endDate);
+    if (start && end && start <= end) {
+      let cur = start;
+      while (cur <= end) {
+        days.add(cur);
+        const d = new Date(`${cur}T12:00:00`);
+        d.setDate(d.getDate() + 1);
+        cur = d.toISOString().split('T')[0];
+      }
+    }
+  }
+
+  for (const item of dataset.items || []) {
     if (item.startTime) {
       const d = _localDate(item.startTime);
       if (d) days.add(d);
     }
   }
+
   return Array.from(days).sort();
 }
+
+// ── Room management ────────────────────────────────────────────────────────
+
+// event.rooms is stored as { [dateStr]: string[] } (per-day).
+// Legacy flat arrays are migrated on first write via _ensureEventRooms().
+
+function _getRooms() {
+  const rooms = _dataset.event?.rooms;
+  if (!rooms) return _deriveRoomsForDay();
+  if (Array.isArray(rooms)) return rooms.filter(r => r !== ''); // legacy flat array
+  const dayRooms = rooms[_activeDay];
+  return Array.isArray(dayRooms) ? dayRooms.filter(r => r !== '') : _deriveRoomsForDay();
+}
+
+function _deriveRoomsForDay() {
+  const seen = new Set();
+  const rooms = [];
+  for (const item of _dataset.items || []) {
+    const r = item.location ?? '';
+    if (r && _localDate(item.startTime) === _activeDay && !seen.has(r)) {
+      seen.add(r); rooms.push(r);
+    }
+  }
+  return rooms;
+}
+
+function _ensureEventRooms() {
+  if (!_dataset.event) _dataset.event = {};
+  const rooms = _dataset.event.rooms;
+
+  if (Array.isArray(rooms)) {
+    // Migrate flat array → per-day object, applying to all known days
+    const days = extractDays(_dataset);
+    const perDay = {};
+    for (const day of days) perDay[day] = rooms.filter(r => r !== '');
+    _dataset.event.rooms = perDay;
+  } else if (!rooms || typeof rooms !== 'object') {
+    _dataset.event.rooms = {};
+  }
+
+  if (!Array.isArray(_dataset.event.rooms[_activeDay])) {
+    _dataset.event.rooms[_activeDay] = _deriveRoomsForDay();
+  }
+}
+
+function _addRoom() {
+  const name = window.prompt('Room name:', '');
+  if (name === null) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  _ensureEventRooms();
+  const dayRooms = _dataset.event.rooms[_activeDay];
+  if (!dayRooms.includes(trimmed)) {
+    dayRooms.push(trimmed);
+    _cbs.markDirty();
+  }
+  _redraw();
+}
+
+function _renameRoom(idx, newName) {
+  _ensureEventRooms();
+  const dayRooms = _dataset.event.rooms[_activeDay];
+  const oldName = dayRooms[idx];
+  if (newName === oldName) return;
+  dayRooms[idx] = newName;
+  // Propagate rename to other days and all sessions
+  for (const list of Object.values(_dataset.event.rooms)) {
+    const i = list.indexOf(oldName);
+    if (i !== -1 && list !== dayRooms) list[i] = newName;
+  }
+  for (const item of _dataset.items || []) {
+    if (item.location === oldName) item.location = newName;
+  }
+  _cbs.markDirty();
+  _redraw();
+}
+
+function _deleteRoom(idx) {
+  _ensureEventRooms();
+  const dayRooms = _dataset.event.rooms[_activeDay];
+  const room = dayRooms[idx];
+  const affected = (_dataset.items || []).filter(
+    item => (item.location ?? '') === room && _localDate(item.startTime) === _activeDay
+  );
+  if (affected.length > 0) {
+    if (!window.confirm(`Remove "${room}" from ${fmtDayLabel(_activeDay)}? ${affected.length} session(s) on this day will have their location cleared.`)) return;
+    for (const item of affected) item.location = '';
+  }
+  dayRooms.splice(idx, 1);
+  _cbs.markDirty();
+  _redraw();
+}
+
+function _reorderRoom(fromIdx, toIdx) {
+  _ensureEventRooms();
+  const rooms = _dataset.event.rooms[_activeDay];
+  const [moved] = rooms.splice(fromIdx, 1);
+  rooms.splice(toIdx, 0, moved);
+  _cbs.markDirty();
+  _redraw();
+}
+
+function _startRenameRoom(chip, idx) {
+  const label = chip.querySelector('.tl-room-chip-label');
+  if (!label) return;
+  const currentName = _getRooms()[idx] ?? '';
+
+  const input = document.createElement('input');
+  input.className = 'tl-room-chip-input';
+  input.value = currentName;
+  label.replaceWith(input);
+  input.focus();
+  input.select();
+
+  let committed = false;
+  const commit = () => {
+    if (committed) return;
+    committed = true;
+    const newName = input.value.trim();
+    if (newName && newName !== currentName) {
+      _renameRoom(idx, newName);
+    } else {
+      const restored = document.createElement('span');
+      restored.className = 'tl-room-chip-label';
+      restored.textContent = currentName || '(no room)';
+      input.replaceWith(restored);
+    }
+  };
+
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { input.value = currentName; commit(); }
+  });
+}
+
+// ── Misc helpers ───────────────────────────────────────────────────────────
 
 function fmtDayLabel(dateStr) {
   const d = new Date(`${dateStr}T12:00:00`);
@@ -74,16 +230,6 @@ function fmtMins(total) {
   const ampm = h < 12 ? 'am' : 'pm';
   const h12 = h % 12 || 12;
   return m ? `${h12}:${String(m).padStart(2, '0')}${ampm}` : `${h12}${ampm}`;
-}
-
-function extractRooms(dayItems) {
-  const seen = new Set();
-  const rooms = [];
-  for (const { item } of dayItems) {
-    const r = item.location || '';
-    if (!seen.has(r)) { seen.add(r); rooms.push(r); }
-  }
-  return rooms;
 }
 
 function getTimeRange(dayItems) {
@@ -104,6 +250,20 @@ function getTimeRange(dayItems) {
   return { minMins, maxMins };
 }
 
+function calcRowH(dayItems) {
+  let minDur = Infinity;
+  for (const { item } of dayItems) {
+    if (!item.startTime) continue;
+    const start = _localMins(item.startTime);
+    const end = item.endTime ? _localMins(item.endTime) : start + 60;
+    const dur = end - start;
+    if (dur > 0 && dur < minDur) minDur = dur;
+  }
+  if (!isFinite(minDur) || minDur <= 0) return ROW_H;
+  // Scale so the shortest session renders at MIN_SESSION_PX or taller
+  return Math.max(ROW_H, Math.ceil(MIN_SESSION_PX * SNAP_MINS / minDur));
+}
+
 function getPrimaryTrack(item) {
   if (Array.isArray(item.track)) return item.track[0] || '';
   return String(item.track || '').split(',')[0].trim();
@@ -122,18 +282,63 @@ function buildDayTabs(days) {
   </div>`;
 }
 
+function buildRoomBar(rooms) {
+  const chips = rooms.map((r, idx) => `
+    <div class="tl-room-chip" data-room-idx="${idx}" draggable="true">
+      <span class="tl-room-chip-grip" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>
+      <span class="tl-room-chip-label">${esc(r)}</span>
+      <button class="tl-room-chip-rename" data-room-idx="${idx}" type="button" title="Rename room">
+        <i class="fas fa-pen" aria-hidden="true"></i>
+      </button>
+      <button class="tl-room-chip-delete" data-room-idx="${idx}" type="button" title="Remove room from this day">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+    </div>`).join('');
+
+  return `<div class="tl-room-bar">
+    <div class="tl-room-chips">${chips || '<span class="tl-room-bar-hint">No rooms — add one to begin.</span>'}</div>
+    <button class="tl-add-room-btn" type="button">
+      <i class="fas fa-plus" aria-hidden="true"></i>Add room
+    </button>
+  </div>`;
+}
+
 function buildTimeAxis(minMins, totalSlots) {
   let labels = '';
   for (let i = 0; i <= totalSlots; i++) {
     const mins = minMins + i * SNAP_MINS;
     if (mins % 60 === 0) {
-      labels += `<div class="tl-time-label" style="top:${40 + i * ROW_H}px">${fmtMins(mins)}</div>`;
+      labels += `<div class="tl-time-label" style="top:${40 + i * _rowH}px">${fmtMins(mins)}</div>`;
     }
   }
-  return `<div class="tl-time-axis" style="height:${40 + totalSlots * ROW_H}px">
+  return `<div class="tl-time-axis" style="height:${40 + totalSlots * _rowH}px">
     <div class="tl-time-axis-header"></div>
     ${labels}
   </div>`;
+}
+
+function buildSpanningSession(item, index, minMins) {
+  const startMins = _localMins(item.startTime);
+  const endMins = item.endTime ? _localMins(item.endTime) : startMins + 60;
+  const durMins = Math.max(SNAP_MINS, endMins - startMins);
+  const top = Math.max(0, (startMins - minMins) / SNAP_MINS * _rowH);
+  const height = Math.max(MIN_SESSION_PX, durMins / SNAP_MINS * _rowH);
+  const track = getPrimaryTrack(item);
+  const spk = Array.isArray(item.speakers) ? item.speakers.join(', ') : (item.speakers || '');
+
+  return `
+    <div class="tl-session tl-session-spanning" data-index="${index}" data-room=""
+         data-track="${esc(track)}" style="top:${top}px;height:${height}px">
+      <div class="tl-session-inner">
+        <div class="tl-session-title">${esc(item.title || 'Untitled')}</div>
+        ${spk ? `<div class="tl-session-speakers">${esc(spk)}</div>` : ''}
+        <div class="tl-session-time">${esc(fmtMins(startMins))}–${esc(fmtMins(endMins))}</div>
+      </div>
+      <button class="tl-session-delete" data-index="${index}" type="button" title="Delete session">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+      <div class="tl-resize-handle" data-index="${index}"></div>
+    </div>`;
 }
 
 function buildRoomColumn(room, dayItems, minMins, totalSlots) {
@@ -141,22 +346,19 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
   for (let i = 0; i < totalSlots; i++) {
     const mins = minMins + i * SNAP_MINS;
     lines += `<div class="tl-slot-bg${mins % 60 === 0 ? ' is-hour' : ''}"
-      style="top:${i * ROW_H}px;height:${ROW_H}px"
-      data-slot-mins="${mins}"></div>`;
+      style="top:${i * _rowH}px;height:${_rowH}px" data-slot-mins="${mins}"></div>`;
   }
 
-  const roomItems = dayItems.filter(({ item }) => (item.location || '') === room);
+  const roomItems = dayItems.filter(({ item }) => (item.location ?? '') === room);
   let blocks = '';
   for (const { item, index } of roomItems) {
     const startMins = _localMins(item.startTime);
     const endMins = item.endTime ? _localMins(item.endTime) : startMins + 60;
     const durMins = Math.max(SNAP_MINS, endMins - startMins);
-    const top = Math.max(0, (startMins - minMins) / SNAP_MINS * ROW_H);
-    const height = durMins / SNAP_MINS * ROW_H;
+    const top = Math.max(0, (startMins - minMins) / SNAP_MINS * _rowH);
+    const height = Math.max(MIN_SESSION_PX, durMins / SNAP_MINS * _rowH);
     const track = getPrimaryTrack(item);
-    const spk = Array.isArray(item.speakers)
-      ? item.speakers.join(', ')
-      : (item.speakers || '');
+    const spk = Array.isArray(item.speakers) ? item.speakers.join(', ') : (item.speakers || '');
 
     blocks += `
       <div class="tl-session" data-index="${index}" data-room="${esc(room)}"
@@ -182,53 +384,62 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
 // ── Main render ────────────────────────────────────────────────────────────
 
 function _redraw() {
-  if (!_dataset?.items?.length) {
-    _el.innerHTML = '<p class="tl-empty">No sessions loaded. Open a dataset first.</p>';
+  if (!_dataset?.event) {
+    _el.innerHTML = '<p class="tl-empty">No dataset loaded. Open a dataset first.</p>';
     return;
   }
 
-  const days = extractDays(_dataset.items);
+  const days = extractDays(_dataset);
   if (!days.length) {
-    _el.innerHTML = '<p class="tl-empty">No sessions with valid start times found.</p>';
+    _el.innerHTML = '<p class="tl-empty">No conference dates found. Set Start Date and End Date on the Event tab, or add sessions with start times.</p>';
     return;
   }
 
   if (!_activeDay || !days.includes(_activeDay)) _activeDay = days[0];
 
-  const dayItems = _dataset.items
+  const rooms = _getRooms();
+
+  const dayItems = (_dataset.items || [])
     .map((item, index) => ({ item, index }))
     .filter(({ item }) => _localDate(item.startTime) === _activeDay);
 
-  const rooms = extractRooms(dayItems);
+  const { minMins, maxMins } = getTimeRange(dayItems);
+  const totalSlots = Math.max(1, Math.ceil((maxMins - minMins) / SNAP_MINS));
+  _rowH = calcRowH(dayItems);
+
   if (!rooms.length) {
-    _el.innerHTML = `${buildDayTabs(days)}<p class="tl-empty">No sessions on this day.</p>`;
-    _el.querySelector('.tl-day-tab')?.parentElement
-      ?.querySelectorAll('.tl-day-tab')
-      .forEach(b => b.addEventListener('click', () => { _activeDay = b.dataset.day; _redraw(); }));
+    _el.innerHTML = `<div class="tl-root">
+      ${buildDayTabs(days)}
+      ${buildRoomBar([])}
+    </div>`;
+    _bindAll();
     return;
   }
 
-  const { minMins, maxMins } = getTimeRange(dayItems);
-  const totalSlots = Math.max(1, Math.ceil((maxMins - minMins) / SNAP_MINS));
   const colsTemplate = `repeat(${rooms.length}, minmax(180px, 1fr))`;
 
-  _el.innerHTML = `
-    <div class="tl-root">
-      ${buildDayTabs(days)}
-      <div class="tl-scroll-wrap">
-        <div class="tl-layout">
-          ${buildTimeAxis(minMins, totalSlots)}
-          <div class="tl-rooms-wrap">
-            <div class="tl-rooms-header" style="grid-template-columns:${colsTemplate}">
-              ${rooms.map(r => `<div class="tl-room-header">${esc(r || '(no room)')}</div>`).join('')}
-            </div>
-            <div class="tl-rooms-body" style="grid-template-columns:${colsTemplate};height:${totalSlots * ROW_H}px">
-              ${rooms.map(r => buildRoomColumn(r, dayItems, minMins, totalSlots)).join('')}
-            </div>
+  const roomedItems = dayItems.filter(({ item }) => item.location);
+  const spanningItems = dayItems.filter(({ item }) => !item.location);
+  const spanningHtml = spanningItems.map(({ item, index }) => buildSpanningSession(item, index, minMins)).join('');
+
+  _el.innerHTML = `<div class="tl-root">
+    ${buildDayTabs(days)}
+    ${buildRoomBar(rooms)}
+    <div class="tl-scroll-wrap">
+      <div class="tl-layout">
+        ${buildTimeAxis(minMins, totalSlots)}
+        <div class="tl-rooms-wrap">
+          <div class="tl-rooms-header" style="grid-template-columns:${colsTemplate}">
+            ${rooms.map(r => `<div class="tl-room-header">${esc(r)}</div>`).join('')}
+          </div>
+          <div class="tl-rooms-body" style="grid-template-columns:${colsTemplate};height:${totalSlots * _rowH}px">
+            ${rooms.map(r => buildRoomColumn(r, roomedItems, minMins, totalSlots)).join('')}
+            ${spanningHtml ? `<div class="tl-spanning-layer">${spanningHtml}</div>` : ''}
           </div>
         </div>
       </div>
-    </div>`;
+    </div>
+  </div>`;
 
   _el.dataset.minMins = minMins;
   _el.dataset.rooms = JSON.stringify(rooms);
@@ -242,6 +453,8 @@ function _bindAll() {
   _el.querySelectorAll('.tl-day-tab').forEach(btn =>
     btn.addEventListener('click', () => { _activeDay = btn.dataset.day; _redraw(); }));
 
+  _bindRoomBar();
+
   _el.querySelectorAll('.tl-session').forEach(block =>
     block.addEventListener('mousedown', _onMoveStart));
   _el.querySelectorAll('.tl-resize-handle').forEach(h =>
@@ -253,6 +466,48 @@ function _bindAll() {
     col.addEventListener('click', _onColClick);
     col.addEventListener('mousemove', _onColHover);
     col.addEventListener('mouseleave', _onColLeave);
+  });
+}
+
+let _roomDragIdx = null;
+
+function _bindRoomBar() {
+  const bar = _el.querySelector('.tl-room-bar');
+  if (!bar) return;
+
+  bar.querySelector('.tl-add-room-btn')?.addEventListener('click', _addRoom);
+
+  bar.querySelectorAll('.tl-room-chip').forEach(chip => {
+    const idx = parseInt(chip.dataset.roomIdx, 10);
+
+    chip.querySelector('.tl-room-chip-rename')?.addEventListener('click', () =>
+      _startRenameRoom(chip, idx));
+    chip.querySelector('.tl-room-chip-delete')?.addEventListener('click', () =>
+      _deleteRoom(idx));
+
+    chip.addEventListener('dragstart', e => {
+      _roomDragIdx = idx;
+      chip.classList.add('is-room-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    chip.addEventListener('dragend', () => {
+      _roomDragIdx = null;
+      bar.querySelectorAll('.tl-room-chip').forEach(c =>
+        c.classList.remove('is-room-dragging', 'is-room-drag-over'));
+    });
+    chip.addEventListener('dragover', e => {
+      if (_roomDragIdx === null || _roomDragIdx === idx) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      bar.querySelectorAll('.tl-room-chip').forEach(c => c.classList.remove('is-room-drag-over'));
+      chip.classList.add('is-room-drag-over');
+    });
+    chip.addEventListener('dragleave', () => chip.classList.remove('is-room-drag-over'));
+    chip.addEventListener('drop', e => {
+      e.preventDefault();
+      if (_roomDragIdx === null || _roomDragIdx === idx) return;
+      _reorderRoom(_roomDragIdx, idx);
+    });
   });
 }
 
@@ -271,12 +526,12 @@ function _onMoveStart(e) {
     index,
     block,
     startY: e.clientY,
-    origTop: parseInt(block.style.top, 10),
     origStartMins: _localMins(item.startTime),
     origEndMins: item.endTime ? _localMins(item.endTime) : _localMins(item.startTime) + 60,
     rooms: JSON.parse(_el.dataset.rooms || '[]'),
     minMins: parseInt(_el.dataset.minMins, 10),
-    targetRoom: item.location || '',
+    targetRoom: item.location ?? '',
+    isSpanning: !item.location,
   };
 
   block.classList.add('is-dragging');
@@ -287,13 +542,12 @@ function _onMoveStart(e) {
 function _onMoveMove(e) {
   if (!_drag || _drag.type !== 'move') return;
 
-  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / ROW_H);
+  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / _rowH);
   const newStartMins = Math.max(_drag.minMins, _drag.origStartMins + snappedSlotDelta * SNAP_MINS);
-  const dy = (newStartMins - _drag.origStartMins) / SNAP_MINS * ROW_H;
-  _drag.block.style.transform = `translateY(${dy}px)`;
+  _drag.block.style.transform = `translateY(${(newStartMins - _drag.origStartMins) / SNAP_MINS * _rowH}px)`;
 
   const body = _el.querySelector('.tl-rooms-body');
-  if (body && _drag.rooms.length) {
+  if (body && _drag.rooms.length && !_drag.isSpanning) {
     const { left, width } = body.getBoundingClientRect();
     const colIdx = Math.max(0, Math.min(_drag.rooms.length - 1, Math.floor((e.clientX - left) / (width / _drag.rooms.length))));
     const newRoom = _drag.rooms[colIdx];
@@ -308,15 +562,14 @@ function _onMoveMove(e) {
 function _onMoveUp(e) {
   if (!_drag || _drag.type !== 'move') { _cleanDrag(); return; }
 
-  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / ROW_H);
+  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / _rowH);
   const durMins = _drag.origEndMins - _drag.origStartMins;
   const newStartMins = Math.max(_drag.minMins, _drag.origStartMins + snappedSlotDelta * SNAP_MINS);
-  const newEndMins = newStartMins + durMins;
 
   const item = _dataset.items[_drag.index];
   item.startTime = _minsToUtc(_activeDay, newStartMins);
-  item.endTime = _minsToUtc(_activeDay, newEndMins);
-  item.location = _drag.targetRoom;
+  item.endTime = _minsToUtc(_activeDay, newStartMins + durMins);
+  if (!_drag.isSpanning) item.location = _drag.targetRoom;
 
   _cbs.markDirty();
   _cbs.trackQuickSessionChange(_drag.index, true);
@@ -352,14 +605,14 @@ function _onResizeStart(e) {
 
 function _onResizeMove(e) {
   if (!_drag || _drag.type !== 'resize') return;
-  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / ROW_H);
-  _drag.block.style.height = `${Math.max(ROW_H, _drag.origHeight + snappedSlotDelta * ROW_H)}px`;
+  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / _rowH);
+  _drag.block.style.height = `${Math.max(MIN_SESSION_PX, _drag.origHeight + snappedSlotDelta * _rowH)}px`;
 }
 
 function _onResizeUp(e) {
   if (!_drag || _drag.type !== 'resize') { _cleanDrag(); return; }
 
-  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / ROW_H);
+  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / _rowH);
   const newEndMins = Math.max(
     _drag.origStartMins + SNAP_MINS,
     _drag.origEndMins + snappedSlotDelta * SNAP_MINS
@@ -381,21 +634,19 @@ function _onColClick(e) {
   if (_drag) return;
 
   const col = e.currentTarget;
-  const room = col.dataset.room || '';
+  const room = col.dataset.room ?? '';
   const minMins = parseInt(_el.dataset.minMins, 10);
   const relY = e.clientY - col.getBoundingClientRect().top;
-  const slotMins = minMins + Math.floor(relY / ROW_H) * SNAP_MINS;
+  const slotMins = minMins + Math.floor(relY / _rowH) * SNAP_MINS;
 
   const title = window.prompt('New session title:', '');
   if (title === null || !title.trim()) return;
 
-  const startMins = slotMins;
-  const endMins = slotMins + 60;
-
+  _dataset.items = _dataset.items || [];
   _dataset.items.push({
     title: title.trim(),
-    startTime: _minsToUtc(_activeDay, startMins),
-    endTime: _minsToUtc(_activeDay, endMins),
+    startTime: _minsToUtc(_activeDay, slotMins),
+    endTime: _minsToUtc(_activeDay, slotMins + 60),
     location: room,
     track: '',
     speakers: [],
@@ -423,10 +674,9 @@ function _onColHover(e) {
   const col = e.currentTarget;
   const minMins = parseInt(_el.dataset.minMins, 10);
   const relY = e.clientY - col.getBoundingClientRect().top;
-  const slotIndex = Math.floor(relY / ROW_H);
   const ind = col.querySelector('.tl-add-indicator');
   if (ind) {
-    ind.style.top = `${slotIndex * ROW_H}px`;
+    ind.style.top = `${Math.floor(relY / _rowH) * _rowH}px`;
     ind.style.display = 'flex';
   }
 }
