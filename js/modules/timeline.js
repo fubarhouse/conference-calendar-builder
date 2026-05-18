@@ -292,9 +292,10 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
     const height = sessionHeight(durMins);
     const track = getPrimaryTrack(item);
     const spk = Array.isArray(item.speakers) ? item.speakers.join(', ') : (item.speakers || '');
+    const compact = height < SNAP_H ? ' is-compact' : '';
 
     blocks += `
-      <div class="tl-session" data-index="${index}" data-room="${esc(room)}"
+      <div class="tl-session${compact}" data-index="${index}" data-room="${esc(room)}"
            data-track="${esc(track)}" style="top:${top}px;height:${height}px">
         <div class="tl-session-inner">
           <div class="tl-session-title">${esc(item.title || 'Untitled')}</div>
@@ -322,9 +323,10 @@ function buildSpanningSession(item, index, minMins) {
   const height = sessionHeight(durMins);
   const track = getPrimaryTrack(item);
   const spk = Array.isArray(item.speakers) ? item.speakers.join(', ') : (item.speakers || '');
+  const compact = height < SNAP_H ? ' is-compact' : '';
 
   return `
-    <div class="tl-session tl-session-spanning" data-index="${index}" data-room=""
+    <div class="tl-session tl-session-spanning${compact}" data-index="${index}" data-room=""
          data-track="${esc(track)}" style="top:${top}px;height:${height}px">
       <div class="tl-session-inner">
         <div class="tl-session-title">${esc(item.title || 'Untitled')}</div>

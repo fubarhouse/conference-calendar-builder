@@ -3175,6 +3175,22 @@
     height: 100%;
     overflow: hidden;
 }
+.tl-session.is-compact .tl-session-inner {
+    padding-bottom: 3px;
+}
+.tl-session.is-compact .tl-session-speakers,
+.tl-session.is-compact .tl-session-time {
+    display: none;
+}
+.tl-session.is-compact .tl-session-title {
+    -webkit-line-clamp: 1;
+    white-space: nowrap;
+    display: block;
+    text-overflow: ellipsis;
+}
+.tl-session.is-compact .tl-resize-handle {
+    height: 4px;
+}
 
 .tl-session-title {
     font-size: 0.67rem;
