@@ -103,6 +103,9 @@
             <button id="showSitemapTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="sitemapWorkspacePanel">
               <i class="fas fa-map mr-2 text-[0.72rem]"></i>Sitemap
             </button>
+            <button id="showTimelineTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="timelineWorkspacePanel">
+              <i class="fas fa-calendar-week mr-2 text-[0.72rem]"></i>Timeline
+            </button>
           </div>
         </div>
 
@@ -250,6 +253,18 @@
           </div>
         </div>
         <div id="sitemapContent"></div>
+      </section>
+      </div>
+
+      <div id="timelineWorkspacePanel" class="hidden">
+      <section class="editor-meta-accordion rounded-lg shadow-md p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-100">Timeline Editor</h2>
+            <p class="text-sm text-gray-400">Drag sessions to reschedule. Click an empty slot to add. Drag the bottom handle to resize.</p>
+          </div>
+        </div>
+        <div id="timelineCanvas"></div>
       </section>
       </div>
       </section>

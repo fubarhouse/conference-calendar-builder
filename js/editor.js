@@ -2,6 +2,7 @@ import { loadEventCatalog } from './modules/eventCatalog.js';
 import { formatTextBlock } from './modules/markdown.js';
 import { isLocalhost, slugify } from './modules/utils.js';
 import { configureEventSearch, openEventSearchModal } from './modules/eventSearch.js';
+import { renderTimeline } from './modules/timeline.js';
 
 const state = {
   dataset: null,
@@ -234,6 +235,9 @@ const els = {
   showSponsorsTab: document.getElementById('showSponsorsTab'),
   showSitemapTab: document.getElementById('showSitemapTab'),
   sitemapWorkspacePanel: document.getElementById('sitemapWorkspacePanel'),
+  showTimelineTab: document.getElementById('showTimelineTab'),
+  timelineWorkspacePanel: document.getElementById('timelineWorkspacePanel'),
+  timelineCanvas: document.getElementById('timelineCanvas'),
   sponsorSessionPickerModal: document.getElementById('sponsorSessionPickerModal'),
   sponsorSessionPickerList: document.getElementById('sponsorSessionPickerList'),
   sponsorSessionPickerCount: document.getElementById('sponsorSessionPickerCount'),
@@ -1876,7 +1880,7 @@ function setSponsorWorkspaceExpanded(expanded) {
 }
 
 function setActiveEditorTab(tab) {
-  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap'].includes(tab) ? tab : 'event';
+  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline'].includes(tab) ? tab : 'event';
   state.activeEditorTab = nextTab;
 
   if (els.eventWorkspacePanel) {
@@ -1928,10 +1932,30 @@ function setActiveEditorTab(tab) {
     els.showSitemapTab.setAttribute('aria-selected', active ? 'true' : 'false');
     if (active) renderSitemap();
   }
+  if (els.sitemapWorkspacePanel) {
+    els.sitemapWorkspacePanel.classList.toggle('hidden', nextTab !== 'sitemap');
+  }
+  if (els.timelineWorkspacePanel) {
+    els.timelineWorkspacePanel.classList.toggle('hidden', nextTab !== 'timeline');
+  }
+  if (els.showTimelineTab) {
+    const active = nextTab === 'timeline';
+    els.showTimelineTab.classList.toggle('is-active', active);
+    els.showTimelineTab.setAttribute('aria-selected', active ? 'true' : 'false');
+    if (active && state.dataset && els.timelineCanvas) {
+      renderTimeline(els.timelineCanvas, state.dataset, {
+        markDirty: () => markDirty(true),
+        trackQuickSessionChange,
+        utcIsoToLocalInput,
+        localInputToUtcIso,
+        getEventTimezone,
+      });
+    }
+  }
 }
 
 async function switchEditorTab(tab) {
-  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap'].includes(tab) ? tab : 'event';
+  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline'].includes(tab) ? tab : 'event';
   if (nextTab === state.activeEditorTab) return true;
   const allowed = await confirmDiscardPendingChanges(`${nextTab} form`);
   if (!allowed) return false;
@@ -3513,6 +3537,12 @@ function bindEvents() {
   if (els.showSitemapTab) {
     els.showSitemapTab.addEventListener('click', async () => {
       await switchEditorTab('sitemap');
+    });
+  }
+
+  if (els.showTimelineTab) {
+    els.showTimelineTab.addEventListener('click', async () => {
+      await switchEditorTab('timeline');
     });
   }
 
