@@ -20,7 +20,7 @@
             line-height: 1.5;
             -webkit-text-size-adjust: 100%;
             tab-size: 4;
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
         body {
             margin: 0;
@@ -75,9 +75,7 @@
             align-items: center;
             justify-content: center;
             padding: 1.25rem;
-            background:
-                radial-gradient(circle at 20% 10%, rgba(70, 143, 211, 0.2), transparent 35%),
-                linear-gradient(170deg, rgba(7, 17, 29, 0.96), rgba(13, 27, 42, 0.97));
+            background: var(--bg-0);
             transition: opacity 180ms ease, visibility 180ms ease;
         }
         .page-loading-overlay.is-hidden {
@@ -167,10 +165,7 @@
         }
         body.theme-dark {
             color: var(--text-0);
-            background:
-                radial-gradient(circle at 20% -10%, #1e3b63 0%, transparent 40%),
-                radial-gradient(circle at 90% 0%, #1a3458 0%, transparent 35%),
-                linear-gradient(170deg, var(--bg-0), var(--bg-1));
+            background: var(--bg-0);
         }
         .theme-dark .bg-white {
             background-color: var(--surface-0) !important;
@@ -627,14 +622,20 @@
             padding-top: 14px;
         }
         .slot-heading {
-            background: linear-gradient(90deg, rgba(23, 48, 75, 0.85), rgba(20, 35, 52, 0.78));
-            border: 1px solid rgba(101, 145, 193, 0.25);
+            background: rgba(6, 12, 24, 0.97);
+            border: none;
+            border-left: 3px solid rgba(46, 163, 255, 0.55);
             border-radius: 0;
-            color: var(--text-1) !important;
-            backdrop-filter: blur(5px);
+            color: var(--text-2) !important;
+            font-size: 0.74rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding-left: 0.85rem;
+            backdrop-filter: none;
         }
-        .slot-bg-a { background: linear-gradient(165deg, rgba(38, 61, 89, 0.75), rgba(22, 36, 55, 0.78)); }
-        .slot-bg-b { background: linear-gradient(165deg, rgba(50, 70, 96, 0.72), rgba(27, 42, 63, 0.78)); }
+        .slot-bg-a { background: rgba(9, 16, 28, 0.88); }
+        .slot-bg-b { background: rgba(12, 21, 36, 0.85); }
         .event-card {
             border-color: rgba(132, 180, 226, 0.3);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
@@ -664,11 +665,18 @@
             background-color: rgba(74, 118, 163, 0.22) !important;
         }
         .header-shell {
-            background:
-                radial-gradient(circle at 12% 30%, rgba(152, 209, 255, 0.2), transparent 34%),
-                radial-gradient(circle at 78% 10%, rgba(122, 193, 255, 0.22), transparent 40%),
-                linear-gradient(120deg, #0d4d81, #0a3e69 60%, #0a3559);
-            border-bottom: 1px solid rgba(169, 215, 255, 0.28);
+            background: #040c18;
+            border-bottom: none;
+            position: relative;
+        }
+        .header-shell::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #2ea3ff 0%, #06b6d4 55%, transparent 100%);
         }
         .header-logo {
             width: 104px;
@@ -1089,6 +1097,7 @@
             line-height: 1.2;
             text-transform: uppercase;
             letter-spacing: 0.04em;
+            text-align: center;
         }
         .sponsor-logo-row {
             display: grid;
@@ -1342,12 +1351,21 @@
                 grid-template-columns: 142px minmax(0, 1fr);
                 gap: 0.75rem;
             }
+            #sponsorsContainer {
+                width: 100vw;
+                margin-left: calc(50% - 50vw);
+                border-radius: 0;
+                border-left: none !important;
+                border-right: none !important;
+            }
             .sponsor-logo-row {
-                gap: 0.7rem;
-                grid-template-columns: repeat(auto-fit, minmax(140px, 156px));
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                justify-content: stretch;
+                column-gap: 0.7rem;
+                row-gap: 0.85rem;
             }
             .sponsor-card {
-                max-width: 156px;
+                max-width: 100%;
             }
         }
         @media (max-width: 479px) {
@@ -2898,4 +2916,71 @@
         }
         .theme-dark .event-search-empty {
             color: #a0bdd6;
+        }
+
+        /* ── Per-track pill colours ─────────────────────────────────── */
+        .track-pill[data-track="Keynote"] {
+            background: rgba(245, 158, 11, 0.14) !important;
+            border-color: rgba(245, 158, 11, 0.5) !important;
+            color: #fbbf24 !important;
+        }
+        .track-pill[data-track="Drupal Development"] {
+            background: rgba(16, 185, 129, 0.12) !important;
+            border-color: rgba(16, 185, 129, 0.45) !important;
+            color: #34d399 !important;
+        }
+        .track-pill[data-track="Web Tools & Complementary Technologies"] {
+            background: rgba(14, 165, 233, 0.12) !important;
+            border-color: rgba(14, 165, 233, 0.45) !important;
+            color: #38bdf8 !important;
+        }
+        .track-pill[data-track="User Experience & Content"] {
+            background: rgba(249, 115, 22, 0.12) !important;
+            border-color: rgba(249, 115, 22, 0.45) !important;
+            color: #fb923c !important;
+        }
+        .track-pill[data-track="People & Culture"] {
+            background: rgba(168, 85, 247, 0.12) !important;
+            border-color: rgba(168, 85, 247, 0.45) !important;
+            color: #c084fc !important;
+        }
+        .track-pill[data-track="Sponsor"] {
+            background: rgba(99, 102, 241, 0.12) !important;
+            border-color: rgba(99, 102, 241, 0.45) !important;
+            color: #a5b4fc !important;
+        }
+
+        /* ── Per-track card left-border accents (not applied to selected cards) */
+        .event-card[data-primary-track]:not(.drupal-blue-border-light) {
+            border-left-width: 3px;
+        }
+        .event-card[data-primary-track="Keynote"]:not(.drupal-blue-border-light) {
+            border-left-color: rgba(245, 158, 11, 0.75) !important;
+        }
+        .event-card[data-primary-track="Drupal Development"]:not(.drupal-blue-border-light) {
+            border-left-color: rgba(16, 185, 129, 0.7) !important;
+        }
+        .event-card[data-primary-track="Web Tools & Complementary Technologies"]:not(.drupal-blue-border-light) {
+            border-left-color: rgba(14, 165, 233, 0.7) !important;
+        }
+        .event-card[data-primary-track="User Experience & Content"]:not(.drupal-blue-border-light) {
+            border-left-color: rgba(249, 115, 22, 0.7) !important;
+        }
+        .event-card[data-primary-track="People & Culture"]:not(.drupal-blue-border-light) {
+            border-left-color: rgba(168, 85, 247, 0.7) !important;
+        }
+        .event-card[data-primary-track="Sponsor"]:not(.drupal-blue-border-light) {
+            border-left-color: rgba(99, 102, 241, 0.7) !important;
+        }
+        .event-card[data-primary-track="Other"]:not(.drupal-blue-border-light) {
+            border-left-color: rgba(100, 116, 139, 0.5) !important;
+        }
+
+        /* ── Day headings ────────────────────────────────────────────── */
+        .theme-dark #eventsContainer h2 {
+            font-weight: 700 !important;
+            color: #d4e4f8 !important;
+            border-bottom: 1px solid var(--line-0);
+            padding-bottom: 0.55rem;
+            margin-bottom: 1.1rem !important;
         }
