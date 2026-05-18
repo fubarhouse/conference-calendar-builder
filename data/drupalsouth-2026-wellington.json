@@ -271,6 +271,19 @@
         "bgStyle": "auto",
         "aspect": "auto",
         "enabled": true
+      },
+      {
+        "id": "sponsor-20",
+        "title": "The Drop Times",
+        "tier": "Media",
+        "row": 6,
+        "priority": 200,
+        "image": "./img/sponsors/drupalsouth/2026-wellington/sponsor-20.png",
+        "imageAlt": "Sponsor 20The Drop Times logo",
+        "link": "https://drupalsouth.org/sponsors/thedroptimes",
+        "bgStyle": "auto",
+        "aspect": "auto",
+        "enabled": true
       }
     ]
   },
@@ -349,7 +362,7 @@
         "Dave Sparks"
       ],
       "full_description": "Dave Sparks will deliver a retrospective covering \"1 Team, 2 Decades of delivery, 3 Quick thoughts for the future.\" The presenter plans to offer \"a brief debunking of dearly held beliefs, rapid-fire reckons from a personal perspective,\" along with musical references spanning multiple decades. Attendees should expect an unconventional presentation style rather than traditional corporate messaging.",
-      "video_url": "",
+      "video_url": "https://youtu.be/-qX1kiSzu8U",
       "sponsorIds": "sponsor-1"
     },
     {
@@ -481,7 +494,7 @@
         "Alex Skrypnyk"
       ],
       "full_description": "The session explores a practical, production-tested approach where developers maintain control while AI agents execute well-defined tasks. Key topics covered include feature planning before prompting, using AI agents for scoped implementations, generating tests and integrations, and code review processes. The presenter emphasizes treating AI as an accelerator rather than autonomous builder, showing \"where AI fits into modern Drupal development - and where it absolutely does not.\"",
-      "video_url": "",
+      "video_url": "https://youtu.be/vhEJThnAKj8",
       "sponsorIds": ""
     },
     {
@@ -801,7 +814,7 @@
         "Jonnie Haddon"
       ],
       "full_description": "The session explores evolving government practices, examining \"where we have come from, what's changed, what hasn't and why working with Government might be worth another look.\" It addresses perceptions of slow government processes and difficult procurement while highlighting new infrastructure and openness to local tech collaboration.",
-      "video_url": "",
+      "video_url": "https://youtu.be/ve6LlBv937g",
       "sponsorIds": ""
     },
     {
@@ -908,7 +921,7 @@
       "startTime": "2026-05-13T21:00:00Z",
       "endTime": "2026-05-13T21:30:00Z",
       "duration": "P30M",
-      "title": "The Case for Drupal CMS",
+      "title": "The Case for Drupal CMS: Growing adoption and expanding our focus for a new digital era",
       "location": "Te Aro",
       "link": "",
       "track": [
@@ -916,7 +929,7 @@
       ],
       "speakers": "Pamela Barone",
       "full_description": "When Drupal CMS was announced almost two years ago, the focus on user experience for less technical users may have felt like a pivot for a project that has largely prioritised developers in recent years. But rather than changing the focus, the introduction of a product-ised release is all about growing adoption by expanding Drupal's reach. This is more than just marketing -- although that's important too! -- and the convergence of new developments in the last year or so does feel like the start of a new era for Drupal, not only for newbies but for all of us.\n\nNow that we are a few months on from the release of Drupal CMS 2.0, it's a good time to reflect on the initiative and see where things stand. In this session, I will:\n\nRevisit the strategy for Drupal CMS and how fits in with the larger project\nExplain what Drupal CMS actually is and touch on some of the highlights from the latest release\nProvide some observations about outcomes so far\nLook ahead to what's coming up",
-      "video_url": "",
+      "video_url": "https://youtu.be/tT5xOX-GRnI",
       "sponsorIds": ""
     },
     {
@@ -948,7 +961,7 @@
         "Owen Lansbury"
       ],
       "full_description": "The presentation examines how Drupal has adapted amid significant market shifts, including budget constraints, increased competition from SaaS and enterprise solutions, and AI-driven disruption. The speaker will discuss strategic decisions behind recent developments like Drupal CMS, Core 11.3, and the global Drupal AI Initiative, analyzing implications for both digital agencies and organizations considering or currently using Drupal.",
-      "video_url": "",
+      "video_url": "https://youtu.be/pOUDMEQmZG0",
       "sponsorIds": ""
     },
     {
@@ -1014,7 +1027,7 @@
         "Suchi Garg"
       ],
       "full_description": "The session addresses how AI can produce outputs aligned with organizational standards. It introduces Drupal's Context Control Center Module as a centralized system for managing \"rules, policies and guidelines\" that connect to AI features. The presentation covers practical applications like maintaining brand consistency, ensuring government compliance, and managing content accessibility standards.",
-      "video_url": "",
+      "video_url": "https://youtu.be/Bg5PW_NbYCw",
       "sponsorIds": ""
     },
     {
@@ -1107,7 +1120,7 @@
       "startTime": "2026-05-13T23:10:00Z",
       "endTime": "2026-05-13T23:40:00Z",
       "duration": "P30M",
-      "title": "Eventa: The Drupal based ticketing platform that you used to get here",
+      "title": "Eventa: A Drupal based ticketing platform",
       "location": "Loft",
       "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4338",
       "track": [
@@ -1430,7 +1443,7 @@
         "Yi Jiang"
       ],
       "full_description": "Yi Jiang explores Web Components and Single Directory Components (SDC), examining how \"reusable, tested components help site builders safely create richer pages.\" The session examines what occurs when demonstration code meets production environments.",
-      "video_url": "",
+      "video_url": "https://youtu.be/p0lqGXIFzG8",
       "sponsorIds": ""
     },
     {
