@@ -43,7 +43,11 @@ async function main() {
 
   const payload = {
     defaultFile,
-    files: files.map((file) => (file === defaultFile ? { file, default: true } : { file }))
+    files: files.map((file) => {
+      const entry = { file };
+      if (file === defaultFile) entry.default = true;
+      return entry;
+    })
   };
 
   await writeFile(indexPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');

@@ -123,36 +123,6 @@ export function wireStatsHandlers(selectionOverviewFn, stageStatsFn) {
   setSelectionOverviewUpdater((events) => selectionOverviewFn(events, stageStatsFn));
 }
 
-function getCategoryFromFilename(file = '') {
-  if (file.startsWith('drupalsouth')) return 'DrupalSouth';
-  if (file.startsWith('drupalcon')) return 'DrupalCon';
-  if (file.startsWith('drupalgovau')) return 'DrupalGovAU';
-  if (file.startsWith('ddd')) return 'Drupal Dev Days';
-  return 'Other';
-}
-
-function parseMetaFromFilename(file = '') {
-  const parts = file.replace('.json', '').split('-');
-  const yearIdx = parts.findIndex((p) => /^20\d{2}$/.test(p));
-  if (yearIdx === -1) return { designation: getCategoryFromFilename(file), year: '', location: '' };
-  const designation = getCategoryFromFilename(file);
-  const year = parts[yearIdx];
-  const afterYear = parts.slice(yearIdx + 1);
-  let locationParts;
-  if (afterYear.length > 0) {
-    locationParts = afterYear;
-  } else {
-    // Year is last (e.g. drupalcon-eu-barcelona-2024): skip designation slug (1 part) + region (1 part)
-    locationParts = parts.slice(file.startsWith('drupalcon-') ? 2 : 1, yearIdx);
-  }
-  const location = locationParts.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  return { designation, year, location };
-}
-
-function getEventCategoryFallback(item = null) {
-  return getCategoryFromFilename(item?.file || '');
-}
-
 function normalizeCategoryName(value, fallback = 'Other') {
   const raw = String(value || '').trim();
   if (!raw) return fallback;
@@ -160,18 +130,6 @@ function normalizeCategoryName(value, fallback = 'Other') {
   if (lower === 'drupalgov') return 'DrupalGovAU';
   if (lower === 'drupalgovau') return 'DrupalGovAU';
   return raw;
-}
-
-function getEventCategoryFromMeta(eventMeta = null, fallbackItem = null) {
-  const fromMeta = normalizeCategoryName(eventMeta?.designation || '');
-  if (fromMeta) {
-    return fromMeta;
-  }
-  return normalizeCategoryName(getEventCategoryFallback(fallbackItem), 'Other');
-}
-
-function resolveEffectiveCategory(item = null, eventMeta = null) {
-  return getEventCategoryFromMeta(eventMeta, item);
 }
 
 function normalizeFlagValue(value) {
@@ -204,7 +162,7 @@ const hydrateAllEventMeta = once(async () => {
         const data = await response.json();
         const eventMeta = data?.event || {};
         manifestEventMetaByFile.set(item.file, eventMeta);
-        manifestCategoryByFile.set(item.file, resolveEffectiveCategory(item, eventMeta));
+        manifestCategoryByFile.set(item.file, normalizeCategoryName(eventMeta?.designation || '', 'Other'));
         manifestVisibleByFile.set(item.file, isEventVisibleByConfig(item, eventMeta));
       } catch {
         // keep filename-based defaults
@@ -217,8 +175,8 @@ async function hydrateManifestCategories() {
   eventCatalog = await loadEventCatalog();
   for (const item of eventCatalog) {
     if (!item?.file) continue;
-    manifestEventMetaByFile.set(item.file, parseMetaFromFilename(item.file));
-    manifestCategoryByFile.set(item.file, getCategoryFromFilename(item.file));
+    manifestEventMetaByFile.set(item.file, {});
+    manifestCategoryByFile.set(item.file, 'Other');
     manifestVisibleByFile.set(item.file, item.enabled !== false && item.hidden !== true);
   }
   configureEventSearch({
@@ -230,34 +188,8 @@ async function hydrateManifestCategories() {
   });
 }
 
-export function getEventCategory(eventManifestItem) {
-  const file = eventManifestItem?.file || '';
-  if (!file) return 'Other';
-  return manifestCategoryByFile.get(file) || normalizeCategoryName(getEventCategoryFallback(eventManifestItem), 'Other');
-}
 
-export function getManifestForCategory(category) {
-  return eventCatalog
-    .filter(
-      (evt) =>
-        getEventCategory(evt) === category &&
-        (manifestVisibleByFile.get(evt.file) ?? true)
-    )
-    .sort((a, b) => {
-      const metaA = manifestEventMetaByFile.get(a.file) || {};
-      const metaB = manifestEventMetaByFile.get(b.file) || {};
-      const yearA = Number.parseInt(String(metaA.year || ''), 10);
-      const yearB = Number.parseInt(String(metaB.year || ''), 10);
 
-      if (Number.isFinite(yearA) && Number.isFinite(yearB) && yearA !== yearB) {
-        return yearB - yearA;
-      }
-
-      const labelA = getCatalogLabel(a).toLowerCase();
-      const labelB = getCatalogLabel(b).toLowerCase();
-      return labelB.localeCompare(labelA);
-    });
-}
 
 export function getSearchableEvents() {
   return eventCatalog
@@ -287,30 +219,9 @@ export function getSearchableEvents() {
 
 export async function selectEventFromSearch(category, file) {
   state.currentEventCategory = category;
-  setActiveTab(category);
-  populateEventSelector(category, file);
+  updateHeaderBranding(category);
   localStorage.setItem('selectedEventFile', file);
   await loadEvent(file);
-}
-
-function getAvailableEnabledCategories() {
-  const categories = [];
-  eventCatalog.forEach((item) => {
-    const category = getEventCategory(item);
-    const isVisible = manifestVisibleByFile.get(item.file) ?? true;
-    if (category && isVisible && !categories.includes(category)) {
-      categories.push(category);
-    }
-  });
-  return categories;
-}
-
-function renderCategoryOptions(categories) {
-  const select = document.getElementById('eventCategorySelect');
-  if (!select) return;
-  select.innerHTML = categories
-    .map((category) => `<option value="${category}">${category}</option>`)
-    .join('');
 }
 
 export function getHeaderBranding(category, eventMeta = null) {
@@ -654,42 +565,6 @@ function formatEventDateRange(eventMeta = null) {
 }
 
 
-export function setActiveTab(category) {
-  const select = document.getElementById('eventCategorySelect');
-  if (select) {
-    select.value = category;
-  }
-  updateHeaderBranding(category);
-}
-
-export function populateEventSelector(category, preferredFile) {
-  const eventSelector = document.getElementById('eventSelector');
-  const categoryEvents = getManifestForCategory(category);
-  eventSelector.innerHTML = '';
-
-  categoryEvents.forEach((evt) => {
-    const option = document.createElement('option');
-    option.value = evt.file;
-    option.textContent = getCatalogLabel(evt);
-    eventSelector.appendChild(option);
-  });
-
-  const hasPreferred = preferredFile && categoryEvents.some((evt) => evt.file === preferredFile);
-  if (hasPreferred) {
-    eventSelector.value = preferredFile;
-    return;
-  }
-
-  const categoryDefault = categoryEvents.find((evt) => evt.default);
-  if (categoryDefault) {
-    eventSelector.value = categoryDefault.file;
-    return;
-  }
-
-  if (categoryEvents.length > 0) {
-    eventSelector.value = categoryEvents[0].file;
-  }
-}
 
 function getManifestItemByFile(file) {
   return eventCatalog.find((item) => item.file === file) || null;
@@ -704,7 +579,7 @@ function getCatalogLabel(item = null) {
     return `${designation} ${year}: ${location}`;
   }
   const joined = [designation, year, location].filter(Boolean).join(' ').trim();
-  return joined || String(item?.file || '');
+  return joined || String(item?.file || '').replace(/\.json$/i, '');
 }
 
 function getEventDisplayName(meta = {}, manifestItem = null) {
@@ -908,22 +783,9 @@ function openShareModal() {
 }
 
 function applyScheduleLockUi() {
-  const categoryWrap = document.getElementById('eventCategorySelectWrap');
-  const selectorLabel = document.getElementById('eventSelectorLabel');
-  const selectorWrap = document.getElementById('eventSelectorWrap');
   const searchButton = document.getElementById('searchEvents');
   const shareButton = document.getElementById('shareSchedule');
-  const hideEventSelectors = state.scheduleLockedToCurrentEvent || isMobileViewport();
-  const toggleVisibility = (element, hidden) => {
-    if (!element) return;
-    element.classList.toggle('hidden', hidden);
-  };
-
-  toggleVisibility(categoryWrap, hideEventSelectors);
-  toggleVisibility(selectorLabel, hideEventSelectors);
-  toggleVisibility(selectorWrap, hideEventSelectors);
-  toggleVisibility(searchButton, state.scheduleLockedToCurrentEvent);
-
+  if (searchButton) searchButton.classList.toggle('hidden', state.scheduleLockedToCurrentEvent);
   if (shareButton) {
     shareButton.style.width = state.scheduleLockedToCurrentEvent ? '100%' : '';
     shareButton.style.flex = state.scheduleLockedToCurrentEvent ? '1 1 auto' : '';
@@ -1000,9 +862,10 @@ export async function loadEvent(filename) {
   const manifestItem = getManifestItemByFile(filename);
   const events = await fetchEvents(filename);
   updateHeaderFlag(manifestItem || inferFlagFromMeta(state.eventMeta || {}));
-  if (state.currentEventCategory) {
-    updateHeaderBranding(state.currentEventCategory);
-  }
+  const category = normalizeCategoryName(state.eventMeta?.designation || '', 'Other');
+  state.currentEventCategory = category;
+  manifestCategoryByFile.set(filename, category);
+  updateHeaderBranding(category);
   const meta = state.eventMeta || {};
   state.eventColumns = Number(meta.columns) > 0 ? Number(meta.columns) : 3;
   const eventDisplayName = updateDocumentTitle(meta, manifestItem);
@@ -1131,34 +994,6 @@ function parseAndApplyStartupModes(urlModes) {
   applyThemeClass(state.themeMode);
 }
 
-function wireEventListeners(eventSelector) {
-  eventSelector.addEventListener('change', () => {
-    localStorage.setItem('selectedEventFile', eventSelector.value);
-    loadEvent(eventSelector.value);
-  });
-
-  const eventCategorySelect = document.getElementById('eventCategorySelect');
-  if (eventCategorySelect) {
-    eventCategorySelect.addEventListener('change', async () => {
-      const category = eventCategorySelect.value;
-      if (!category || category === state.currentEventCategory) return;
-
-      state.currentEventCategory = category;
-      setActiveTab(category);
-
-      const currentSavedEvent = localStorage.getItem('selectedEventFile');
-      populateEventSelector(category, currentSavedEvent);
-
-      if (eventSelector.value) {
-        localStorage.setItem('selectedEventFile', eventSelector.value);
-        await loadEvent(eventSelector.value);
-      }
-    });
-  }
-
-  setupEventListeners();
-}
-
 export async function init() {
   setupEditorAccessButton();
   bindViewportScheduleLockUi();
@@ -1166,45 +1001,19 @@ export async function init() {
   parseAndApplyStartupModes(urlModes);
   await hydrateManifestCategories();
 
-  const eventSelector = document.getElementById('eventSelector');
+  const defaultEvent = eventCatalog.find((e) => e.default) || eventCatalog[0];
+  if (!defaultEvent) return;
+
   const fileFromUrl = getEventFileById(urlModes.id);
   const savedEvent = localStorage.getItem('selectedEventFile');
   const savedEventIsValid = savedEvent && eventCatalog.some((e) => e.file === savedEvent);
-  const defaultEvent = eventCatalog.find((e) => e.default) || eventCatalog[0];
-  if (!defaultEvent) {
-    eventSelector.innerHTML = '';
-    return;
-  }
-
   const initialFile = fileFromUrl || (savedEventIsValid ? savedEvent : defaultEvent.file);
-  const initialManifestItem = eventCatalog.find((e) => e.file === initialFile) || defaultEvent;
-  const initialCategory = getEventCategory(initialManifestItem);
-  const availableCategories = getAvailableEnabledCategories();
-  const safeInitialCategory = availableCategories.includes(initialCategory)
-    ? initialCategory
-    : availableCategories[0] || '';
 
-  renderCategoryOptions(availableCategories);
-
-  if (!safeInitialCategory) {
-    eventSelector.innerHTML = '';
-    return;
-  }
-
-  state.currentEventCategory = safeInitialCategory;
-  setActiveTab(safeInitialCategory);
-  populateEventSelector(safeInitialCategory, initialFile);
+  setupEventListeners();
   applyScheduleLockUi();
 
-  if (eventSelector.value) {
-    localStorage.setItem('selectedEventFile', eventSelector.value);
-  }
-
-  wireEventListeners(eventSelector);
-
-  if (eventSelector.value) {
-    await loadEvent(eventSelector.value);
-  }
+  localStorage.setItem('selectedEventFile', initialFile);
+  await loadEvent(initialFile);
 }
 
 export function toggleEventSelectionPublic(eventId) {

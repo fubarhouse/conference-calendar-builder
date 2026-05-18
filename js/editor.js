@@ -10,7 +10,6 @@ const state = {
   fileHandle: null,
   projectDirHandle: null,
   folderConnectedInSession: false,
-  lastDatasetSelectValue: '',
   selectedIndex: -1,
   selectedSponsorIndex: -1,
   draggingIndex: -1,
@@ -176,7 +175,7 @@ function hasFsApi() {
 const els = {
   blocked: document.getElementById('editorBlocked'),
   app: document.getElementById('editorApp'),
-  datasetSelect: document.getElementById('datasetSelect'),
+  datasetLabel: document.getElementById('datasetLabel'),
   editorSearchEvents: document.getElementById('editorSearchEvents'),
   folderConnectionToggle: document.getElementById('folderConnectionToggle'),
   openFileDataset: document.getElementById('openFileDataset'),
@@ -376,24 +375,17 @@ async function connectProjectFolder() {
   state.projectDirHandle = handle;
   state.folderConnectedInSession = true;
   await setStoredProjectDirHandle(handle);
-  await renderDatasetOptionsFromConnectedFolder();
-  setDatasetLoadingEnabled(true);
   setFolderConnectionButtonState();
   void refreshEditorSearch();
 
-  const selectedFile = String(els.datasetSelect.value || '').trim();
-  if (selectedFile) {
-    if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${selectedFile}`))) {
+  const currentFile = state.file;
+  if (currentFile && isEditorDatasetFile(currentFile)) {
+    if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${currentFile}`))) {
       try {
-        await loadDataset(selectedFile);
+        await loadDataset(currentFile);
       } catch (error) {
-        els.datasetSelect.value = '';
-        state.lastDatasetSelectValue = '';
         window.alert(`Could not load dataset: ${error.message}`);
       }
-    } else {
-      els.datasetSelect.value = '';
-      state.lastDatasetSelectValue = '';
     }
   }
 
@@ -417,12 +409,11 @@ function disconnectProjectFolder() {
   state.dataset = null;
   state.file = '';
   state.outputPath = '';
-  state.lastDatasetSelectValue = '';
   state.selectedIndex = -1;
   state.selectedSponsorIndex = -1;
   state.sessionSearchQuery = '';
   setCurrentFilenameLabel();
-  setDatasetLoadingEnabled(false);
+  updateDatasetLabel('');
   setEditorButtonsEnabled(false);
   els.eventMetaForm.innerHTML = '';
   if (els.logoForm) {
@@ -438,7 +429,6 @@ function disconnectProjectFolder() {
   if (els.sessionSearchInput) {
     els.sessionSearchInput.value = '';
   }
-  renderDatasetOptionsFromConnectedFolder();
   markDirty(false);
   resetSessionQuickEditState();
   resetSponsorQuickEditState();
@@ -551,8 +541,17 @@ function setFolderConnectionButtonState() {
   }
 }
 
-function setDatasetLoadingEnabled(enabled) {
-  els.datasetSelect.disabled = !enabled;
+function updateDatasetLabel(file) {
+  if (!els.datasetLabel) return;
+  if (!file) {
+    els.datasetLabel.textContent = 'No dataset loaded';
+    els.datasetLabel.classList.add('text-gray-400');
+    return;
+  }
+  const meta = state.dataset?.event || {};
+  const label = buildDatasetOptionLabel(file, meta);
+  els.datasetLabel.textContent = label || file;
+  els.datasetLabel.classList.remove('text-gray-400');
 }
 
 function cloneJsonValue(value) {
@@ -1122,66 +1121,6 @@ async function loadDatasetMetaForGrouping(files) {
   return records;
 }
 
-async function renderDatasetOptionsFromCatalog(preferred = '') {
-  const files = eventCatalog.map((item) => item.file).filter((f) => isEditorDatasetFile(f));
-  if (files.length === 0) {
-    els.datasetSelect.innerHTML = '<option value="">No datasets available</option>';
-    els.datasetSelect.value = '';
-    return;
-  }
-
-  els.datasetSelect.innerHTML = [...files]
-    .sort((a, b) => a.localeCompare(b))
-    .map((file) => `<option value="${escapeAttr(file)}">${escapeHtml(getManifestLabelByFile(file))}</option>`)
-    .join('');
-
-  const target = preferred || eventCatalog.find((i) => i.default)?.file || files[0];
-  if (target) els.datasetSelect.value = target;
-}
-
-async function renderDatasetOptionsFromConnectedFolder(preferred = '') {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    await renderDatasetOptionsFromCatalog(preferred);
-    return;
-  }
-
-  const files = await listDatasetFilesFromConnectedFolder();
-  if (files.length === 0) {
-    els.datasetSelect.innerHTML = '<option value="">No JSON files found in data/</option>';
-    els.datasetSelect.value = '';
-    return;
-  }
-
-  const groupedRecords = await loadDatasetMetaForGrouping(files);
-  const groups = new Map();
-  groupedRecords.forEach((record) => {
-    if (!groups.has(record.group)) groups.set(record.group, []);
-    groups.get(record.group).push(record);
-  });
-
-  els.datasetSelect.innerHTML = [...groups.entries()]
-    .map(([groupName, records]) => {
-      const options = records
-        .map((record) => `<option value="${escapeAttr(record.file)}">${escapeHtml(record.label)}</option>`)
-        .join('');
-      return `<optgroup label="${escapeAttr(groupName)}">${options}</optgroup>`;
-    })
-    .join('');
-
-  if (preferred && files.includes(preferred)) {
-    els.datasetSelect.value = preferred;
-    return;
-  }
-
-  const defaultItem = eventCatalog.find((i) => i.default);
-  if (defaultItem && files.includes(defaultItem.file)) {
-    els.datasetSelect.value = defaultItem.file;
-    return;
-  }
-
-  els.datasetSelect.value = files[0];
-}
-
 function normalizeDatasetShape() {
   if (!state.dataset || typeof state.dataset !== 'object') state.dataset = {};
   if (!state.dataset.event || typeof state.dataset.event !== 'object') state.dataset.event = {};
@@ -1232,7 +1171,7 @@ function finalizeDatasetLoad(file) {
   renderSponsorForm();
   if (state.activeEditorTab === 'sitemap') renderSitemap();
   setEditorButtonsEnabled(true);
-  if (els.datasetSelect.value !== file) els.datasetSelect.value = file;
+  updateDatasetLabel(file);
   if (els.sessionSearchInput) els.sessionSearchInput.value = '';
 }
 
@@ -1252,7 +1191,6 @@ async function loadDataset(file) {
   state.dataset = parsed;
   state.file = file;
   state.outputPath = targetPath;
-  state.lastDatasetSelectValue = file;
   state.fileHandle = handle;
   state.selectedIndex = -1;
   state.selectedSponsorIndex = -1;
@@ -1282,7 +1220,6 @@ async function loadDatasetFromUrl(file) {
   state.dataset = parsed;
   state.file = file;
   state.outputPath = normalizeOutputPath(`data/${file}`);
-  state.lastDatasetSelectValue = file;
   state.fileHandle = null;
   state.selectedIndex = -1;
   state.selectedSponsorIndex = -1;
@@ -1299,18 +1236,11 @@ async function loadDatasetFromFileObject(fileObj) {
   state.dataset = parsed;
   state.file = file;
   state.outputPath = normalizeOutputPath(`data/${file}`);
-  state.lastDatasetSelectValue = file;
   state.fileHandle = null;
   state.selectedIndex = -1;
   state.selectedSponsorIndex = -1;
   state.sessionSearchQuery = '';
   normalizeDatasetShape();
-  if (!els.datasetSelect.querySelector(`option[value=${JSON.stringify(file)}]`)) {
-    const opt = document.createElement('option');
-    opt.value = file;
-    opt.textContent = file;
-    els.datasetSelect.prepend(opt);
-  }
   finalizeDatasetLoad(file);
 }
 
@@ -3372,35 +3302,6 @@ function renderSitemap() {
 }
 
 function bindEvents() {
-  els.datasetSelect.addEventListener('change', async () => {
-    const nextFile = String(els.datasetSelect.value || '').trim();
-    const previousValue = state.lastDatasetSelectValue || '';
-
-    if (!nextFile) {
-      els.datasetSelect.value = previousValue;
-      return;
-    }
-    if (nextFile === previousValue) {
-      return;
-    }
-
-    if (!(await confirmDiscardPendingChanges(`dataset ${nextFile}`))) {
-      els.datasetSelect.value = previousValue;
-      return;
-    }
-
-    try {
-      if (state.projectDirHandle && state.folderConnectedInSession) {
-        await loadDataset(nextFile);
-      } else {
-        await loadDatasetFromUrl(nextFile);
-      }
-    } catch (error) {
-      els.datasetSelect.value = previousValue;
-      window.alert(`Could not load dataset: ${error.message}`);
-    }
-  });
-
   els.newDataset.addEventListener('click', async () => {
     if (!(await confirmDiscardPendingChanges('a new dataset'))) return;
     const pathValue = promptForNewFilename();
@@ -3679,30 +3580,74 @@ async function buildConnectedFolderSearchCatalog() {
     });
 }
 
+let _catalogSearchEntries = null;
+
+async function buildCatalogSearchEntries() {
+  if (_catalogSearchEntries) return _catalogSearchEntries;
+  const files = eventCatalog.filter((item) => isEditorDatasetFile(item.file)).map((item) => item.file);
+  const entries = await Promise.all(
+    files.map(async (file) => {
+      try {
+        const resp = await fetch(`./data/${file}`);
+        if (!resp.ok) throw new Error();
+        const parsed = await resp.json();
+        const meta = parsed?.event || {};
+        const designation = String(meta.designation || '').trim();
+        const year = String(meta.year || '').trim();
+        const location = String(meta.location || '').trim();
+        const label =
+          designation && year && location
+            ? `${designation} ${year}: ${location}`
+            : [designation, year, location].filter(Boolean).join(' ') || file.replace(/\.json$/i, '');
+        return { file, category: designation || 'Other', designation, location, year, region: String(meta.region || '').trim(), venue: String(meta.venue || '').trim(), label };
+      } catch {
+        const fallbackDesignation = String(eventCatalog.find((i) => i.file === file)?.designation || '').trim();
+        return { file, category: fallbackDesignation || 'Other', designation: fallbackDesignation, location: '', year: '', region: '', venue: '', label: file.replace(/\.json$/i, '') };
+      }
+    })
+  );
+  _catalogSearchEntries = entries
+    .filter(Boolean)
+    .sort((a, b) => {
+      const ya = Number.parseInt(a.year, 10);
+      const yb = Number.parseInt(b.year, 10);
+      if (Number.isFinite(ya) && Number.isFinite(yb) && ya !== yb) return yb - ya;
+      return a.label.localeCompare(b.label);
+    });
+  return _catalogSearchEntries;
+}
+
 async function refreshEditorSearch() {
   if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    configureEventSearch({ getEvents: () => [], onSelect: async () => {} });
-    if (els.editorSearchEvents) els.editorSearchEvents.disabled = true;
+    configureEventSearch({
+      getEvents: () => buildCatalogSearchEntries(),
+      onSelect: async (_category, file) => {
+        if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${file}`))) {
+          try {
+            await loadDatasetFromUrl(file);
+          } catch (error) {
+            window.alert(`Could not load dataset: ${error.message}`);
+          }
+        }
+      },
+    });
+    if (els.editorSearchEvents) els.editorSearchEvents.disabled = false;
     return;
   }
 
   const searchableEvents = await buildConnectedFolderSearchCatalog();
-
   configureEventSearch({
     getEvents: () => searchableEvents,
     onSelect: async (_category, file) => {
       if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${file}`))) {
         try {
-          els.datasetSelect.value = file;
           await loadDataset(file);
         } catch (error) {
-          els.datasetSelect.value = state.lastDatasetSelectValue || '';
           window.alert(`Could not load dataset: ${error.message}`);
         }
       }
     },
   });
-
   if (els.editorSearchEvents) els.editorSearchEvents.disabled = false;
 }
 
@@ -3721,8 +3666,7 @@ async function init() {
   if (els.editorSearchEvents) {
     els.editorSearchEvents.addEventListener('click', openEventSearchModal);
   }
-  await renderDatasetOptionsFromConnectedFolder();
-  setDatasetLoadingEnabled(true);
+  void refreshEditorSearch();
   bindEvents();
   markDirty(false);
   resetSessionQuickEditState();
