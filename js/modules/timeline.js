@@ -1,16 +1,18 @@
 // Drag-and-drop timeline editor for event session JSON.
-// Renders a calendar grid per day; sessions are draggable/resizable blocks.
+// Display grid: 15-minute slots at ROW_H px each.
+// Drag/add snaps to 15-minute increments (SNAP_MINS).
 
-const ROW_H = 48;        // minimum px per 30-minute slot
-const SNAP_MINS = 30;
-const MIN_SESSION_PX = 32; // minimum rendered height for any session
+const SLOT_MINS = 15;                              // display granularity
+const SNAP_MINS = 15;                              // drag/add snap granularity
+const ROW_H = 44;                                  // px per SLOT_MINS (4×44=176px/hr)
+const SNAP_H = (SNAP_MINS / SLOT_MINS) * ROW_H;   // px per snap step (= 44)
+const MIN_SESSION_PX = 28;                         // minimum rendered session height
 
 let _el = null;
 let _dataset = null;
 let _cbs = null;
 let _activeDay = null;
 let _drag = null;
-let _rowH = ROW_H;      // dynamic slot height, recalculated each render
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -56,7 +58,6 @@ function esc(str) {
 
 function extractDays(dataset) {
   const days = new Set();
-
   const { startDate, endDate } = dataset.event || {};
   if (startDate && endDate) {
     const start = _localDate(startDate);
@@ -71,26 +72,23 @@ function extractDays(dataset) {
       }
     }
   }
-
   for (const item of dataset.items || []) {
     if (item.startTime) {
       const d = _localDate(item.startTime);
       if (d) days.add(d);
     }
   }
-
   return Array.from(days).sort();
 }
 
 // ── Room management ────────────────────────────────────────────────────────
 
-// event.rooms is stored as { [dateStr]: string[] } (per-day).
-// Legacy flat arrays are migrated on first write via _ensureEventRooms().
+// event.rooms is { [dateStr]: string[] }. Legacy flat arrays are migrated on first write.
 
 function _getRooms() {
   const rooms = _dataset.event?.rooms;
   if (!rooms) return _deriveRoomsForDay();
-  if (Array.isArray(rooms)) return rooms.filter(r => r !== ''); // legacy flat array
+  if (Array.isArray(rooms)) return rooms.filter(r => r !== '');
   const dayRooms = rooms[_activeDay];
   return Array.isArray(dayRooms) ? dayRooms.filter(r => r !== '') : _deriveRoomsForDay();
 }
@@ -110,9 +108,7 @@ function _deriveRoomsForDay() {
 function _ensureEventRooms() {
   if (!_dataset.event) _dataset.event = {};
   const rooms = _dataset.event.rooms;
-
   if (Array.isArray(rooms)) {
-    // Migrate flat array → per-day object, applying to all known days
     const days = extractDays(_dataset);
     const perDay = {};
     for (const day of days) perDay[day] = rooms.filter(r => r !== '');
@@ -120,7 +116,6 @@ function _ensureEventRooms() {
   } else if (!rooms || typeof rooms !== 'object') {
     _dataset.event.rooms = {};
   }
-
   if (!Array.isArray(_dataset.event.rooms[_activeDay])) {
     _dataset.event.rooms[_activeDay] = _deriveRoomsForDay();
   }
@@ -146,7 +141,6 @@ function _renameRoom(idx, newName) {
   const oldName = dayRooms[idx];
   if (newName === oldName) return;
   dayRooms[idx] = newName;
-  // Propagate rename to other days and all sessions
   for (const list of Object.values(_dataset.event.rooms)) {
     const i = list.indexOf(oldName);
     if (i !== -1 && list !== dayRooms) list[i] = newName;
@@ -183,40 +177,6 @@ function _reorderRoom(fromIdx, toIdx) {
   _redraw();
 }
 
-function _startRenameRoom(chip, idx) {
-  const label = chip.querySelector('.tl-room-chip-label');
-  if (!label) return;
-  const currentName = _getRooms()[idx] ?? '';
-
-  const input = document.createElement('input');
-  input.className = 'tl-room-chip-input';
-  input.value = currentName;
-  label.replaceWith(input);
-  input.focus();
-  input.select();
-
-  let committed = false;
-  const commit = () => {
-    if (committed) return;
-    committed = true;
-    const newName = input.value.trim();
-    if (newName && newName !== currentName) {
-      _renameRoom(idx, newName);
-    } else {
-      const restored = document.createElement('span');
-      restored.className = 'tl-room-chip-label';
-      restored.textContent = currentName || '(no room)';
-      input.replaceWith(restored);
-    }
-  };
-
-  input.addEventListener('blur', commit);
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); commit(); }
-    if (e.key === 'Escape') { input.value = currentName; commit(); }
-  });
-}
-
 // ── Misc helpers ───────────────────────────────────────────────────────────
 
 function fmtDayLabel(dateStr) {
@@ -245,23 +205,18 @@ function getTimeRange(dayItems) {
       if (m > maxMins) maxMins = m;
     }
   }
+  // Snap boundaries to SNAP_MINS
   minMins = Math.floor(minMins / SNAP_MINS) * SNAP_MINS;
   maxMins = Math.ceil(maxMins / SNAP_MINS) * SNAP_MINS;
   return { minMins, maxMins };
 }
 
-function calcRowH(dayItems) {
-  let minDur = Infinity;
-  for (const { item } of dayItems) {
-    if (!item.startTime) continue;
-    const start = _localMins(item.startTime);
-    const end = item.endTime ? _localMins(item.endTime) : start + 60;
-    const dur = end - start;
-    if (dur > 0 && dur < minDur) minDur = dur;
-  }
-  if (!isFinite(minDur) || minDur <= 0) return ROW_H;
-  // Scale so the shortest session renders at MIN_SESSION_PX or taller
-  return Math.max(ROW_H, Math.ceil(MIN_SESSION_PX * SNAP_MINS / minDur));
+function sessionTop(startMins, minMins) {
+  return Math.max(0, (startMins - minMins) / SLOT_MINS * ROW_H);
+}
+
+function sessionHeight(durMins) {
+  return Math.max(MIN_SESSION_PX, (durMins / SLOT_MINS) * ROW_H);
 }
 
 function getPrimaryTrack(item) {
@@ -306,47 +261,25 @@ function buildRoomBar(rooms) {
 function buildTimeAxis(minMins, totalSlots) {
   let labels = '';
   for (let i = 0; i <= totalSlots; i++) {
-    const mins = minMins + i * SNAP_MINS;
+    const mins = minMins + i * SLOT_MINS;
     if (mins % 60 === 0) {
-      labels += `<div class="tl-time-label" style="top:${40 + i * _rowH}px">${fmtMins(mins)}</div>`;
+      labels += `<div class="tl-time-label" style="top:${40 + i * ROW_H}px">${fmtMins(mins)}</div>`;
     }
   }
-  return `<div class="tl-time-axis" style="height:${40 + totalSlots * _rowH}px">
+  return `<div class="tl-time-axis" style="height:${40 + totalSlots * ROW_H}px">
     <div class="tl-time-axis-header"></div>
     ${labels}
   </div>`;
 }
 
-function buildSpanningSession(item, index, minMins) {
-  const startMins = _localMins(item.startTime);
-  const endMins = item.endTime ? _localMins(item.endTime) : startMins + 60;
-  const durMins = Math.max(SNAP_MINS, endMins - startMins);
-  const top = Math.max(0, (startMins - minMins) / SNAP_MINS * _rowH);
-  const height = Math.max(MIN_SESSION_PX, durMins / SNAP_MINS * _rowH);
-  const track = getPrimaryTrack(item);
-  const spk = Array.isArray(item.speakers) ? item.speakers.join(', ') : (item.speakers || '');
-
-  return `
-    <div class="tl-session tl-session-spanning" data-index="${index}" data-room=""
-         data-track="${esc(track)}" style="top:${top}px;height:${height}px">
-      <div class="tl-session-inner">
-        <div class="tl-session-title">${esc(item.title || 'Untitled')}</div>
-        ${spk ? `<div class="tl-session-speakers">${esc(spk)}</div>` : ''}
-        <div class="tl-session-time">${esc(fmtMins(startMins))}–${esc(fmtMins(endMins))}</div>
-      </div>
-      <button class="tl-session-delete" data-index="${index}" type="button" title="Delete session">
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
-      <div class="tl-resize-handle" data-index="${index}"></div>
-    </div>`;
-}
-
 function buildRoomColumn(room, dayItems, minMins, totalSlots) {
   let lines = '';
   for (let i = 0; i < totalSlots; i++) {
-    const mins = minMins + i * SNAP_MINS;
-    lines += `<div class="tl-slot-bg${mins % 60 === 0 ? ' is-hour' : ''}"
-      style="top:${i * _rowH}px;height:${_rowH}px" data-slot-mins="${mins}"></div>`;
+    const mins = minMins + i * SLOT_MINS;
+    const isHour = mins % 60 === 0;
+    const isHalf = !isHour && mins % 30 === 0;
+    lines += `<div class="tl-slot-bg${isHour ? ' is-hour' : isHalf ? ' is-half' : ''}"
+      style="top:${i * ROW_H}px;height:${ROW_H}px" data-slot-mins="${mins}"></div>`;
   }
 
   const roomItems = dayItems.filter(({ item }) => (item.location ?? '') === room);
@@ -354,9 +287,9 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
   for (const { item, index } of roomItems) {
     const startMins = _localMins(item.startTime);
     const endMins = item.endTime ? _localMins(item.endTime) : startMins + 60;
-    const durMins = Math.max(SNAP_MINS, endMins - startMins);
-    const top = Math.max(0, (startMins - minMins) / SNAP_MINS * _rowH);
-    const height = Math.max(MIN_SESSION_PX, durMins / SNAP_MINS * _rowH);
+    const durMins = Math.max(SLOT_MINS, endMins - startMins);
+    const top = sessionTop(startMins, minMins);
+    const height = sessionHeight(durMins);
     const track = getPrimaryTrack(item);
     const spk = Array.isArray(item.speakers) ? item.speakers.join(', ') : (item.speakers || '');
 
@@ -379,6 +312,30 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
     ${lines}${blocks}
     <div class="tl-add-indicator" aria-hidden="true"></div>
   </div>`;
+}
+
+function buildSpanningSession(item, index, minMins) {
+  const startMins = _localMins(item.startTime);
+  const endMins = item.endTime ? _localMins(item.endTime) : startMins + 60;
+  const durMins = Math.max(SLOT_MINS, endMins - startMins);
+  const top = sessionTop(startMins, minMins);
+  const height = sessionHeight(durMins);
+  const track = getPrimaryTrack(item);
+  const spk = Array.isArray(item.speakers) ? item.speakers.join(', ') : (item.speakers || '');
+
+  return `
+    <div class="tl-session tl-session-spanning" data-index="${index}" data-room=""
+         data-track="${esc(track)}" style="top:${top}px;height:${height}px">
+      <div class="tl-session-inner">
+        <div class="tl-session-title">${esc(item.title || 'Untitled')}</div>
+        ${spk ? `<div class="tl-session-speakers">${esc(spk)}</div>` : ''}
+        <div class="tl-session-time">${esc(fmtMins(startMins))}–${esc(fmtMins(endMins))}</div>
+      </div>
+      <button class="tl-session-delete" data-index="${index}" type="button" title="Delete session">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+      <div class="tl-resize-handle" data-index="${index}"></div>
+    </div>`;
 }
 
 // ── Main render ────────────────────────────────────────────────────────────
@@ -404,8 +361,7 @@ function _redraw() {
     .filter(({ item }) => _localDate(item.startTime) === _activeDay);
 
   const { minMins, maxMins } = getTimeRange(dayItems);
-  const totalSlots = Math.max(1, Math.ceil((maxMins - minMins) / SNAP_MINS));
-  _rowH = calcRowH(dayItems);
+  const totalSlots = Math.max(1, Math.ceil((maxMins - minMins) / SLOT_MINS));
 
   if (!rooms.length) {
     _el.innerHTML = `<div class="tl-root">
@@ -417,7 +373,6 @@ function _redraw() {
   }
 
   const colsTemplate = `repeat(${rooms.length}, minmax(180px, 1fr))`;
-
   const roomedItems = dayItems.filter(({ item }) => item.location);
   const spanningItems = dayItems.filter(({ item }) => !item.location);
   const spanningHtml = spanningItems.map(({ item, index }) => buildSpanningSession(item, index, minMins)).join('');
@@ -432,7 +387,7 @@ function _redraw() {
           <div class="tl-rooms-header" style="grid-template-columns:${colsTemplate}">
             ${rooms.map(r => `<div class="tl-room-header">${esc(r)}</div>`).join('')}
           </div>
-          <div class="tl-rooms-body" style="grid-template-columns:${colsTemplate};height:${totalSlots * _rowH}px">
+          <div class="tl-rooms-body" style="grid-template-columns:${colsTemplate};height:${totalSlots * ROW_H}px">
             ${rooms.map(r => buildRoomColumn(r, roomedItems, minMins, totalSlots)).join('')}
             ${spanningHtml ? `<div class="tl-spanning-layer">${spanningHtml}</div>` : ''}
           </div>
@@ -511,6 +466,40 @@ function _bindRoomBar() {
   });
 }
 
+function _startRenameRoom(chip, idx) {
+  const label = chip.querySelector('.tl-room-chip-label');
+  if (!label) return;
+  const currentName = _getRooms()[idx] ?? '';
+
+  const input = document.createElement('input');
+  input.className = 'tl-room-chip-input';
+  input.value = currentName;
+  label.replaceWith(input);
+  input.focus();
+  input.select();
+
+  let committed = false;
+  const commit = () => {
+    if (committed) return;
+    committed = true;
+    const newName = input.value.trim();
+    if (newName && newName !== currentName) {
+      _renameRoom(idx, newName);
+    } else {
+      const restored = document.createElement('span');
+      restored.className = 'tl-room-chip-label';
+      restored.textContent = currentName || '(no room)';
+      input.replaceWith(restored);
+    }
+  };
+
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { input.value = currentName; commit(); }
+  });
+}
+
 // ── Move drag ──────────────────────────────────────────────────────────────
 
 function _onMoveStart(e) {
@@ -542,9 +531,9 @@ function _onMoveStart(e) {
 function _onMoveMove(e) {
   if (!_drag || _drag.type !== 'move') return;
 
-  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / _rowH);
+  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / SNAP_H);
   const newStartMins = Math.max(_drag.minMins, _drag.origStartMins + snappedSlotDelta * SNAP_MINS);
-  _drag.block.style.transform = `translateY(${(newStartMins - _drag.origStartMins) / SNAP_MINS * _rowH}px)`;
+  _drag.block.style.transform = `translateY(${(newStartMins - _drag.origStartMins) / SLOT_MINS * ROW_H}px)`;
 
   const body = _el.querySelector('.tl-rooms-body');
   if (body && _drag.rooms.length && !_drag.isSpanning) {
@@ -562,7 +551,7 @@ function _onMoveMove(e) {
 function _onMoveUp(e) {
   if (!_drag || _drag.type !== 'move') { _cleanDrag(); return; }
 
-  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / _rowH);
+  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / SNAP_H);
   const durMins = _drag.origEndMins - _drag.origStartMins;
   const newStartMins = Math.max(_drag.minMins, _drag.origStartMins + snappedSlotDelta * SNAP_MINS);
 
@@ -605,14 +594,14 @@ function _onResizeStart(e) {
 
 function _onResizeMove(e) {
   if (!_drag || _drag.type !== 'resize') return;
-  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / _rowH);
-  _drag.block.style.height = `${Math.max(MIN_SESSION_PX, _drag.origHeight + snappedSlotDelta * _rowH)}px`;
+  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / SNAP_H);
+  _drag.block.style.height = `${Math.max(MIN_SESSION_PX, _drag.origHeight + snappedSlotDelta * SNAP_H)}px`;
 }
 
 function _onResizeUp(e) {
   if (!_drag || _drag.type !== 'resize') { _cleanDrag(); return; }
 
-  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / _rowH);
+  const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / SNAP_H);
   const newEndMins = Math.max(
     _drag.origStartMins + SNAP_MINS,
     _drag.origEndMins + snappedSlotDelta * SNAP_MINS
@@ -637,7 +626,7 @@ function _onColClick(e) {
   const room = col.dataset.room ?? '';
   const minMins = parseInt(_el.dataset.minMins, 10);
   const relY = e.clientY - col.getBoundingClientRect().top;
-  const slotMins = minMins + Math.floor(relY / _rowH) * SNAP_MINS;
+  const slotMins = minMins + Math.floor(relY / SNAP_H) * SNAP_MINS;
 
   const title = window.prompt('New session title:', '');
   if (title === null || !title.trim()) return;
@@ -672,11 +661,11 @@ function _onDelete(e) {
 function _onColHover(e) {
   if (_drag || e.target.closest('.tl-session')) return;
   const col = e.currentTarget;
-  const minMins = parseInt(_el.dataset.minMins, 10);
   const relY = e.clientY - col.getBoundingClientRect().top;
   const ind = col.querySelector('.tl-add-indicator');
   if (ind) {
-    ind.style.top = `${Math.floor(relY / _rowH) * _rowH}px`;
+    ind.style.top = `${Math.floor(relY / SNAP_H) * SNAP_H}px`;
+    ind.style.height = `${SNAP_H}px`;
     ind.style.display = 'flex';
   }
 }

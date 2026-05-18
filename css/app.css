@@ -3142,6 +3142,7 @@
     border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 .tl-slot-bg.is-hour { border-bottom-color: var(--line-0); }
+.tl-slot-bg.is-half { border-bottom-color: rgba(255,255,255,0.06); }
 
 .tl-session {
     position: absolute;
