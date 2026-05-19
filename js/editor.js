@@ -1244,6 +1244,15 @@ async function loadDataset(file) {
   renderSponsorList();
   renderSponsorForm();
   if (state.activeEditorTab === 'sitemap') renderSitemap();
+  if (state.activeEditorTab === 'timeline' && els.timelineCanvas) {
+    renderTimeline(els.timelineCanvas, state.dataset, {
+      markDirty: () => markDirty(true),
+      trackQuickSessionChange,
+      utcIsoToLocalInput,
+      localInputToUtcIso,
+      getEventTimezone,
+    });
+  }
   setEditorButtonsEnabled(true);
   if (els.datasetSelect.value !== file) {
     els.datasetSelect.value = file;
