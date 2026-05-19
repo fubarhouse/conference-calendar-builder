@@ -238,6 +238,7 @@ const els = {
   showTimelineTab: document.getElementById('showTimelineTab'),
   timelineWorkspacePanel: document.getElementById('timelineWorkspacePanel'),
   timelineCanvas: document.getElementById('timelineCanvas'),
+  timelineSaveBtn: document.getElementById('timelineSaveBtn'),
   sponsorSessionPickerModal: document.getElementById('sponsorSessionPickerModal'),
   sponsorSessionPickerList: document.getElementById('sponsorSessionPickerList'),
   sponsorSessionPickerCount: document.getElementById('sponsorSessionPickerCount'),
@@ -458,6 +459,7 @@ function setEditorButtonsEnabled(enabled) {
   }
   els.saveDataset.disabled = !enabled;
   els.saveAsDataset.disabled = !enabled;
+  if (els.timelineSaveBtn) els.timelineSaveBtn.disabled = !enabled;
   els.saveSession.disabled = !enabled || state.selectedIndex < 0;
   els.addSession.disabled = !enabled;
   els.deleteSession.disabled = !enabled || state.selectedIndex < 0;
@@ -3543,6 +3545,12 @@ function bindEvents() {
   if (els.showTimelineTab) {
     els.showTimelineTab.addEventListener('click', async () => {
       await switchEditorTab('timeline');
+    });
+  }
+
+  if (els.timelineSaveBtn) {
+    els.timelineSaveBtn.addEventListener('click', async () => {
+      try { await saveDataset(); } catch (e) { window.alert(e?.message || String(e)); }
     });
   }
 

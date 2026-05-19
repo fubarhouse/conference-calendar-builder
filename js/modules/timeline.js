@@ -95,14 +95,11 @@ function _getRooms() {
 
 function _deriveRoomsForDay() {
   const seen = new Set();
-  const rooms = [];
   for (const item of _dataset.items || []) {
     const r = item.location ?? '';
-    if (r && _localDate(item.startTime) === _activeDay && !seen.has(r)) {
-      seen.add(r); rooms.push(r);
-    }
+    if (r && _localDate(item.startTime) === _activeDay) seen.add(r);
   }
-  return rooms;
+  return [...seen].sort();
 }
 
 function _ensureEventRooms() {
