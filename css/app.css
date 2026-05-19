@@ -3440,3 +3440,228 @@
     color: #2ea3ff;
     background: rgba(46,163,255,0.06);
 }
+
+/* ── Welcome / onboarding modal ─────────────────────────────────────────── */
+.editor-welcome {
+    width: min(580px, 100%);
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.28);
+    padding: 2.25rem 2.25rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.editor-welcome-icon {
+    font-size: 2rem;
+    color: #34526f;
+    margin-bottom: 0.75rem;
+    line-height: 1;
+}
+.editor-welcome-heading {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a2e40;
+    margin: 0 0 0.4rem;
+}
+.editor-welcome-lead {
+    font-size: 0.92rem;
+    color: #5a7390;
+    margin: 0 0 1.5rem;
+    line-height: 1.55;
+}
+.editor-welcome-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-bottom: 1.75rem;
+}
+.editor-welcome-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid #e2eaf3;
+    border-radius: 0.5rem;
+    background: #f7fbff;
+}
+.editor-welcome-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    border-radius: 50%;
+    background: #34526f;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+}
+.editor-welcome-step-title {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1a2e40;
+    margin-bottom: 0.2rem;
+}
+.editor-welcome-step-body {
+    display: block;
+    font-size: 0.81rem;
+    color: #5a7390;
+    line-height: 1.5;
+}
+.editor-welcome-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.4rem;
+    background: #34526f;
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    align-self: flex-start;
+}
+.editor-welcome-cta:hover {
+    background: #2a4259;
+}
+
+/* ── Preview mode banner ─────────────────────────────────────────────────── */
+.preview-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: #f59e0b;
+    color: #1a1200;
+    padding: 0.5rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1;
+}
+.preview-banner-link {
+    margin-left: 0.25rem;
+    color: #1a1200;
+    font-weight: 700;
+    text-decoration: underline;
+    white-space: nowrap;
+}
+.preview-banner-link:hover { opacity: 0.75; }
+body.has-preview-banner { padding-top: 2.25rem; }
+
+/* ── Welcome modal screen 2 ─────────────────────────────────────────────── */
+.editor-welcome-icon--success {
+    color: #16a34a;
+}
+.editor-welcome-event-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 260px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+.editor-welcome-event-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid #e2eaf3;
+    border-radius: 0.45rem;
+    background: #f7fbff;
+    color: #1a2e40;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: border-color 0.12s, background 0.12s;
+}
+.editor-welcome-event-btn:hover {
+    border-color: #34526f;
+    background: #eef6ff;
+}
+.editor-welcome-event-btn .welcome-btn-icon { color: #34526f; flex-shrink: 0; }
+.editor-welcome-event-btn .welcome-btn-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.editor-welcome-event-btn .welcome-btn-arrow { color: #9eb2c8; flex-shrink: 0; }
+.editor-welcome-empty {
+    color: #9eb2c8;
+    font-size: 0.86rem;
+    padding: 0.25rem 0 0.5rem;
+}
+.editor-welcome-new-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-top: 0.25rem;
+}
+.editor-welcome-or-label {
+    font-size: 0.82rem;
+    color: #9eb2c8;
+}
+.editor-welcome-cta-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1.1rem;
+    background: transparent;
+    color: #34526f;
+    border: 1.5px solid #34526f;
+    border-radius: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.editor-welcome-cta-secondary:hover {
+    background: #34526f;
+    color: #fff;
+}
+
+/* ── Dirty / unsaved changes indicator ──────────────────────────────────── */
+#dirtyState[data-dirty="true"] {
+    border-color: #f59e0b;
+    color: #f59e0b;
+    background: rgba(245,158,11,0.06);
+}
+
+/* ── Save toast ─────────────────────────────────────────────────────────── */
+.save-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(0.5rem);
+    background: #1a2e40;
+    color: #fff;
+    padding: 0.55rem 1.2rem;
+    border-radius: 2rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 9999;
+}
+.save-toast.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ── Timezone hint on session time fields ───────────────────────────────── */
+.editor-tz-note {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.78rem;
+    color: #8aabb0;
+}

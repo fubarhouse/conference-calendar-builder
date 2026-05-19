@@ -40,7 +40,7 @@
 
     <div id="editorApp" class="space-y-4">
       <section id="editorToolbar" class="bg-white rounded-lg shadow-md p-4">
-        <div class="grid grid-cols-1 xl:grid-cols-[1fr_auto_auto_auto_auto_auto] gap-2 items-end">
+        <div class="grid grid-cols-1 xl:grid-cols-[1fr_auto_auto_auto_auto_auto_auto] gap-2 items-end">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1" for="datasetSelect">Dataset</label>
             <select id="datasetSelect" class="w-full h-11 pr-10 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white"></select>
@@ -60,10 +60,13 @@
           <button id="saveAsDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
             <i class="fas fa-file-export mr-2"></i>Save As
           </button>
+          <button id="previewDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+            <i class="fas fa-eye mr-2"></i>Preview
+          </button>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-2 mt-2 items-end">
           <label class="block">
-            <span class="block text-xs font-medium text-gray-400 mb-1">JSON Path</span>
+            <span class="block text-xs font-medium text-gray-400 mb-1">Save location</span>
             <div class="relative">
               <i class="fas fa-file-code absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
               <input id="currentFilenameInput" type="text" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white pl-9 pr-3" placeholder="data/new-event.json" disabled>
@@ -101,7 +104,7 @@
               <i class="fas fa-handshake mr-2 text-[0.72rem]"></i>Sponsors
             </button>
             <button id="showSitemapTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="sitemapWorkspacePanel">
-              <i class="fas fa-map mr-2 text-[0.72rem]"></i>Sitemap
+              <i class="fas fa-link mr-2 text-[0.72rem]"></i>Sources
             </button>
             <button id="showTimelineTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="timelineWorkspacePanel">
               <i class="fas fa-calendar-week mr-2 text-[0.72rem]"></i>Timeline
@@ -248,7 +251,7 @@
       <section class="bg-white rounded-lg shadow-md p-4">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h2 class="text-lg font-semibold text-gray-100">Sitemap</h2>
+            <h2 class="text-lg font-semibold text-gray-100">Sources</h2>
             <p class="text-sm text-gray-400">Known URLs for this event's domain, derived from the dataset.</p>
           </div>
         </div>
@@ -273,6 +276,59 @@
       </section>
     </div>
   </main>
+
+  <div id="editorWelcome" class="session-modal-overlay hidden" aria-hidden="true">
+    <div class="editor-welcome" role="dialog" aria-modal="true" aria-labelledby="editorWelcomeTitle">
+
+      <!-- Screen 1: Connect folder -->
+      <div id="welcomeScreen1">
+        <div class="editor-welcome-icon"><i class="fas fa-calendar-alt"></i></div>
+        <h2 id="editorWelcomeTitle" class="editor-welcome-heading">Welcome to the Dataset Editor</h2>
+        <p class="editor-welcome-lead">Build and edit Drupal event schedules. To get started, open the folder where your event data files live.</p>
+        <div class="editor-welcome-steps">
+          <div class="editor-welcome-step">
+            <span class="editor-welcome-step-num">1</span>
+            <div>
+              <span class="editor-welcome-step-title">Open your project folder</span>
+              <span class="editor-welcome-step-body">Click the button below. Your browser will ask permission to access a folder on your computer — choose the root of your calendar project.</span>
+            </div>
+          </div>
+          <div class="editor-welcome-step">
+            <span class="editor-welcome-step-num">2</span>
+            <div>
+              <span class="editor-welcome-step-title">Select or create an event</span>
+              <span class="editor-welcome-step-body">Pick an existing event to edit, or start a new one from scratch.</span>
+            </div>
+          </div>
+          <div class="editor-welcome-step">
+            <span class="editor-welcome-step-num">3</span>
+            <div>
+              <span class="editor-welcome-step-title">Edit and save</span>
+              <span class="editor-welcome-step-body">Add sessions, speaker details, and sponsors — then click <strong>Save</strong> when you're done.</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="editor-welcome-cta" id="welcomeConnectFolder">
+          <i class="fas fa-folder-open"></i>Open Project Folder
+        </button>
+      </div>
+
+      <!-- Screen 2: Select event -->
+      <div id="welcomeScreen2" class="hidden">
+        <div class="editor-welcome-icon editor-welcome-icon--success"><i class="fas fa-folder-open"></i></div>
+        <h2 class="editor-welcome-heading">Choose an event</h2>
+        <p class="editor-welcome-lead">Your project folder is connected. Select an event to start editing, or create a new one.</p>
+        <div id="welcomeEventList" class="editor-welcome-event-list"></div>
+        <div class="editor-welcome-new-row">
+          <span class="editor-welcome-or-label">or</span>
+          <button type="button" class="editor-welcome-cta-secondary" id="welcomeNewEvent">
+            <i class="fas fa-file-circle-plus"></i>Create new event
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
 
   <div id="sponsorSessionPickerModal" class="session-modal-overlay hidden" aria-hidden="true">
     <div class="session-modal-card" role="dialog" aria-modal="true" aria-labelledby="sponsorSessionPickerTitle">
@@ -321,6 +377,8 @@
       </div>
     </div>
   </div>
+
+  <div id="saveToast" class="save-toast"><i class="fas fa-check mr-2"></i>Saved successfully</div>
 
   <script type="module" src="./js/editor.js"></script>
 </body>

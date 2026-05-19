@@ -50,7 +50,8 @@ function parseModeFromUrl() {
         params.get('scheduleOnly') ||
         params.get('schedule_only')
     ) === true;
-  return { design, theme, id, currentSchedule };
+  const preview = params.get('preview') === '1';
+  return { design, theme, id, currentSchedule, preview };
 }
 
 function normalizeDesignMode(design) {
@@ -910,19 +911,34 @@ function updateHeaderFlag(manifestItem = null) {
   flag.classList.remove('hidden');
 }
 
+function processEventItems(items) {
+  items.forEach((event) => {
+    event.clean_title = event.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+  });
+  return items;
+}
+
 export async function fetchEvents(filename) {
+  if (filename === '__preview__') {
+    try {
+      const raw = localStorage.getItem('__preview__');
+      if (!raw) return [];
+      const data = JSON.parse(raw);
+      state.eventMeta = data.event || {};
+      return processEventItems(data.items || []);
+    } catch {
+      return [];
+    }
+  }
   try {
     const response = await fetch(`./data/${filename}`);
     const data = await response.json();
     state.eventMeta = data.event;
-    data.items.forEach((event) => {
-      event.clean_title = event.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^_|_$/g, '');
-    });
-    return data.items;
+    return processEventItems(data.items);
   } catch {
     return [];
   }
@@ -1110,10 +1126,34 @@ function wireEventListeners(eventSelector) {
   setupEventListeners();
 }
 
+function showPreviewBanner() {
+  const banner = document.createElement('div');
+  banner.className = 'preview-banner';
+  banner.innerHTML = `<i class="fas fa-eye"></i><span><strong>Preview mode</strong> — these changes have not been saved yet.</span><a href="./editor.html" class="preview-banner-link">Back to editor</a>`;
+  document.body.prepend(banner);
+  document.body.classList.add('has-preview-banner');
+}
+
 export async function init() {
   setupEditorAccessButton();
   bindViewportScheduleLockUi();
   const urlModes = parseModeFromUrl();
+
+  if (urlModes.preview) {
+    parseAndApplyStartupModes(urlModes);
+    const raw = localStorage.getItem('__preview__');
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        const designation = String(data?.event?.designation || '').toLowerCase();
+        state.currentEventCategory = designation.includes('drupalcon') ? 'DrupalCon' : (data?.event?.designation || 'Conference');
+      } catch { /* use defaults */ }
+    }
+    await loadEvent('__preview__');
+    showPreviewBanner();
+    return;
+  }
+
   parseAndApplyStartupModes(urlModes);
   await hydrateManifestCategories();
 
