@@ -47,6 +47,8 @@ const EVENT_META_FIELDS = [
   'venue',
   'website',
   'scheduleURL',
+  'startDate',
+  'endDate',
   'logo',
   'flickr',
   'timezone',
@@ -93,6 +95,14 @@ const EVENT_META_FIELD_CONFIG = {
   columns: {
     label: 'Schedule columns',
     description: 'The preferred number of columns for the public schedule layout.'
+  },
+  startDate: {
+    label: 'Conference start date',
+    description: 'First day of the event. Populates the timeline day tabs even when no sessions are scheduled yet.'
+  },
+  endDate: {
+    label: 'Conference end date',
+    description: 'Last day of the event. All dates between start and end appear as timeline days.'
   },
   enabled: {
     label: 'Show this event',
@@ -1753,6 +1763,21 @@ function renderEventMetaForm() {
       `;
     }
 
+    if (field === 'startDate' || field === 'endDate') {
+      const raw = toStringValue(event[field]);
+      const dateValue = raw ? raw.split('T')[0] : '';
+      return `
+        <label class="editor-form-field ${spanClass}">
+          ${renderFieldIntro('event', field, config)}
+          <input data-event-field="${field}" type="date" value="${escapeAttr(dateValue)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white px-3"${fieldDescriptionAttr(
+            'event',
+            field,
+            config
+          )}>
+        </label>
+      `;
+    }
+
     if (field === 'columns') {
       const value = Number.isFinite(Number(event[field])) ? Number(event[field]) : 3;
       return `
@@ -1802,6 +1827,15 @@ function renderEventMetaForm() {
       if (field === 'designation' || field === 'year' || field === 'location') {
         renderLogoForm();
         renderFlickrForm();
+      }
+      if ((field === 'startDate' || field === 'endDate') && state.activeEditorTab === 'timeline' && els.timelineCanvas) {
+        renderTimeline(els.timelineCanvas, state.dataset, {
+          markDirty: () => markDirty(true),
+          trackQuickSessionChange,
+          utcIsoToLocalInput,
+          localInputToUtcIso,
+          getEventTimezone,
+        });
       }
     });
   });
