@@ -2,6 +2,7 @@ import { loadEventCatalog } from './modules/eventCatalog.js';
 import { formatTextBlock } from './modules/markdown.js';
 import { isLocalhost, slugify } from './modules/utils.js';
 import { configureEventSearch, openEventSearchModal } from './modules/eventSearch.js';
+import { renderTimeline } from './modules/timeline.js';
 
 const state = {
   dataset: null,
@@ -30,8 +31,14 @@ const state = {
   sessionStructureDirty: false,
   sponsorStructureDirty: false,
   timezones: [],
-  sponsorSessionPickerOpen: false
+  sponsorSessionPickerOpen: false,
+  sessionSponsorPickerOpen: false
 };
+
+const UNDO_STACK = [];
+const UNDO_LIMIT = 50;
+const RECOVERY_KEY = '__editor_recovery__';
+const RECOVERY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const FILE_LINK_DB = 'dataset-editor-file-links';
 const FILE_LINK_STORE = 'links';
@@ -46,6 +53,8 @@ const EVENT_META_FIELDS = [
   'venue',
   'website',
   'scheduleURL',
+  'startDate',
+  'endDate',
   'logo',
   'flickr',
   'timezone',
@@ -93,6 +102,14 @@ const EVENT_META_FIELD_CONFIG = {
     label: 'Schedule columns',
     description: 'The preferred number of columns for the public schedule layout.'
   },
+  startDate: {
+    label: 'Conference start date',
+    description: 'First day of the event. Populates the timeline day tabs even when no sessions are scheduled yet.'
+  },
+  endDate: {
+    label: 'Conference end date',
+    description: 'Last day of the event. All dates between start and end appear as timeline days.'
+  },
   enabled: {
     label: 'Show this event',
     description: 'Controls whether this dataset is available in the public planner.'
@@ -135,19 +152,19 @@ const SPONSOR_FIELDS = [
   { key: 'subtitle', label: 'Subtitle text', description: 'Optional display name shown on the schedule instead of the company name. Falls back to the sponsor title if blank.', type: 'text', span: 2 },
   { key: 'id', label: 'Sponsor ID', description: 'Stable identifier used by sessions to reference this sponsor.', type: 'text' },
   { key: 'tier', label: 'Tier', description: 'Grouping label such as Platinum, Gold, Silver, or Partner.', type: 'text' },
-  { key: 'row', label: 'Row', description: 'Integer row index used to control which sponsor row renders first.', type: 'number' },
-  { key: 'priority', label: 'Priority', description: 'Lower numbers sort earlier within a row.', type: 'number' },
+  { key: 'row', label: 'Display row', description: 'Which row this sponsor appears in. Lower numbers appear first.', type: 'number' },
+  { key: 'priority', label: 'Display order', description: 'Position within the row. Lower numbers appear earlier.', type: 'number' },
   { key: 'link', label: 'Sponsor URL', description: 'Optional external link for the sponsor logo or card.', type: 'text', span: 2 },
   { key: 'image', label: 'Image path', description: 'Relative path to the uploaded sponsor image asset.', type: 'text', span: 2 },
   { key: 'imageAlt', label: 'Image alternative text', description: 'Short accessible description for the sponsor image.', type: 'text', span: 2 },
-  { key: 'bgStyle', label: 'Background style', description: 'Controls how non-transparent logos are framed.', type: 'select', options: ['auto', 'transparent', 'light-plate', 'dark-plate', 'brand-fill'] },
-  { key: 'aspect', label: 'Aspect hint', description: 'Helps the renderer handle square and wide assets consistently.', type: 'select', options: ['auto', 'square', 'landscape', 'banner'] },
+  { key: 'bgStyle', label: 'Logo background', description: 'How the logo image background is treated. Use "light-plate" or "dark-plate" if the logo has no transparent background.', type: 'select', options: ['auto', 'transparent', 'light-plate', 'dark-plate', 'brand-fill'] },
+  { key: 'aspect', label: 'Image shape', description: 'The aspect ratio of the logo. Helps ensure it displays at the right size and proportions.', type: 'select', options: ['auto', 'square', 'landscape', 'banner'] },
   { key: 'enabled', label: 'Show sponsor', description: 'Controls whether this sponsor is available for rendering and session association.', type: 'checkbox' }
 ];
 const SESSION_FIELDS = [
   { key: 'title', label: 'Session title', description: 'The public title shown on schedule cards and detail views.', type: 'text', span: 2 },
-  { key: 'startTime', label: 'Start time', description: 'Enter the local event start time. It will be stored as UTC.', type: 'datetime-local' },
-  { key: 'endTime', label: 'End time', description: 'Enter the local event finish time. It will be stored as UTC.', type: 'datetime-local' },
+  { key: 'startTime', label: 'Start time', description: 'Enter the session start time in the event\'s local timezone.', type: 'datetime-local' },
+  { key: 'endTime', label: 'End time', description: 'Enter the session end time in the event\'s local timezone.', type: 'datetime-local' },
   { key: 'location', label: 'Room or location', description: 'The room, stage, or location for this session.', type: 'text' },
   { key: 'duration', label: 'Session duration', description: 'Calculated automatically from the start and end time.', type: 'text' },
   { key: 'track', label: 'Track or topic', description: 'Use commas to separate multiple tracks or topics.', type: 'text' },
@@ -160,7 +177,7 @@ const SESSION_FIELDS = [
     span: 2
   },
   { key: 'full_description', label: 'Session description', description: 'The full public description. Markdown formatting is supported.', type: 'textarea', span: 2 },
-  { key: 'sponsorIds', label: 'Sponsor IDs', description: 'Optional sponsor references for this session. Use commas or new lines.', type: 'textarea', span: 2 },
+  { key: 'sponsorIds', label: 'Sponsors', description: 'Sponsors associated with this session.', type: 'sponsors', span: 2 },
   { key: 'link', label: 'Session page URL', description: 'The original or canonical web page for this session.', type: 'text', span: 2 },
   { key: 'video_url', label: 'Video URL', description: 'Optional recording URL shown with the session details.', type: 'text', span: 2 }
 ];
@@ -172,12 +189,17 @@ let eventCatalog = [];
 const els = {
   blocked: document.getElementById('editorBlocked'),
   app: document.getElementById('editorApp'),
+  welcome: document.getElementById('editorWelcome'),
+  saveToast: document.getElementById('saveToast'),
   datasetSelect: document.getElementById('datasetSelect'),
   editorSearchEvents: document.getElementById('editorSearchEvents'),
   folderConnectionToggle: document.getElementById('folderConnectionToggle'),
   newDataset: document.getElementById('newDataset'),
   saveDataset: document.getElementById('saveDataset'),
   saveAsDataset: document.getElementById('saveAsDataset'),
+  previewDataset: document.getElementById('previewDataset'),
+  undoAction: document.getElementById('undoAction'),
+  revertDataset: document.getElementById('revertDataset'),
   exportDataset: document.getElementById('exportDataset'),
   currentFilenameInput: document.getElementById('currentFilenameInput'),
   dirtyState: document.getElementById('dirtyState'),
@@ -234,11 +256,20 @@ const els = {
   showSponsorsTab: document.getElementById('showSponsorsTab'),
   showSitemapTab: document.getElementById('showSitemapTab'),
   sitemapWorkspacePanel: document.getElementById('sitemapWorkspacePanel'),
+  showTimelineTab: document.getElementById('showTimelineTab'),
+  timelineWorkspacePanel: document.getElementById('timelineWorkspacePanel'),
+  timelineCanvas: document.getElementById('timelineCanvas'),
+  timelineSaveBtn: document.getElementById('timelineSaveBtn'),
   sponsorSessionPickerModal: document.getElementById('sponsorSessionPickerModal'),
   sponsorSessionPickerList: document.getElementById('sponsorSessionPickerList'),
   sponsorSessionPickerCount: document.getElementById('sponsorSessionPickerCount'),
   closeSponsorSessionPicker: document.getElementById('closeSponsorSessionPicker'),
-  closeSponsorSessionPickerBack: document.getElementById('closeSponsorSessionPickerBack')
+  closeSponsorSessionPickerBack: document.getElementById('closeSponsorSessionPickerBack'),
+  sessionSponsorPickerModal: document.getElementById('sessionSponsorPickerModal'),
+  sessionSponsorPickerList: document.getElementById('sessionSponsorPickerList'),
+  sessionSponsorPickerCount: document.getElementById('sessionSponsorPickerCount'),
+  closeSessionSponsorPicker: document.getElementById('closeSessionSponsorPicker'),
+  closeSessionSponsorPickerBack: document.getElementById('closeSessionSponsorPickerBack')
 };
 
 
@@ -373,6 +404,7 @@ async function connectProjectFolder() {
   await renderDatasetOptionsFromConnectedFolder();
   setDatasetLoadingEnabled(true);
   setFolderConnectionButtonState();
+  showWelcomeScreen2();
   void refreshEditorSearch();
 
   const selectedFile = String(els.datasetSelect.value || '').trim();
@@ -420,14 +452,14 @@ function disconnectProjectFolder() {
   setEditorButtonsEnabled(false);
   els.eventMetaForm.innerHTML = '';
   if (els.logoForm) {
-    els.logoForm.innerHTML = '<p class="text-sm text-gray-400">Connect folder to begin.</p>';
+    els.logoForm.innerHTML = '<p class="text-sm text-gray-400">Open a project folder to get started.</p>';
   }
   if (els.flickrForm) {
-    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Connect folder to begin.</p>';
+    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Open a project folder to get started.</p>';
   }
-  els.sessionList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Connect folder to begin.</li>';
+  els.sessionList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Open a project folder to get started.</li>';
   els.sessionForm.innerHTML = '<p class="text-sm text-gray-400">Select a session on the left to edit it.</p>';
-  els.sponsorList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Connect folder to begin.</li>';
+  els.sponsorList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Open a project folder to get started.</li>';
   els.sponsorForm.innerHTML = '<p class="text-sm text-gray-400">Select a sponsor row to edit it.</p>';
   if (els.sessionSearchInput) {
     els.sessionSearchInput.value = '';
@@ -439,6 +471,7 @@ function disconnectProjectFolder() {
   markSessionDirty(false);
   markSponsorDirty(false);
   setFolderConnectionButtonState();
+  syncWelcomePanel();
   void refreshEditorSearch();
 }
 
@@ -454,6 +487,9 @@ function setEditorButtonsEnabled(enabled) {
   }
   els.saveDataset.disabled = !enabled;
   els.saveAsDataset.disabled = !enabled;
+  if (els.previewDataset) els.previewDataset.disabled = !enabled;
+  if (els.revertDataset) els.revertDataset.disabled = true;
+  if (els.timelineSaveBtn) els.timelineSaveBtn.disabled = !enabled;
   els.saveSession.disabled = !enabled || state.selectedIndex < 0;
   els.addSession.disabled = !enabled;
   els.deleteSession.disabled = !enabled || state.selectedIndex < 0;
@@ -539,9 +575,9 @@ function setQuickSponsorEditEnabled(enabled) {
 function setFolderConnectionButtonState() {
   if (!els.folderConnectionToggle) return;
   if (state.folderConnectedInSession && state.projectDirHandle) {
-    els.folderConnectionToggle.innerHTML = '<i class="fas fa-unlink mr-2"></i>Disconnect Folder';
+    els.folderConnectionToggle.innerHTML = '<i class="fas fa-unlink mr-2"></i>Disconnect folder';
   } else {
-    els.folderConnectionToggle.innerHTML = '<i class="fas fa-link mr-2"></i>Connect Folder';
+    els.folderConnectionToggle.innerHTML = '<i class="fas fa-folder-open mr-2"></i>Open project folder';
   }
 }
 
@@ -587,6 +623,134 @@ async function restorePersistedSnapshot() {
   syncSponsorSaveButton();
 }
 
+function saveRecoverySnapshot() {
+  if (!state.dataset) return;
+  try {
+    localStorage.setItem(RECOVERY_KEY, JSON.stringify({
+      dataset: state.dataset,
+      file: state.file,
+      outputPath: state.outputPath,
+      savedAt: Date.now(),
+    }));
+  } catch {
+    // localStorage full or unavailable
+  }
+}
+
+function clearRecoverySnapshot() {
+  try { localStorage.removeItem(RECOVERY_KEY); } catch {}
+}
+
+function loadRecoverySnapshot() {
+  try {
+    const raw = localStorage.getItem(RECOVERY_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data?.dataset || !data?.file) return null;
+    if (data.savedAt && Date.now() - data.savedAt > RECOVERY_MAX_AGE_MS) {
+      clearRecoverySnapshot();
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function applyRecovery(recovery) {
+  state.dataset = recovery.dataset;
+  state.file = recovery.file || '';
+  state.outputPath = recovery.outputPath || '';
+  state.selectedIndex = -1;
+  state.selectedSponsorIndex = -1;
+  state.sessionSearchQuery = '';
+  normalizeDatasetShape();
+  clearRecoverySnapshot();
+  undoClear();
+  markDirty(true);
+  markSessionDirty(false);
+  markSponsorDirty(false);
+  setEditorButtonsEnabled(true);
+  setCurrentFilenameLabel();
+  renderEventMetaForm();
+  renderSessionList();
+  renderSessionForm();
+  renderSponsorList();
+  renderSponsorForm();
+  syncSessionSaveButton();
+  syncSponsorSaveButton();
+  closeWelcomeModal();
+}
+
+function showRecoveryBar(recovery) {
+  const bar = document.getElementById('recoveryBar');
+  const textEl = document.getElementById('recoveryBarText');
+  if (!bar || !textEl) return;
+  const ageMs = Date.now() - (recovery.savedAt || 0);
+  const ageMin = Math.round(ageMs / 60_000);
+  const ageText = ageMin < 1 ? 'just now' : ageMin === 1 ? '1 minute ago' : `${ageMin} minutes ago`;
+  textEl.textContent = `Unsaved work from ${ageText} found for "${recovery.file}".`;
+  bar.classList.remove('hidden');
+  document.getElementById('recoveryRestore')?.addEventListener('click', () => {
+    applyRecovery(recovery);
+    bar.classList.add('hidden');
+  });
+  document.getElementById('recoveryDismiss')?.addEventListener('click', () => {
+    if (!window.confirm('Discard the recovered work? This cannot be undone.')) return;
+    clearRecoverySnapshot();
+    bar.classList.add('hidden');
+  });
+}
+
+function undoPush() {
+  if (!state.dataset) return;
+  UNDO_STACK.push({
+    dataset: cloneJsonValue(state.dataset),
+    selectedIndex: state.selectedIndex,
+    selectedSponsorIndex: state.selectedSponsorIndex,
+  });
+  if (UNDO_STACK.length > UNDO_LIMIT) UNDO_STACK.shift();
+  updateUndoButton();
+}
+
+function undoClear() {
+  UNDO_STACK.length = 0;
+  updateUndoButton();
+}
+
+function updateUndoButton() {
+  if (els.undoAction) {
+    els.undoAction.disabled = UNDO_STACK.length === 0;
+    els.undoAction.title = UNDO_STACK.length > 0
+      ? `Undo (${UNDO_STACK.length} step${UNDO_STACK.length === 1 ? '' : 's'}) — Ctrl+Z`
+      : 'Nothing to undo';
+  }
+}
+
+async function performUndo() {
+  if (UNDO_STACK.length === 0) return;
+  const entry = UNDO_STACK.pop();
+  state.dataset = entry.dataset;
+  state.selectedIndex = entry.selectedIndex;
+  state.selectedSponsorIndex = entry.selectedSponsorIndex;
+  state.quickEditSessionChanges = new Set();
+  state.quickEditSponsorChanges = new Set();
+  normalizeDatasetShape();
+  markDirty(true);
+  markSessionDirty(false);
+  markSponsorDirty(false);
+  updateUndoButton();
+  renderEventMetaForm();
+  renderSessionList();
+  renderSessionForm();
+  renderSponsorList();
+  renderSponsorForm();
+  syncSessionSaveButton();
+  syncSponsorSaveButton();
+  if (els.deleteSession) els.deleteSession.disabled = state.selectedIndex < 0;
+  if (els.deleteSponsor) els.deleteSponsor.disabled = state.selectedSponsorIndex < 0;
+}
+
 async function confirmDiscardPendingChanges(targetLabel = 'another form') {
   if (!state.dirty) return true;
   const proceed = window.confirm(
@@ -599,9 +763,90 @@ async function confirmDiscardPendingChanges(targetLabel = 'another form') {
 
 function markDirty(nextDirty = true) {
   state.dirty = nextDirty;
-  const color = state.dirty ? 'text-amber-300' : 'text-emerald-300';
-  const label = state.dirty ? 'Unsaved changes' : 'No changes';
+  const color = nextDirty ? 'text-amber-300' : 'text-emerald-300';
+  const label = nextDirty ? 'Unsaved changes' : 'No changes';
   els.dirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-xs ${color}"></i><span>${label}</span>`;
+  els.dirtyState.dataset.dirty = String(nextDirty);
+  els.saveDataset.classList.toggle('is-dirty', nextDirty);
+  if (els.timelineSaveBtn) els.timelineSaveBtn.classList.toggle('is-dirty', nextDirty);
+  if (els.revertDataset) {
+    els.revertDataset.disabled = !nextDirty || !state.persistedSnapshot;
+  }
+}
+
+let _saveToastTimer = null;
+function showSaveToast() {
+  if (!els.saveToast) return;
+  clearTimeout(_saveToastTimer);
+  els.saveToast.classList.add('is-visible');
+  _saveToastTimer = setTimeout(() => els.saveToast.classList.remove('is-visible'), 2500);
+}
+
+function syncWelcomePanel() {
+  if (!els.welcome) return;
+  const show = (!state.folderConnectedInSession || !state.projectDirHandle) && !state.dataset;
+  if (show) {
+    document.getElementById('welcomeScreen1')?.classList.remove('hidden');
+    document.getElementById('welcomeScreen2')?.classList.add('hidden');
+  }
+  els.welcome.classList.toggle('hidden', !show);
+  els.welcome.setAttribute('aria-hidden', String(!show));
+  document.body.classList.toggle('session-modal-open', show);
+}
+
+function closeWelcomeModal() {
+  if (!els.welcome) return;
+  els.welcome.classList.add('hidden');
+  els.welcome.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('session-modal-open');
+}
+
+function showWelcomeScreen2() {
+  if (!els.welcome) return;
+  document.getElementById('welcomeScreen1')?.classList.add('hidden');
+  const screen2 = document.getElementById('welcomeScreen2');
+  if (screen2) screen2.classList.remove('hidden');
+
+  const eventList = document.getElementById('welcomeEventList');
+  if (eventList) {
+    const extractYear = (text) => { const m = text.match(/\b(20\d{2}|19\d{2})\b/); return m ? parseInt(m[1], 10) : 0; };
+    const options = Array.from(els.datasetSelect.options)
+      .filter((o) => o.value.trim())
+      .sort((a, b) => extractYear(b.text) - extractYear(a.text));
+    eventList.innerHTML = options.length
+      ? options.map((o) => `
+          <button type="button" class="editor-welcome-event-btn" data-welcome-load="${escapeAttr(o.value)}">
+            <i class="fas fa-file-code welcome-btn-icon"></i>
+            <span class="welcome-btn-label">${escapeHtml(o.text)}</span>
+            <i class="fas fa-chevron-right welcome-btn-arrow"></i>
+          </button>
+        `).join('')
+      : '<p class="editor-welcome-empty">No event files found in this folder yet.</p>';
+
+    eventList.querySelectorAll('[data-welcome-load]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const file = btn.dataset.welcomeLoad;
+        closeWelcomeModal();
+        try {
+          els.datasetSelect.value = file;
+          state.lastDatasetSelectValue = file;
+          await loadDataset(file);
+        } catch (e) {
+          window.alert(`Could not load event: ${e.message}`);
+        }
+      });
+    });
+  }
+
+  const newEventBtn = document.getElementById('welcomeNewEvent');
+  if (newEventBtn) {
+    newEventBtn.onclick = () => {
+      const pathValue = promptForNewFilename();
+      if (!pathValue) return;
+      closeWelcomeModal();
+      createDatasetScaffold(pathValue);
+    };
+  }
 }
 
 function markSessionDirty(nextDirty = true) {
@@ -1229,6 +1474,8 @@ async function loadDataset(file) {
   markSessionDirty(false);
   markSponsorDirty(false);
   capturePersistedSnapshot();
+  undoClear();
+  clearRecoverySnapshot();
   setCurrentFilenameLabel();
   renderEventMetaForm();
   renderLogoForm();
@@ -1238,6 +1485,15 @@ async function loadDataset(file) {
   renderSponsorList();
   renderSponsorForm();
   if (state.activeEditorTab === 'sitemap') renderSitemap();
+  if (state.activeEditorTab === 'timeline' && els.timelineCanvas) {
+    renderTimeline(els.timelineCanvas, state.dataset, {
+      markDirty: () => markDirty(true),
+      trackQuickSessionChange,
+      utcIsoToLocalInput,
+      localInputToUtcIso,
+      getEventTimezone,
+    });
+  }
   setEditorButtonsEnabled(true);
   if (els.datasetSelect.value !== file) {
     els.datasetSelect.value = file;
@@ -1738,6 +1994,21 @@ function renderEventMetaForm() {
       `;
     }
 
+    if (field === 'startDate' || field === 'endDate') {
+      const raw = toStringValue(event[field]);
+      const dateValue = raw ? raw.split('T')[0] : '';
+      return `
+        <label class="editor-form-field ${spanClass}">
+          ${renderFieldIntro('event', field, config)}
+          <input data-event-field="${field}" type="date" value="${escapeAttr(dateValue)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white px-3"${fieldDescriptionAttr(
+            'event',
+            field,
+            config
+          )}>
+        </label>
+      `;
+    }
+
     if (field === 'columns') {
       const value = Number.isFinite(Number(event[field])) ? Number(event[field]) : 3;
       return `
@@ -1768,6 +2039,7 @@ function renderEventMetaForm() {
   els.eventMetaForm.innerHTML = html;
 
   els.eventMetaForm.querySelectorAll('[data-event-field]').forEach((input) => {
+    input.addEventListener('focus', undoPush);
     input.addEventListener('input', () => {
       const field = input.dataset.eventField;
       if (field === 'columns') {
@@ -1787,6 +2059,15 @@ function renderEventMetaForm() {
       if (field === 'designation' || field === 'year' || field === 'location') {
         renderLogoForm();
         renderFlickrForm();
+      }
+      if ((field === 'startDate' || field === 'endDate') && state.activeEditorTab === 'timeline' && els.timelineCanvas) {
+        renderTimeline(els.timelineCanvas, state.dataset, {
+          markDirty: () => markDirty(true),
+          trackQuickSessionChange,
+          utcIsoToLocalInput,
+          localInputToUtcIso,
+          getEventTimezone,
+        });
       }
     });
   });
@@ -1876,7 +2157,7 @@ function setSponsorWorkspaceExpanded(expanded) {
 }
 
 function setActiveEditorTab(tab) {
-  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap'].includes(tab) ? tab : 'event';
+  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline'].includes(tab) ? tab : 'event';
   state.activeEditorTab = nextTab;
 
   if (els.eventWorkspacePanel) {
@@ -1928,10 +2209,30 @@ function setActiveEditorTab(tab) {
     els.showSitemapTab.setAttribute('aria-selected', active ? 'true' : 'false');
     if (active) renderSitemap();
   }
+  if (els.sitemapWorkspacePanel) {
+    els.sitemapWorkspacePanel.classList.toggle('hidden', nextTab !== 'sitemap');
+  }
+  if (els.timelineWorkspacePanel) {
+    els.timelineWorkspacePanel.classList.toggle('hidden', nextTab !== 'timeline');
+  }
+  if (els.showTimelineTab) {
+    const active = nextTab === 'timeline';
+    els.showTimelineTab.classList.toggle('is-active', active);
+    els.showTimelineTab.setAttribute('aria-selected', active ? 'true' : 'false');
+    if (active && state.dataset && els.timelineCanvas) {
+      renderTimeline(els.timelineCanvas, state.dataset, {
+        markDirty: () => markDirty(true),
+        trackQuickSessionChange,
+        utcIsoToLocalInput,
+        localInputToUtcIso,
+        getEventTimezone,
+      });
+    }
+  }
 }
 
 async function switchEditorTab(tab) {
-  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap'].includes(tab) ? tab : 'event';
+  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline'].includes(tab) ? tab : 'event';
   if (nextTab === state.activeEditorTab) return true;
   const allowed = await confirmDiscardPendingChanges(`${nextTab} form`);
   if (!allowed) return false;
@@ -2102,6 +2403,10 @@ function renderSessionList() {
                 >
                   <i class="fas fa-up-right-from-square mr-1.5 text-[0.72rem]"></i><span>Open</span>
                 </button>
+                <button type="button" data-duplicate-session="${rowIndex}" title="Duplicate session"
+                  class="h-10 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                  <i class="fas fa-copy mr-1.5 text-[0.72rem]"></i><span>Duplicate</span>
+                </button>
                 ${state.sessionListExpanded ? `
                 <button type="button" data-move-top="${rowIndex}" title="Send to top"
                   class="h-10 inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">↑↑</button>
@@ -2123,6 +2428,10 @@ function renderSessionList() {
               <div class="text-xs text-gray-400 truncate">${escapeHtml([getSessionTimingSummary(rowItem), rowItem?.location || ''].filter(Boolean).join(' | '))}</div>
             </div>
             <div class="flex items-center gap-0.5 shrink-0">
+              <button type="button" data-duplicate-session="${rowIndex}" title="Duplicate session"
+                class="text-xs px-1 py-0.5 rounded text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 bg-gray-900/50">
+                <i class="fas fa-copy"></i>
+              </button>
               ${state.sessionListExpanded ? `
               <button type="button" data-move-top="${rowIndex}" title="Send to top"
                 class="text-xs px-1 py-0.5 rounded text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 bg-gray-900/50">↑↑</button>
@@ -2144,6 +2453,7 @@ function renderSessionList() {
     const items = state.dataset.items;
     const clampedTo = Math.max(0, Math.min(to, items.length - 1));
     if (from === clampedTo) return;
+    undoPush();
     const moved = items.splice(from, 1)[0];
     items.splice(clampedTo, 0, moved);
     moveTrackedIndex(state.quickEditSessionChanges, from, clampedTo);
@@ -2189,7 +2499,7 @@ function renderSessionList() {
       const from = state.draggingIndex;
       const to = index;
       if (from < 0 || to < 0 || from === to) return;
-
+      undoPush();
       const moved = state.dataset.items.splice(from, 1)[0];
       state.dataset.items.splice(to, 0, moved);
       moveTrackedIndex(state.quickEditSessionChanges, from, to);
@@ -2217,6 +2527,11 @@ function renderSessionList() {
       if (input === null) return;
       const n = parseInt(input, 10);
       if (!isNaN(n)) moveSessionTo(index, n - 1);
+    });
+
+    row.querySelector('[data-duplicate-session]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      duplicateSession(index);
     });
   });
 
@@ -2253,7 +2568,10 @@ function renderSessionList() {
 
     input.addEventListener('focus', async (event) => {
       event.stopPropagation();
-      if (isQuickSessionEditEnabled()) return;
+      if (isQuickSessionEditEnabled()) {
+        undoPush();
+        return;
+      }
       await selectRow();
     });
 
@@ -2299,14 +2617,41 @@ function renderSessionField(field, item) {
   const spanClass = field.span === 2 ? 'md:col-span-2' : '';
   const describedBy = fieldDescriptionAttr('session', field.key, field);
 
+  if (field.key === 'sponsorIds') {
+    const linkedIds = parseMultiValue(item[field.key] || '');
+    const sponsors = state.dataset?.event?.sponsors || [];
+    const linkedSponsors = linkedIds.map((id) => sponsors.find((s) => s.id === id)).filter(Boolean);
+    const linkedHtml = linkedSponsors.length
+      ? `<div class="space-y-2">${linkedSponsors.map((sponsor) => `
+          <div class="editor-linked-item">
+            <div class="editor-linked-item-copy">
+              <div class="editor-linked-item-title">${escapeHtml(sponsor.title || sponsor.id)}</div>
+              <div class="editor-linked-item-meta">${escapeHtml(sponsor.id)}</div>
+            </div>
+            <button type="button" class="editor-linked-item-action" data-remove-session-sponsor="${escapeAttr(sponsor.id)}" aria-label="Remove ${escapeAttr(sponsor.title || sponsor.id)}">
+              <i class="fas fa-trash"></i><span>Remove</span>
+            </button>
+          </div>
+        `).join('')}</div>`
+      : '<p class="speaker-session-summary">No sponsors linked to this session yet.</p>';
+    return `
+      <div class="${spanClass}">
+        <div class="rounded-md border border-gray-700 bg-gray-900/30 px-3 py-3 text-sm text-gray-200 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs text-gray-400">${linkedSponsors.length ? `${linkedSponsors.length} linked sponsor${linkedSponsors.length === 1 ? '' : 's'}` : 'No sponsors linked yet.'}</span>
+            <button id="addLinkedSessionSponsor" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add sponsor
+            </button>
+          </div>
+          ${linkedHtml}
+        </div>
+        ${field.description ? `<span id="${escapeAttr(fieldDescriptionId('session', field.key))}" class="editor-field-description">${escapeHtml(field.description)}</span>` : ''}
+      </div>
+    `;
+  }
+
   if (field.type === 'textarea') {
     const value = toStringValue(item[field.key]);
-    const sponsorHelp =
-      field.key === 'sponsorIds'
-        ? `<div class="mt-2 text-xs text-gray-400">Available sponsor IDs: ${escapeHtml(
-            (state.dataset?.event?.sponsors || []).map((sponsor) => sponsor.id).filter(Boolean).join(', ') || 'None yet'
-          )}</div>`
-        : '';
     const markdownPreview =
       field.key === 'full_description'
         ? `<div class="mt-2 p-3 rounded-md border border-gray-700 bg-gray-900/30">
@@ -2320,7 +2665,6 @@ function renderSessionField(field, item) {
           <textarea data-session-field="${field.key}" rows="${field.key.includes('description') ? 7 : 3}" class="w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3 py-2"${describedBy}>${escapeHtml(
           value
         )}</textarea>
-        ${sponsorHelp}
         ${markdownPreview}
       </label>
     `;
@@ -2328,11 +2672,14 @@ function renderSessionField(field, item) {
 
   if (field.type === 'datetime-local') {
     const localValue = utcIsoToLocalInput(item[field.key], getEventTimezone());
+    const tzHint = field.key === 'startTime'
+      ? `<span class="editor-tz-note"><i class="fas fa-clock mr-1"></i>Times are shown in <strong>${escapeHtml(getEventTimezone())}</strong></span>`
+      : '';
     return `
       <label class="editor-form-field ${spanClass}">
         ${renderFieldIntro('session', field.key, field)}
         <input data-session-field="${field.key}" type="datetime-local" value="${escapeAttr(localValue)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${describedBy}>
-        <span data-utc-preview="${field.key}" class="mt-1 block text-xs text-gray-400">Stored UTC: ${escapeHtml(item[field.key] || '')}</span>
+        ${tzHint}
       </label>
     `;
   }
@@ -2346,6 +2693,24 @@ function renderSessionField(field, item) {
       </label>
     `;
   }
+  if (field.key === 'location') {
+    const rooms = [...new Set(
+      (state.dataset?.items || [])
+        .map((s) => String(s.location || '').trim())
+        .filter(Boolean)
+    )].sort();
+    const datalistHtml = rooms.length
+      ? `<datalist id="roomSuggestions">${rooms.map((r) => `<option value="${escapeAttr(r)}">`).join('')}</datalist>`
+      : '';
+    return `
+      <label class="editor-form-field ${spanClass}">
+        ${renderFieldIntro('session', field.key, field)}
+        <input data-session-field="${field.key}" type="text" value="${escapeAttr(value)}"${rooms.length ? ' list="roomSuggestions"' : ''} class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${describedBy}>
+        ${datalistHtml}
+      </label>
+    `;
+  }
+
   return `
     <label class="editor-form-field ${spanClass}">
       ${renderFieldIntro('session', field.key, field)}
@@ -2394,19 +2759,18 @@ function renderSessionForm() {
   els.sessionForm.innerHTML = SESSION_FIELDS.map((field) => renderSessionField(field, item)).join('');
 
   els.sessionForm.querySelectorAll('[data-session-field]').forEach((input) => {
+    input.addEventListener('focus', undoPush);
     input.addEventListener('input', () => {
       const key = input.dataset.sessionField;
       const raw = input.value;
 
-      if (key === 'track' || key === 'speaker_usernames' || key === 'speakers' || key === 'sponsorIds') {
+      if (key === 'track' || key === 'speaker_usernames' || key === 'speakers') {
         const values = parseMultiValue(raw);
         item[key] = values.length <= 1 ? (values[0] || '') : values;
       } else if (key === 'startTime' || key === 'endTime') {
         const utcIso = localInputToUtcIso(raw, getEventTimezone());
         item[key] = utcIso;
         syncSessionDuration(item);
-        const preview = els.sessionForm.querySelector(`[data-utc-preview="${key}"]`);
-        if (preview) preview.textContent = `Stored UTC: ${utcIso || ''}`;
         const durationField = els.sessionForm.querySelector('[data-session-derived-field="duration"]');
         if (durationField) durationField.value = durationToEditorValue(item.duration);
       } else {
@@ -2421,15 +2785,24 @@ function renderSessionForm() {
       markSessionDirty(true);
       trackQuickSessionChange(state.selectedIndex);
       renderSessionList();
-      if (key === 'sponsorIds') {
-        renderSponsorForm();
-      }
+    });
+  });
+
+  const addLinkedSponsorButton = els.sessionForm.querySelector('#addLinkedSessionSponsor');
+  if (addLinkedSponsorButton) {
+    addLinkedSponsorButton.addEventListener('click', () => openSessionSponsorPicker());
+  }
+
+  els.sessionForm.querySelectorAll('[data-remove-session-sponsor]').forEach((button) => {
+    button.addEventListener('click', () => {
+      removeSponsorFromSession(button.dataset.removeSessionSponsor);
     });
   });
 }
 
 async function addSession() {
   if (!state.dataset) return;
+  undoPush();
   const seed = state.dataset.items[state.selectedIndex] || {};
   const newItem = {
     title: 'New session',
@@ -2982,8 +3355,92 @@ function removeLinkedSessionFromSponsor(itemIndex) {
   renderSessionForm();
 }
 
+function getAvailableSponsorsForSession(item) {
+  const linkedIds = parseMultiValue(item?.sponsorIds || '');
+  return (state.dataset?.event?.sponsors || [])
+    .map((sponsor, index) => ({ sponsor, index }))
+    .filter(({ sponsor }) => sponsor.id && !linkedIds.includes(sponsor.id));
+}
+
+function openSessionSponsorPicker() {
+  const item = state.dataset?.items?.[state.selectedIndex];
+  if (!item || !els.sessionSponsorPickerModal || !els.sessionSponsorPickerList) return;
+  const availableSponsors = getAvailableSponsorsForSession(item);
+  state.sessionSponsorPickerOpen = true;
+  els.sessionSponsorPickerModal.classList.remove('hidden');
+  els.sessionSponsorPickerModal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('session-modal-open');
+  if (els.sessionSponsorPickerCount) {
+    els.sessionSponsorPickerCount.textContent = `${availableSponsors.length} available`;
+  }
+  els.sessionSponsorPickerList.innerHTML = availableSponsors.length
+    ? availableSponsors.map(({ sponsor, index }) => `
+        <article class="speaker-session-card">
+          <div>
+            <h3 class="speaker-session-title">${escapeHtml(sponsor.title || sponsor.id || '(Untitled sponsor)')}</h3>
+            <p class="speaker-session-meta">${escapeHtml(sponsor.id || '')}</p>
+          </div>
+          <div class="session-modal-links">
+            <button type="button" class="session-modal-link" data-add-session-sponsor="${index}">
+              <i class="fas fa-plus"></i><span>Add sponsor</span>
+            </button>
+          </div>
+        </article>
+      `).join('')
+    : '<p class="speaker-session-summary">All sponsors are already linked to this session.</p>';
+  els.sessionSponsorPickerList.querySelectorAll('[data-add-session-sponsor]').forEach((button) => {
+    button.addEventListener('click', () => {
+      addSponsorToSession(Number.parseInt(button.dataset.addSessionSponsor || '-1', 10));
+    });
+  });
+}
+
+function closeSessionSponsorPicker() {
+  if (!els.sessionSponsorPickerModal) return;
+  state.sessionSponsorPickerOpen = false;
+  els.sessionSponsorPickerModal.classList.add('hidden');
+  els.sessionSponsorPickerModal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('session-modal-open');
+}
+
+function addSponsorToSession(sponsorIndex) {
+  const item = state.dataset?.items?.[state.selectedIndex];
+  const sponsor = state.dataset?.event?.sponsors?.[sponsorIndex];
+  if (!item || !sponsor?.id) return;
+  const ids = parseMultiValue(item?.sponsorIds || '');
+  if (!ids.includes(sponsor.id)) {
+    undoPush();
+    const nextIds = [...ids, sponsor.id].filter(Boolean);
+    item.sponsorIds = nextIds.length <= 1 ? (nextIds[0] || '') : nextIds;
+    markDirty(true);
+    markSessionDirty(true);
+    markSponsorDirty(true);
+    trackQuickSessionChange(state.selectedIndex);
+    trackQuickSponsorChange(state.selectedSponsorIndex);
+  }
+  closeSessionSponsorPicker();
+  renderSessionForm();
+  renderSponsorForm();
+}
+
+function removeSponsorFromSession(sponsorId) {
+  const item = state.dataset?.items?.[state.selectedIndex];
+  if (!item || !sponsorId) return;
+  undoPush();
+  const ids = parseMultiValue(item?.sponsorIds || '');
+  const nextIds = ids.filter((id) => id !== sponsorId);
+  item.sponsorIds = nextIds.length <= 1 ? (nextIds[0] || '') : nextIds;
+  markDirty(true);
+  markSessionDirty(true);
+  markSponsorDirty(true);
+  trackQuickSessionChange(state.selectedIndex);
+  renderSessionForm();
+  renderSponsorForm();
+}
+
 async function addSponsor() {
   if (!state.dataset) return;
+  undoPush();
   const sponsors = state.dataset.event.sponsors || (state.dataset.event.sponsors = []);
   const seed = sponsors[state.selectedSponsorIndex] || {};
   const nextNumber = sponsors.length + 1;
@@ -3017,7 +3474,7 @@ async function deleteSponsor() {
   const sponsor = sponsors[state.selectedSponsorIndex];
   const okay = window.confirm(`Delete sponsor "${sponsor?.title || 'Untitled'}"?`);
   if (!okay) return;
-
+  undoPush();
   const [removed] = sponsors.splice(state.selectedSponsorIndex, 1);
   removeTrackedIndex(state.quickEditSponsorChanges, state.selectedSponsorIndex);
   if (removed?.id) {
@@ -3060,7 +3517,7 @@ async function deleteSession() {
   const item = state.dataset.items[state.selectedIndex];
   const okay = window.confirm(`Delete session "${item?.title || 'Untitled'}"?`);
   if (!okay) return;
-
+  undoPush();
   state.dataset.items.splice(state.selectedIndex, 1);
   removeTrackedIndex(state.quickEditSessionChanges, state.selectedIndex);
   if (state.dataset.items.length === 0) {
@@ -3079,6 +3536,23 @@ async function deleteSession() {
   syncSessionSaveButton();
   els.deleteSession.disabled = state.selectedIndex < 0;
   await saveDataset();
+}
+
+function duplicateSession(index) {
+  if (!state.dataset || index < 0 || index >= state.dataset.items.length) return;
+  undoPush();
+  const copy = cloneJsonValue(state.dataset.items[index]);
+  copy.title = `${copy.title || 'Untitled'} (copy)`;
+  state.dataset.items.splice(index + 1, 0, copy);
+  state.selectedIndex = index + 1;
+  markDirty(true);
+  trackQuickSessionChange(index + 1, true);
+  renderSessionList();
+  scrollToSessionRow(state.selectedIndex);
+  renderSessionForm();
+  renderSponsorForm();
+  syncSessionSaveButton();
+  els.deleteSession.disabled = false;
 }
 
 function datasetJsonText() {
@@ -3116,6 +3590,7 @@ async function saveAsDataset() {
     markSessionDirty(false);
     markSponsorDirty(false);
     capturePersistedSnapshot();
+    clearRecoverySnapshot();
     window.alert('File System Access API is unavailable in this browser. Exported JSON instead.');
     return;
   }
@@ -3142,6 +3617,8 @@ async function saveAsDataset() {
   markSessionDirty(false);
   markSponsorDirty(false);
   capturePersistedSnapshot();
+  clearRecoverySnapshot();
+  showSaveToast();
 }
 
 async function saveDataset() {
@@ -3160,7 +3637,7 @@ async function saveDataset() {
     }
   }
   if (!state.fileHandle) {
-    window.alert('No linked save target for this dataset path. Click Connect Folder once or use Save As.');
+    window.alert('No save file linked yet. Use "Open project folder" to connect your folder, or use Save As to choose a file.');
     return;
   }
   if (typeof state.fileHandle.queryPermission === 'function') {
@@ -3177,6 +3654,8 @@ async function saveDataset() {
   markSessionDirty(false);
   markSponsorDirty(false);
   capturePersistedSnapshot();
+  clearRecoverySnapshot();
+  showSaveToast();
 }
 
 async function saveCurrentSession() {
@@ -3337,19 +3816,39 @@ function bindEvents() {
     createDatasetScaffold(pathValue);
   });
 
+  async function handleConnectFolder() {
+    try {
+      await connectProjectFolder();
+    } catch (error) {
+      if (error && error.name === 'AbortError') return;
+      window.alert(`Could not open folder: ${error.message}`);
+    }
+  }
+
   els.folderConnectionToggle.addEventListener('click', async () => {
     if (state.folderConnectedInSession && state.projectDirHandle) {
       disconnectProjectFolder();
       return;
     }
-    try {
-      await connectProjectFolder();
-      window.alert('Project folder connected.');
-    } catch (error) {
-      if (error && error.name === 'AbortError') return;
-      window.alert(`Connect folder failed: ${error.message}`);
-    }
+    await handleConnectFolder();
   });
+
+  const welcomeConnectBtn = document.getElementById('welcomeConnectFolder');
+  if (welcomeConnectBtn) {
+    welcomeConnectBtn.addEventListener('click', () => handleConnectFolder());
+  }
+
+  if (els.previewDataset) {
+    els.previewDataset.addEventListener('click', () => {
+      if (!state.dataset) return;
+      try {
+        localStorage.setItem('__preview__', JSON.stringify(state.dataset));
+        window.open('./index.html?preview=1', '_blank');
+      } catch (e) {
+        window.alert('Could not open preview: ' + e.message);
+      }
+    });
+  }
 
   els.saveDataset.addEventListener('click', async () => {
     try {
@@ -3516,6 +4015,18 @@ function bindEvents() {
     });
   }
 
+  if (els.showTimelineTab) {
+    els.showTimelineTab.addEventListener('click', async () => {
+      await switchEditorTab('timeline');
+    });
+  }
+
+  if (els.timelineSaveBtn) {
+    els.timelineSaveBtn.addEventListener('click', async () => {
+      try { await saveDataset(); } catch (e) { window.alert(e?.message || String(e)); }
+    });
+  }
+
   if (els.closeSponsorSessionPicker) {
     els.closeSponsorSessionPicker.addEventListener('click', closeSponsorSessionPicker);
   }
@@ -3537,8 +4048,59 @@ function bindEvents() {
     });
   }
 
+  if (els.closeSessionSponsorPicker) {
+    els.closeSessionSponsorPicker.addEventListener('click', closeSessionSponsorPicker);
+  }
+
+  if (els.closeSessionSponsorPickerBack) {
+    els.closeSessionSponsorPickerBack.addEventListener('click', closeSessionSponsorPicker);
+  }
+
+  if (els.sessionSponsorPickerModal) {
+    els.sessionSponsorPickerModal.addEventListener('click', (event) => {
+      if (event.target === els.sessionSponsorPickerModal) {
+        closeSessionSponsorPicker();
+      }
+    });
+    els.sessionSponsorPickerModal.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeSessionSponsorPicker();
+      }
+    });
+  }
+
+  if (els.undoAction) {
+    els.undoAction.addEventListener('click', async () => {
+      await performUndo();
+    });
+  }
+
+  if (els.revertDataset) {
+    els.revertDataset.addEventListener('click', async () => {
+      if (!state.persistedSnapshot) return;
+      const okay = window.confirm('Revert all unsaved changes and restore the last saved version?');
+      if (!okay) return;
+      await restorePersistedSnapshot();
+    });
+  }
+
+  document.addEventListener('keydown', async (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+      event.preventDefault();
+      try { await saveDataset(); } catch (e) { window.alert(e?.message || String(e)); }
+      return;
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      event.preventDefault();
+      await performUndo();
+    }
+  });
+
   window.addEventListener('beforeunload', (event) => {
-    if (!state.dirty) return;
+    if (!state.dirty || !state.dataset) return;
+    saveRecoverySnapshot();
     event.preventDefault();
     event.returnValue = '';
   });
@@ -3648,13 +4210,22 @@ async function init() {
   setActiveEditorTab('event');
   setFolderConnectionButtonState();
   if (els.logoForm) {
-    els.logoForm.innerHTML = '<p class="text-sm text-gray-400">Connect folder to begin.</p>';
+    els.logoForm.innerHTML = '<p class="text-sm text-gray-400">Open a project folder to get started.</p>';
   }
   if (els.flickrForm) {
-    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Connect folder to begin.</p>';
+    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Open a project folder to get started.</p>';
   }
-  els.sponsorList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Connect folder to begin.</li>';
+  els.sponsorList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Open a project folder to get started.</li>';
   els.sponsorForm.innerHTML = '<p class="text-sm text-gray-400">Select a sponsor row to edit it.</p>';
+
+  const pendingRecovery = loadRecoverySnapshot();
+  if (pendingRecovery) showRecoveryBar(pendingRecovery);
+
+  setInterval(() => {
+    if (state.dirty && state.dataset) saveRecoverySnapshot();
+  }, 30_000);
+
+  syncWelcomePanel();
 }
 
 void init();

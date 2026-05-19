@@ -629,9 +629,10 @@ function renderEventCard(event, { keywordsFilter, isDrupalConDesign, timeSlotBgC
     : 'track-pill text-xs text-gray-600 bg-white bg-opacity-60 px-2 py-1 rounded-sm inline-flex';
   const trackLabels = normalizeTracks(event.track);
   const highlightedTrack = trackLabels
-    .map((track) => highlightKeywords(escapeHtml(track), keywordsFilter))
-    .map((track) => `<span class="${trackClass}">${track}</span>`)
+    .map((track) => ({ raw: track, text: highlightKeywords(escapeHtml(track), keywordsFilter) }))
+    .map(({ raw, text }) => `<span class="${trackClass}" data-track="${escapeHtml(raw)}">${text}</span>`)
     .join('');
+  const primaryTrack = trackLabels[0] || '';
   const durationText = formatDuration(event, event.duration);
   const [colorA, colorB] = getEventPalette(event);
   const bgColor = isSelected ? 'drupal-blue-bg-light' : timeSlotBgColor;
@@ -642,6 +643,7 @@ function renderEventCard(event, { keywordsFilter, isDrupalConDesign, timeSlotBgC
 
   return `
     <div class="event-card relative h-full p-4 rounded-md transition-colors cursor-pointer border ${cardExtraClass} ${bgColor} ${hoverColor} ${isSelected ? 'drupal-blue-border-light' : 'border-gray-300'}"
+         data-primary-track="${escapeHtml(primaryTrack)}"
          role="button" tabindex="0" aria-haspopup="dialog"
          aria-label="${escapeHtml(event.title || 'Session')}. Open session details."
          data-event-id="${event.id}" ${cardStyle}>
