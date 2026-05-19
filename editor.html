@@ -38,6 +38,15 @@
       <p>This endpoint is available only on <code>localhost</code>/<code>127.0.0.1</code>/<code>::1</code>.</p>
     </div>
 
+    <div id="recoveryBar" class="recovery-bar hidden" role="alert" aria-live="polite">
+      <i class="fas fa-rotate-left recovery-bar-icon"></i>
+      <span id="recoveryBarText" class="recovery-bar-text"></span>
+      <div class="recovery-bar-actions">
+        <button id="recoveryRestore" type="button" class="recovery-bar-btn recovery-bar-btn--primary">Restore</button>
+        <button id="recoveryDismiss" type="button" class="recovery-bar-btn">Dismiss</button>
+      </div>
+    </div>
+
     <div id="editorApp" class="space-y-4">
       <section id="editorToolbar" class="bg-white rounded-lg shadow-md p-4">
         <div class="grid grid-cols-1 xl:grid-cols-[1fr_auto_auto_auto_auto_auto_auto_auto] gap-2 items-end">

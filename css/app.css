@@ -3702,3 +3702,41 @@ body.has-preview-banner { padding-top: 2.25rem; }
     font-size: 0.78rem;
     color: #8aabb0;
 }
+
+/* ── Crash recovery notification bar ───────────────────────────────────── */
+.recovery-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #fffbeb;
+    border: 1px solid #f59e0b;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    color: #78350f;
+    font-size: 0.875rem;
+}
+.recovery-bar.hidden { display: none; }
+.recovery-bar-icon { color: #d97706; flex-shrink: 0; }
+.recovery-bar-text { flex: 1; min-width: 0; }
+.recovery-bar-actions { display: flex; gap: 0.5rem; flex-shrink: 0; margin-left: auto; }
+.recovery-bar-btn {
+    height: 2rem;
+    padding: 0 0.875rem;
+    border-radius: 0.375rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid #d97706;
+    background: #fff;
+    color: #92400e;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+.recovery-bar-btn:hover { background: #fef3c7; }
+.recovery-bar-btn--primary {
+    background: #d97706;
+    color: #fff;
+    border-color: #b45309;
+}
+.recovery-bar-btn--primary:hover { background: #b45309; }

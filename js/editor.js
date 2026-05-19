@@ -37,6 +37,8 @@ const state = {
 
 const UNDO_STACK = [];
 const UNDO_LIMIT = 50;
+const RECOVERY_KEY = '__editor_recovery__';
+const RECOVERY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const FILE_LINK_DB = 'dataset-editor-file-links';
 const FILE_LINK_STORE = 'links';
@@ -621,6 +623,85 @@ async function restorePersistedSnapshot() {
   syncSponsorSaveButton();
 }
 
+function saveRecoverySnapshot() {
+  if (!state.dataset) return;
+  try {
+    localStorage.setItem(RECOVERY_KEY, JSON.stringify({
+      dataset: state.dataset,
+      file: state.file,
+      outputPath: state.outputPath,
+      savedAt: Date.now(),
+    }));
+  } catch {
+    // localStorage full or unavailable
+  }
+}
+
+function clearRecoverySnapshot() {
+  try { localStorage.removeItem(RECOVERY_KEY); } catch {}
+}
+
+function loadRecoverySnapshot() {
+  try {
+    const raw = localStorage.getItem(RECOVERY_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data?.dataset || !data?.file) return null;
+    if (data.savedAt && Date.now() - data.savedAt > RECOVERY_MAX_AGE_MS) {
+      clearRecoverySnapshot();
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function applyRecovery(recovery) {
+  state.dataset = recovery.dataset;
+  state.file = recovery.file || '';
+  state.outputPath = recovery.outputPath || '';
+  state.selectedIndex = -1;
+  state.selectedSponsorIndex = -1;
+  state.sessionSearchQuery = '';
+  normalizeDatasetShape();
+  clearRecoverySnapshot();
+  undoClear();
+  markDirty(true);
+  markSessionDirty(false);
+  markSponsorDirty(false);
+  setEditorButtonsEnabled(true);
+  setCurrentFilenameLabel();
+  renderEventMetaForm();
+  renderSessionList();
+  renderSessionForm();
+  renderSponsorList();
+  renderSponsorForm();
+  syncSessionSaveButton();
+  syncSponsorSaveButton();
+  closeWelcomeModal();
+}
+
+function showRecoveryBar(recovery) {
+  const bar = document.getElementById('recoveryBar');
+  const textEl = document.getElementById('recoveryBarText');
+  if (!bar || !textEl) return;
+  const ageMs = Date.now() - (recovery.savedAt || 0);
+  const ageMin = Math.round(ageMs / 60_000);
+  const ageText = ageMin < 1 ? 'just now' : ageMin === 1 ? '1 minute ago' : `${ageMin} minutes ago`;
+  textEl.textContent = `Unsaved work from ${ageText} found for "${recovery.file}".`;
+  bar.classList.remove('hidden');
+  document.getElementById('recoveryRestore')?.addEventListener('click', () => {
+    applyRecovery(recovery);
+    bar.classList.add('hidden');
+  });
+  document.getElementById('recoveryDismiss')?.addEventListener('click', () => {
+    if (!window.confirm('Discard the recovered work? This cannot be undone.')) return;
+    clearRecoverySnapshot();
+    bar.classList.add('hidden');
+  });
+}
+
 function undoPush() {
   if (!state.dataset) return;
   UNDO_STACK.push({
@@ -703,7 +784,7 @@ function showSaveToast() {
 
 function syncWelcomePanel() {
   if (!els.welcome) return;
-  const show = !state.folderConnectedInSession || !state.projectDirHandle;
+  const show = (!state.folderConnectedInSession || !state.projectDirHandle) && !state.dataset;
   if (show) {
     document.getElementById('welcomeScreen1')?.classList.remove('hidden');
     document.getElementById('welcomeScreen2')?.classList.add('hidden');
@@ -1394,6 +1475,7 @@ async function loadDataset(file) {
   markSponsorDirty(false);
   capturePersistedSnapshot();
   undoClear();
+  clearRecoverySnapshot();
   setCurrentFilenameLabel();
   renderEventMetaForm();
   renderLogoForm();
@@ -3508,6 +3590,7 @@ async function saveAsDataset() {
     markSessionDirty(false);
     markSponsorDirty(false);
     capturePersistedSnapshot();
+    clearRecoverySnapshot();
     window.alert('File System Access API is unavailable in this browser. Exported JSON instead.');
     return;
   }
@@ -3534,6 +3617,7 @@ async function saveAsDataset() {
   markSessionDirty(false);
   markSponsorDirty(false);
   capturePersistedSnapshot();
+  clearRecoverySnapshot();
   showSaveToast();
 }
 
@@ -3570,6 +3654,7 @@ async function saveDataset() {
   markSessionDirty(false);
   markSponsorDirty(false);
   capturePersistedSnapshot();
+  clearRecoverySnapshot();
   showSaveToast();
 }
 
@@ -4014,7 +4099,8 @@ function bindEvents() {
   });
 
   window.addEventListener('beforeunload', (event) => {
-    if (!state.dirty) return;
+    if (!state.dirty || !state.dataset) return;
+    saveRecoverySnapshot();
     event.preventDefault();
     event.returnValue = '';
   });
@@ -4131,6 +4217,14 @@ async function init() {
   }
   els.sponsorList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Open a project folder to get started.</li>';
   els.sponsorForm.innerHTML = '<p class="text-sm text-gray-400">Select a sponsor row to edit it.</p>';
+
+  const pendingRecovery = loadRecoverySnapshot();
+  if (pendingRecovery) showRecoveryBar(pendingRecovery);
+
+  setInterval(() => {
+    if (state.dirty && state.dataset) saveRecoverySnapshot();
+  }, 30_000);
+
   syncWelcomePanel();
 }
 
