@@ -298,6 +298,30 @@
     </div>
   </div>
 
+  <div id="sessionSponsorPickerModal" class="session-modal-overlay hidden" aria-hidden="true">
+    <div class="session-modal-card" role="dialog" aria-modal="true" aria-labelledby="sessionSponsorPickerTitle">
+      <div class="session-modal-header">
+        <button id="closeSessionSponsorPickerBack" type="button" class="session-modal-back">
+          <i class="fas fa-arrow-left"></i><span>Back to session</span>
+        </button>
+        <button id="closeSessionSponsorPicker" type="button" class="session-modal-close" aria-label="Close sponsor picker">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="session-modal-body">
+        <div class="speaker-modal-head">
+          <h2 id="sessionSponsorPickerTitle" class="session-modal-title">Add linked sponsor</h2>
+          <span id="sessionSponsorPickerCount" class="speaker-modal-count-badge">0 available</span>
+        </div>
+        <p class="session-modal-meta">
+          <span class="session-modal-meta-label">Selection</span>
+          <span class="session-modal-meta-value">Choose a sponsor to associate with the selected session.</span>
+        </p>
+        <div id="sessionSponsorPickerList" class="speaker-session-grid"></div>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="./js/editor.js"></script>
 </body>
 </html>
