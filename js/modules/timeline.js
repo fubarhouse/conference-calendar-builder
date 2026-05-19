@@ -1,11 +1,11 @@
 // Drag-and-drop timeline editor for event session JSON.
 // Display grid: 15-minute slots at ROW_H px each.
-// Drag/add snaps to 15-minute increments (SNAP_MINS).
+// Drag/add snaps to 5-minute increments (SNAP_MINS).
 
 const SLOT_MINS = 15;                              // display granularity
-const SNAP_MINS = 15;                              // drag/add snap granularity
+const SNAP_MINS = 5;                               // drag/add snap granularity
 const ROW_H = 64;                                  // px per SLOT_MINS (4×64=256px/hr)
-const SNAP_H = (SNAP_MINS / SLOT_MINS) * ROW_H;   // px per snap step (= 64)
+const SNAP_H = (SNAP_MINS / SLOT_MINS) * ROW_H;   // px per snap step (≈21px)
 const MIN_SESSION_PX = 14;                         // minimum rendered session height (1 text line)
 
 let _el = null;
@@ -318,7 +318,7 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
     const height = sessionHeight(durMins);
     const track = getPrimaryTrack(item);
     const spk = Array.isArray(item.speakers) ? item.speakers.join(', ') : (item.speakers || '');
-    const compact = height < SNAP_H ? ' is-compact' : '';
+    const compact = height < ROW_H ? ' is-compact' : '';
 
     const { lane, total } = layout.get(index);
     const posStyle = total > 1
@@ -354,7 +354,7 @@ function buildSpanningSession(item, index, minMins) {
   const height = sessionHeight(durMins);
   const track = getPrimaryTrack(item);
   const spk = Array.isArray(item.speakers) ? item.speakers.join(', ') : (item.speakers || '');
-  const compact = height < SNAP_H ? ' is-compact' : '';
+  const compact = height < ROW_H ? ' is-compact' : '';
 
   return `
     <div class="tl-session tl-session-spanning${compact}" data-index="${index}" data-room=""
@@ -547,6 +547,7 @@ function _onMoveStart(e) {
     type: 'move',
     index,
     block,
+    startX: e.clientX,
     startY: e.clientY,
     origStartMins: _localMins(item.startTime),
     origEndMins: item.endTime ? _localMins(item.endTime) : _localMins(item.startTime) + 60,
@@ -567,7 +568,9 @@ function _onMoveMove(e) {
 
   const snappedSlotDelta = Math.round((e.clientY - _drag.startY) / SNAP_H);
   const newStartMins = Math.max(_drag.minMins, _drag.origStartMins + snappedSlotDelta * SNAP_MINS);
-  _drag.block.style.transform = `translateY(${(newStartMins - _drag.origStartMins) / SLOT_MINS * ROW_H}px)`;
+  const deltaY = (newStartMins - _drag.origStartMins) / SLOT_MINS * ROW_H;
+  const deltaX = _drag.isSpanning ? 0 : e.clientX - _drag.startX;
+  _drag.block.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
 
   if (_drag.rooms.length && !_drag.isSpanning) {
     const el = document.elementFromPoint(e.clientX, e.clientY);
