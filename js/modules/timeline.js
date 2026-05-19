@@ -6,7 +6,7 @@ const SLOT_MINS = 15;                              // display granularity
 const SNAP_MINS = 15;                              // drag/add snap granularity
 const ROW_H = 64;                                  // px per SLOT_MINS (4×64=256px/hr)
 const SNAP_H = (SNAP_MINS / SLOT_MINS) * ROW_H;   // px per snap step (= 64)
-const MIN_SESSION_PX = 28;                         // minimum rendered session height
+const MIN_SESSION_PX = 14;                         // minimum rendered session height (1 text line)
 
 let _el = null;
 let _dataset = null;
@@ -316,7 +316,7 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
   for (const { item, index } of roomItems) {
     const startMins = _localMins(item.startTime);
     const endMins = item.endTime ? _localMins(item.endTime) : startMins + 60;
-    const durMins = Math.max(SLOT_MINS, endMins - startMins);
+    const durMins = Math.max(1, endMins - startMins);
     const top = sessionTop(startMins, minMins);
     const height = sessionHeight(durMins);
     const track = getPrimaryTrack(item);
@@ -352,7 +352,7 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
 function buildSpanningSession(item, index, minMins) {
   const startMins = _localMins(item.startTime);
   const endMins = item.endTime ? _localMins(item.endTime) : startMins + 60;
-  const durMins = Math.max(SLOT_MINS, endMins - startMins);
+  const durMins = Math.max(1, endMins - startMins);
   const top = sessionTop(startMins, minMins);
   const height = sessionHeight(durMins);
   const track = getPrimaryTrack(item);
