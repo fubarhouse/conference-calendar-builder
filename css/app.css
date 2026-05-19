@@ -3441,6 +3441,31 @@
     background: rgba(46,163,255,0.06);
 }
 
+/* ── Timeline drag affordance ───────────────────────────────────────────── */
+.tl-session {
+    cursor: grab;
+}
+.tl-session:active {
+    cursor: grabbing;
+}
+.tl-drag-handle {
+    position: absolute;
+    top: 4px;
+    right: 22px;
+    opacity: 0;
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.5);
+    pointer-events: none;
+    transition: opacity 0.15s;
+    line-height: 1;
+}
+.tl-session:hover .tl-drag-handle {
+    opacity: 1;
+}
+.tl-session.is-compact .tl-drag-handle {
+    display: none;
+}
+
 /* ── Welcome / onboarding modal ─────────────────────────────────────────── */
 .editor-welcome {
     width: min(580px, 100%);
@@ -3628,11 +3653,23 @@ body.has-preview-banner { padding-top: 2.25rem; }
     color: #fff;
 }
 
-/* ── Dirty / unsaved changes indicator ──────────────────────────────────── */
+/* ── Dirty / unsaved changes indicator + Save button highlight ──────────── */
 #dirtyState[data-dirty="true"] {
     border-color: #f59e0b;
     color: #f59e0b;
     background: rgba(245,158,11,0.06);
+}
+#saveDataset.is-dirty,
+#timelineSaveBtn.is-dirty {
+    background: #f59e0b;
+    border-color: #d97706;
+    color: #1a1200;
+    font-weight: 600;
+}
+#saveDataset.is-dirty:hover,
+#timelineSaveBtn.is-dirty:hover {
+    background: #d97706;
+    border-color: #b45309;
 }
 
 /* ── Save toast ─────────────────────────────────────────────────────────── */

@@ -193,6 +193,7 @@ const els = {
   saveDataset: document.getElementById('saveDataset'),
   saveAsDataset: document.getElementById('saveAsDataset'),
   previewDataset: document.getElementById('previewDataset'),
+  revertDataset: document.getElementById('revertDataset'),
   exportDataset: document.getElementById('exportDataset'),
   currentFilenameInput: document.getElementById('currentFilenameInput'),
   dirtyState: document.getElementById('dirtyState'),
@@ -481,6 +482,7 @@ function setEditorButtonsEnabled(enabled) {
   els.saveDataset.disabled = !enabled;
   els.saveAsDataset.disabled = !enabled;
   if (els.previewDataset) els.previewDataset.disabled = !enabled;
+  if (els.revertDataset) els.revertDataset.disabled = true;
   if (els.timelineSaveBtn) els.timelineSaveBtn.disabled = !enabled;
   els.saveSession.disabled = !enabled || state.selectedIndex < 0;
   els.addSession.disabled = !enabled;
@@ -627,10 +629,15 @@ async function confirmDiscardPendingChanges(targetLabel = 'another form') {
 
 function markDirty(nextDirty = true) {
   state.dirty = nextDirty;
-  const color = state.dirty ? 'text-amber-300' : 'text-emerald-300';
-  const label = state.dirty ? 'Unsaved changes' : 'No changes';
+  const color = nextDirty ? 'text-amber-300' : 'text-emerald-300';
+  const label = nextDirty ? 'Unsaved changes' : 'No changes';
   els.dirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-xs ${color}"></i><span>${label}</span>`;
   els.dirtyState.dataset.dirty = String(nextDirty);
+  els.saveDataset.classList.toggle('is-dirty', nextDirty);
+  if (els.timelineSaveBtn) els.timelineSaveBtn.classList.toggle('is-dirty', nextDirty);
+  if (els.revertDataset) {
+    els.revertDataset.disabled = !nextDirty || !state.persistedSnapshot;
+  }
 }
 
 let _saveToastTimer = null;
@@ -2259,6 +2266,10 @@ function renderSessionList() {
                 >
                   <i class="fas fa-up-right-from-square mr-1.5 text-[0.72rem]"></i><span>Open</span>
                 </button>
+                <button type="button" data-duplicate-session="${rowIndex}" title="Duplicate session"
+                  class="h-10 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                  <i class="fas fa-copy mr-1.5 text-[0.72rem]"></i><span>Duplicate</span>
+                </button>
                 ${state.sessionListExpanded ? `
                 <button type="button" data-move-top="${rowIndex}" title="Send to top"
                   class="h-10 inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">↑↑</button>
@@ -2280,6 +2291,10 @@ function renderSessionList() {
               <div class="text-xs text-gray-400 truncate">${escapeHtml([getSessionTimingSummary(rowItem), rowItem?.location || ''].filter(Boolean).join(' | '))}</div>
             </div>
             <div class="flex items-center gap-0.5 shrink-0">
+              <button type="button" data-duplicate-session="${rowIndex}" title="Duplicate session"
+                class="text-xs px-1 py-0.5 rounded text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 bg-gray-900/50">
+                <i class="fas fa-copy"></i>
+              </button>
               ${state.sessionListExpanded ? `
               <button type="button" data-move-top="${rowIndex}" title="Send to top"
                 class="text-xs px-1 py-0.5 rounded text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 bg-gray-900/50">↑↑</button>
@@ -2374,6 +2389,11 @@ function renderSessionList() {
       if (input === null) return;
       const n = parseInt(input, 10);
       if (!isNaN(n)) moveSessionTo(index, n - 1);
+    });
+
+    row.querySelector('[data-duplicate-session]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      duplicateSession(index);
     });
   });
 
@@ -2532,6 +2552,24 @@ function renderSessionField(field, item) {
       </label>
     `;
   }
+  if (field.key === 'location') {
+    const rooms = [...new Set(
+      (state.dataset?.items || [])
+        .map((s) => String(s.location || '').trim())
+        .filter(Boolean)
+    )].sort();
+    const datalistHtml = rooms.length
+      ? `<datalist id="roomSuggestions">${rooms.map((r) => `<option value="${escapeAttr(r)}">`).join('')}</datalist>`
+      : '';
+    return `
+      <label class="editor-form-field ${spanClass}">
+        ${renderFieldIntro('session', field.key, field)}
+        <input data-session-field="${field.key}" type="text" value="${escapeAttr(value)}"${rooms.length ? ' list="roomSuggestions"' : ''} class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${describedBy}>
+        ${datalistHtml}
+      </label>
+    `;
+  }
+
   return `
     <label class="editor-form-field ${spanClass}">
       ${renderFieldIntro('session', field.key, field)}
@@ -3354,6 +3392,22 @@ async function deleteSession() {
   await saveDataset();
 }
 
+function duplicateSession(index) {
+  if (!state.dataset || index < 0 || index >= state.dataset.items.length) return;
+  const copy = cloneJsonValue(state.dataset.items[index]);
+  copy.title = `${copy.title || 'Untitled'} (copy)`;
+  state.dataset.items.splice(index + 1, 0, copy);
+  state.selectedIndex = index + 1;
+  markDirty(true);
+  trackQuickSessionChange(index + 1, true);
+  renderSessionList();
+  scrollToSessionRow(state.selectedIndex);
+  renderSessionForm();
+  renderSponsorForm();
+  syncSessionSaveButton();
+  els.deleteSession.disabled = false;
+}
+
 function datasetJsonText() {
   stripSummaryFields(state.dataset);
   syncAllSessionDurations();
@@ -3862,6 +3916,15 @@ function bindEvents() {
       if (event.key === 'Escape') {
         closeSessionSponsorPicker();
       }
+    });
+  }
+
+  if (els.revertDataset) {
+    els.revertDataset.addEventListener('click', async () => {
+      if (!state.persistedSnapshot) return;
+      const okay = window.confirm('Revert all unsaved changes and restore the last saved version?');
+      if (!okay) return;
+      await restorePersistedSnapshot();
     });
   }
 

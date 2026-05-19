@@ -42,7 +42,7 @@
       <section id="editorToolbar" class="bg-white rounded-lg shadow-md p-4">
         <div class="grid grid-cols-1 xl:grid-cols-[1fr_auto_auto_auto_auto_auto_auto] gap-2 items-end">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="datasetSelect">Dataset</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="datasetSelect">Event</label>
             <select id="datasetSelect" class="w-full h-11 pr-10 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white"></select>
           </div>
           <button id="editorSearchEvents" type="button" class="h-11 inline-flex items-center justify-center px-5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed" disabled>
@@ -64,7 +64,7 @@
             <i class="fas fa-eye mr-2"></i>Preview
           </button>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-2 mt-2 items-end">
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto] gap-2 mt-2 items-end">
           <label class="block">
             <span class="block text-xs font-medium text-gray-400 mb-1">Save location</span>
             <div class="relative">
@@ -77,6 +77,12 @@
             <div id="dirtyState" class="h-11 inline-flex items-center px-4 rounded-md border border-gray-300 text-sm text-gray-300">
               <i class="fas fa-circle mr-2 text-xs"></i><span>No changes</span>
             </div>
+          </div>
+          <div class="block">
+            <span class="block text-xs font-medium text-gray-400 mb-1">&nbsp;</span>
+            <button id="revertDataset" type="button" class="h-11 inline-flex items-center justify-center pl-4 pr-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+              <i class="fas fa-rotate-left mr-2"></i>Revert
+            </button>
           </div>
         </div>
       </section>

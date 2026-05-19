@@ -333,6 +333,7 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
           ${spk ? `<div class="tl-session-speakers">${esc(spk)}</div>` : ''}
           <div class="tl-session-time">${esc(fmtMins(startMins))}–${esc(fmtMins(endMins))}</div>
         </div>
+        <div class="tl-drag-handle"><i class="fas fa-grip-vertical"></i></div>
         <button class="tl-session-delete" data-index="${index}" type="button" title="Delete session">
           <i class="fas fa-times" aria-hidden="true"></i>
         </button>
@@ -364,6 +365,7 @@ function buildSpanningSession(item, index, minMins) {
         ${spk ? `<div class="tl-session-speakers">${esc(spk)}</div>` : ''}
         <div class="tl-session-time">${esc(fmtMins(startMins))}–${esc(fmtMins(endMins))}</div>
       </div>
+      <div class="tl-drag-handle"><i class="fas fa-grip-vertical"></i></div>
       <button class="tl-session-delete" data-index="${index}" type="button" title="Delete session">
         <i class="fas fa-times" aria-hidden="true"></i>
       </button>
