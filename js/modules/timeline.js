@@ -4,8 +4,8 @@
 
 const SLOT_MINS = 15;                              // display granularity
 const SNAP_MINS = 15;                              // drag/add snap granularity
-const ROW_H = 44;                                  // px per SLOT_MINS (4×44=176px/hr)
-const SNAP_H = (SNAP_MINS / SLOT_MINS) * ROW_H;   // px per snap step (= 44)
+const ROW_H = 64;                                  // px per SLOT_MINS (4×64=256px/hr)
+const SNAP_H = (SNAP_MINS / SLOT_MINS) * ROW_H;   // px per snap step (= 64)
 const MIN_SESSION_PX = 28;                         // minimum rendered session height
 
 let _el = null;
@@ -272,6 +272,34 @@ function buildTimeAxis(minMins, totalSlots) {
   </div>`;
 }
 
+function buildCollisionLayout(roomItems) {
+  const sorted = [...roomItems].sort((a, b) =>
+    _localMins(a.item.startTime) - _localMins(b.item.startTime));
+
+  const laneEnds = [];
+  const layout = new Map(); // index → { lane, startMins, endMins }
+
+  for (const { item, index } of sorted) {
+    const startMins = _localMins(item.startTime);
+    const endMins = item.endTime ? _localMins(item.endTime) : startMins + 60;
+    let lane = laneEnds.findIndex(end => end <= startMins);
+    if (lane === -1) { lane = laneEnds.length; laneEnds.push(endMins); }
+    else laneEnds[lane] = endMins;
+    layout.set(index, { lane, startMins, endMins });
+  }
+
+  // Second pass: compute total overlapping entries for each entry
+  for (const [index, info] of layout) {
+    let total = 0;
+    for (const [, other] of layout) {
+      if (other.startMins < info.endMins && other.endMins > info.startMins) total++;
+    }
+    info.total = total;
+  }
+
+  return layout;
+}
+
 function buildRoomColumn(room, dayItems, minMins, totalSlots) {
   let lines = '';
   for (let i = 0; i < totalSlots; i++) {
@@ -283,6 +311,7 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
   }
 
   const roomItems = dayItems.filter(({ item }) => (item.location ?? '') === room);
+  const layout = buildCollisionLayout(roomItems);
   let blocks = '';
   for (const { item, index } of roomItems) {
     const startMins = _localMins(item.startTime);
@@ -294,9 +323,14 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
     const spk = Array.isArray(item.speakers) ? item.speakers.join(', ') : (item.speakers || '');
     const compact = height < SNAP_H ? ' is-compact' : '';
 
+    const { lane, total } = layout.get(index);
+    const posStyle = total > 1
+      ? `;left:${lane === 0 ? '4px' : `calc(${(lane / total) * 100}% + 2px)`};right:${lane === total - 1 ? '4px' : `calc(${((total - lane - 1) / total) * 100}% + 2px)`}`
+      : '';
+
     blocks += `
       <div class="tl-session${compact}" data-index="${index}" data-room="${esc(room)}"
-           data-track="${esc(track)}" style="top:${top}px;height:${height}px">
+           data-track="${esc(track)}" style="top:${top}px;height:${height}px${posStyle}">
         <div class="tl-session-inner">
           <div class="tl-session-title">${esc(item.title || 'Untitled')}</div>
           ${spk ? `<div class="tl-session-speakers">${esc(spk)}</div>` : ''}
@@ -526,6 +560,7 @@ function _onMoveStart(e) {
   };
 
   block.classList.add('is-dragging');
+  block.style.pointerEvents = 'none';
   document.addEventListener('mousemove', _onMoveMove);
   document.addEventListener('mouseup', _onMoveUp);
 }
@@ -537,15 +572,14 @@ function _onMoveMove(e) {
   const newStartMins = Math.max(_drag.minMins, _drag.origStartMins + snappedSlotDelta * SNAP_MINS);
   _drag.block.style.transform = `translateY(${(newStartMins - _drag.origStartMins) / SLOT_MINS * ROW_H}px)`;
 
-  const body = _el.querySelector('.tl-rooms-body');
-  if (body && _drag.rooms.length && !_drag.isSpanning) {
-    const { left, width } = body.getBoundingClientRect();
-    const colIdx = Math.max(0, Math.min(_drag.rooms.length - 1, Math.floor((e.clientX - left) / (width / _drag.rooms.length))));
-    const newRoom = _drag.rooms[colIdx];
+  if (_drag.rooms.length && !_drag.isSpanning) {
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const col = el?.closest('.tl-room-col');
+    const newRoom = col?.dataset.room ?? _drag.targetRoom;
     if (newRoom !== _drag.targetRoom) {
       _drag.targetRoom = newRoom;
-      _el.querySelectorAll('.tl-room-col').forEach(col =>
-        col.classList.toggle('is-drop-target', col.dataset.room === newRoom));
+      _el.querySelectorAll('.tl-room-col').forEach(c =>
+        c.classList.toggle('is-drop-target', c.dataset.room === newRoom));
     }
   }
 }
@@ -682,6 +716,7 @@ function _cleanDrag() {
   if (_drag?.block) {
     _drag.block.classList.remove('is-dragging');
     _drag.block.style.transform = '';
+    _drag.block.style.pointerEvents = '';
   }
   _el?.querySelectorAll('.tl-room-col').forEach(c => c.classList.remove('is-drop-target'));
   document.removeEventListener('mousemove', _onMoveMove);

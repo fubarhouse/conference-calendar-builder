@@ -3172,7 +3172,6 @@
 
 .tl-session-inner {
     padding: 3px 22px 16px 5px;
-    height: 100%;
     overflow: hidden;
 }
 .tl-session.is-compact .tl-session-inner {
