@@ -35,6 +35,9 @@ const state = {
   sessionSponsorPickerOpen: false
 };
 
+const UNDO_STACK = [];
+const UNDO_LIMIT = 50;
+
 const FILE_LINK_DB = 'dataset-editor-file-links';
 const FILE_LINK_STORE = 'links';
 const DIR_HANDLE_KEY = '__project_dir_handle__';
@@ -193,6 +196,7 @@ const els = {
   saveDataset: document.getElementById('saveDataset'),
   saveAsDataset: document.getElementById('saveAsDataset'),
   previewDataset: document.getElementById('previewDataset'),
+  undoAction: document.getElementById('undoAction'),
   revertDataset: document.getElementById('revertDataset'),
   exportDataset: document.getElementById('exportDataset'),
   currentFilenameInput: document.getElementById('currentFilenameInput'),
@@ -615,6 +619,55 @@ async function restorePersistedSnapshot() {
   renderSponsorForm();
   syncSessionSaveButton();
   syncSponsorSaveButton();
+}
+
+function undoPush() {
+  if (!state.dataset) return;
+  UNDO_STACK.push({
+    dataset: cloneJsonValue(state.dataset),
+    selectedIndex: state.selectedIndex,
+    selectedSponsorIndex: state.selectedSponsorIndex,
+  });
+  if (UNDO_STACK.length > UNDO_LIMIT) UNDO_STACK.shift();
+  updateUndoButton();
+}
+
+function undoClear() {
+  UNDO_STACK.length = 0;
+  updateUndoButton();
+}
+
+function updateUndoButton() {
+  if (els.undoAction) {
+    els.undoAction.disabled = UNDO_STACK.length === 0;
+    els.undoAction.title = UNDO_STACK.length > 0
+      ? `Undo (${UNDO_STACK.length} step${UNDO_STACK.length === 1 ? '' : 's'}) — Ctrl+Z`
+      : 'Nothing to undo';
+  }
+}
+
+async function performUndo() {
+  if (UNDO_STACK.length === 0) return;
+  const entry = UNDO_STACK.pop();
+  state.dataset = entry.dataset;
+  state.selectedIndex = entry.selectedIndex;
+  state.selectedSponsorIndex = entry.selectedSponsorIndex;
+  state.quickEditSessionChanges = new Set();
+  state.quickEditSponsorChanges = new Set();
+  normalizeDatasetShape();
+  markDirty(true);
+  markSessionDirty(false);
+  markSponsorDirty(false);
+  updateUndoButton();
+  renderEventMetaForm();
+  renderSessionList();
+  renderSessionForm();
+  renderSponsorList();
+  renderSponsorForm();
+  syncSessionSaveButton();
+  syncSponsorSaveButton();
+  if (els.deleteSession) els.deleteSession.disabled = state.selectedIndex < 0;
+  if (els.deleteSponsor) els.deleteSponsor.disabled = state.selectedSponsorIndex < 0;
 }
 
 async function confirmDiscardPendingChanges(targetLabel = 'another form') {
@@ -1340,6 +1393,7 @@ async function loadDataset(file) {
   markSessionDirty(false);
   markSponsorDirty(false);
   capturePersistedSnapshot();
+  undoClear();
   setCurrentFilenameLabel();
   renderEventMetaForm();
   renderLogoForm();
@@ -1903,6 +1957,7 @@ function renderEventMetaForm() {
   els.eventMetaForm.innerHTML = html;
 
   els.eventMetaForm.querySelectorAll('[data-event-field]').forEach((input) => {
+    input.addEventListener('focus', undoPush);
     input.addEventListener('input', () => {
       const field = input.dataset.eventField;
       if (field === 'columns') {
@@ -2316,6 +2371,7 @@ function renderSessionList() {
     const items = state.dataset.items;
     const clampedTo = Math.max(0, Math.min(to, items.length - 1));
     if (from === clampedTo) return;
+    undoPush();
     const moved = items.splice(from, 1)[0];
     items.splice(clampedTo, 0, moved);
     moveTrackedIndex(state.quickEditSessionChanges, from, clampedTo);
@@ -2361,7 +2417,7 @@ function renderSessionList() {
       const from = state.draggingIndex;
       const to = index;
       if (from < 0 || to < 0 || from === to) return;
-
+      undoPush();
       const moved = state.dataset.items.splice(from, 1)[0];
       state.dataset.items.splice(to, 0, moved);
       moveTrackedIndex(state.quickEditSessionChanges, from, to);
@@ -2430,7 +2486,10 @@ function renderSessionList() {
 
     input.addEventListener('focus', async (event) => {
       event.stopPropagation();
-      if (isQuickSessionEditEnabled()) return;
+      if (isQuickSessionEditEnabled()) {
+        undoPush();
+        return;
+      }
       await selectRow();
     });
 
@@ -2618,6 +2677,7 @@ function renderSessionForm() {
   els.sessionForm.innerHTML = SESSION_FIELDS.map((field) => renderSessionField(field, item)).join('');
 
   els.sessionForm.querySelectorAll('[data-session-field]').forEach((input) => {
+    input.addEventListener('focus', undoPush);
     input.addEventListener('input', () => {
       const key = input.dataset.sessionField;
       const raw = input.value;
@@ -2660,6 +2720,7 @@ function renderSessionForm() {
 
 async function addSession() {
   if (!state.dataset) return;
+  undoPush();
   const seed = state.dataset.items[state.selectedIndex] || {};
   const newItem = {
     title: 'New session',
@@ -3266,6 +3327,7 @@ function addSponsorToSession(sponsorIndex) {
   if (!item || !sponsor?.id) return;
   const ids = parseMultiValue(item?.sponsorIds || '');
   if (!ids.includes(sponsor.id)) {
+    undoPush();
     const nextIds = [...ids, sponsor.id].filter(Boolean);
     item.sponsorIds = nextIds.length <= 1 ? (nextIds[0] || '') : nextIds;
     markDirty(true);
@@ -3282,6 +3344,7 @@ function addSponsorToSession(sponsorIndex) {
 function removeSponsorFromSession(sponsorId) {
   const item = state.dataset?.items?.[state.selectedIndex];
   if (!item || !sponsorId) return;
+  undoPush();
   const ids = parseMultiValue(item?.sponsorIds || '');
   const nextIds = ids.filter((id) => id !== sponsorId);
   item.sponsorIds = nextIds.length <= 1 ? (nextIds[0] || '') : nextIds;
@@ -3295,6 +3358,7 @@ function removeSponsorFromSession(sponsorId) {
 
 async function addSponsor() {
   if (!state.dataset) return;
+  undoPush();
   const sponsors = state.dataset.event.sponsors || (state.dataset.event.sponsors = []);
   const seed = sponsors[state.selectedSponsorIndex] || {};
   const nextNumber = sponsors.length + 1;
@@ -3328,7 +3392,7 @@ async function deleteSponsor() {
   const sponsor = sponsors[state.selectedSponsorIndex];
   const okay = window.confirm(`Delete sponsor "${sponsor?.title || 'Untitled'}"?`);
   if (!okay) return;
-
+  undoPush();
   const [removed] = sponsors.splice(state.selectedSponsorIndex, 1);
   removeTrackedIndex(state.quickEditSponsorChanges, state.selectedSponsorIndex);
   if (removed?.id) {
@@ -3371,7 +3435,7 @@ async function deleteSession() {
   const item = state.dataset.items[state.selectedIndex];
   const okay = window.confirm(`Delete session "${item?.title || 'Untitled'}"?`);
   if (!okay) return;
-
+  undoPush();
   state.dataset.items.splice(state.selectedIndex, 1);
   removeTrackedIndex(state.quickEditSessionChanges, state.selectedIndex);
   if (state.dataset.items.length === 0) {
@@ -3394,6 +3458,7 @@ async function deleteSession() {
 
 function duplicateSession(index) {
   if (!state.dataset || index < 0 || index >= state.dataset.items.length) return;
+  undoPush();
   const copy = cloneJsonValue(state.dataset.items[index]);
   copy.title = `${copy.title || 'Untitled'} (copy)`;
   state.dataset.items.splice(index + 1, 0, copy);
@@ -3919,6 +3984,12 @@ function bindEvents() {
     });
   }
 
+  if (els.undoAction) {
+    els.undoAction.addEventListener('click', async () => {
+      await performUndo();
+    });
+  }
+
   if (els.revertDataset) {
     els.revertDataset.addEventListener('click', async () => {
       if (!state.persistedSnapshot) return;
@@ -3927,6 +3998,20 @@ function bindEvents() {
       await restorePersistedSnapshot();
     });
   }
+
+  document.addEventListener('keydown', async (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+      event.preventDefault();
+      try { await saveDataset(); } catch (e) { window.alert(e?.message || String(e)); }
+      return;
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      event.preventDefault();
+      await performUndo();
+    }
+  });
 
   window.addEventListener('beforeunload', (event) => {
     if (!state.dirty) return;
