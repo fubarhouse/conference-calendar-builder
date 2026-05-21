@@ -3592,7 +3592,7 @@ body.has-preview-banner { padding-top: 2.25rem; }
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
-    max-height: 260px;
+    height: 260px;
     overflow-y: auto;
     margin-bottom: 1rem;
 }
