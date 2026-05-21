@@ -1,10 +1,10 @@
 {
   "event": {
-    "designation": "DrupalCamp DEN",
+    "designation": "DrupalCamp",
     "location": "Nagoya",
     "year": "2019",
     "website": "https://drupal-camp2019.den-japan.org/",
-    "region": "Japan – Nagoya",
+    "region": "Japan",
     "startDate": "2019-12-07T01:00:00Z",
     "endDate": "2019-12-07T08:30:00Z",
     "scheduleURL": "https://drupal-camp2019.den-japan.org/sessions/",
@@ -236,7 +236,18 @@
         "aspect": "auto",
         "enabled": true
       }
-    ]
+    ],
+    "flickr": {
+      "enabled": true,
+      "groupUrl": "",
+      "image": "",
+      "imageAlt": ""
+    },
+    "logo": {
+      "image": "",
+      "imageAlt": "",
+      "usePlate": false
+    }
   },
   "items": [
     {
