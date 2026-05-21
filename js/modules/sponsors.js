@@ -35,6 +35,26 @@ function normalizeSponsorTitle(value) {
   return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
+const loadSponsorAliases = once(async () => {
+  try {
+    const response = await fetch('./data/sponsors.json');
+    if (!response.ok) return new Map();
+    const entries = await response.json();
+    if (!Array.isArray(entries)) return new Map();
+    const map = new Map();
+    for (const entry of entries) {
+      const canonical = normalizeSponsorTitle(entry.title);
+      const aliases = Array.isArray(entry.aliases) ? entry.aliases.map(normalizeSponsorTitle).filter(Boolean) : [];
+      if (!canonical) continue;
+      const group = new Set([canonical, ...aliases]);
+      for (const key of group) map.set(key, group);
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+});
+
 function ensureSponsorModal() {
   let modal = document.getElementById(SPONSOR_MODAL_ID);
   if (modal) return modal;
@@ -269,8 +289,10 @@ async function openSponsorHistoryModal(sponsor) {
   document.body.classList.add('session-modal-open');
   renderSponsorModalLoading(sponsor.title);
 
-  const entries = await loadAllSponsorHistory();
-  const matchingEntries = entries.filter((entry) => entry.sponsorTitleKey === normalizeSponsorTitle(sponsor.title));
+  const [entries, aliasMap] = await Promise.all([loadAllSponsorHistory(), loadSponsorAliases()]);
+  const titleKey = normalizeSponsorTitle(sponsor.title);
+  const sponsorKeys = aliasMap.get(titleKey) ?? new Set([titleKey]);
+  const matchingEntries = entries.filter((entry) => sponsorKeys.has(entry.sponsorTitleKey));
   renderSponsorHistoryModalContent(sponsor, matchingEntries);
   const closeButton = modal.querySelector('#sponsorModalClose');
   if (closeButton) closeButton.focus();
