@@ -117,16 +117,20 @@ const EVENT_META_FIELD_CONFIG = {
 };
 const FLICKR_FIELD_CONFIG = {
   enabled: {
-    label: 'Show Flickr block',
-    description: 'Displays the Flickr callout on the public event page when a group URL is provided.'
+    label: 'Show photos block',
+    description: 'Displays the photo callout on the public event page when a URL is provided.'
+  },
+  provider: {
+    label: 'Photo provider',
+    description: 'Name of the photo platform shown in the callout (e.g. Flickr, Google Photos, SmugMug).'
   },
   groupUrl: {
-    label: 'Flickr group URL',
-    description: 'The public Flickr group or album link used by the call-to-action button.'
+    label: 'Photos URL',
+    description: 'The public link to the photo album, group, or gallery used by the call-to-action button.'
   },
   image: {
     label: 'Promo image path',
-    description: 'A relative path to the square promo image shown beside the Flickr text.'
+    description: 'A relative path to the square promo image shown beside the photos block text.'
   },
   imageAlt: {
     label: 'Image alternative text',
@@ -999,6 +1003,7 @@ function normalizeFlickrObject(raw = null) {
   const enabled = !(input.enabled === false || String(input.enabled || '').toLowerCase() === 'false');
   return {
     enabled,
+    provider: String(input.provider || '').trim(),
     groupUrl: String(input.groupUrl || '').trim(),
     image: String(input.image || '').trim(),
     imageAlt: String(input.imageAlt || '').trim()
@@ -1749,26 +1754,27 @@ function getFlickrEventLabel(eventMeta = null) {
   return [eventMeta?.designation, eventMeta?.year, eventMeta?.location].filter(Boolean).join(' ').trim() || 'Event';
 }
 
-function getAutomatedFlickrCopy(eventMeta = null, items = []) {
+function getAutomatedFlickrCopy(eventMeta = null, items = [], provider = '') {
   const mode = inferFlickrMode(eventMeta, items);
   const eventLabel = getFlickrEventLabel(eventMeta);
+  const p = String(provider || '').trim() || 'Flickr';
   return {
     mode,
     heading: mode === 'archive' ? `${eventLabel} Photo Archive` : `Share Your ${eventLabel} Photos`,
     description:
       mode === 'archive'
-        ? `Browse the official Flickr group for photos from ${eventLabel}.`
-        : 'Join the official Flickr group and share your photos before, during, and after the event.',
-    buttonText: mode === 'archive' ? 'View Photo Archive' : 'Open Flickr Group'
+        ? `Browse the official ${p} page for photos from ${eventLabel}.`
+        : `Upload and share your photos on ${p} before, during, and after the event.`,
+    buttonText: mode === 'archive' ? 'View Photo Archive' : `Open on ${p}`
   };
 }
 
 function renderFlickrBlock(flickr) {
-  const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items);
+  const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickr.provider);
   return `
     <fieldset class="editor-flickr-block md:col-span-2 xl:col-span-3">
       <legend>
-        <span class="editor-flickr-title"><i class="fab fa-flickr" aria-hidden="true"></i> Flickr block</span>
+        <span class="editor-flickr-title"><i class="fas fa-images" aria-hidden="true"></i> Photos block</span>
         <span class="editor-flickr-summary">Optional photo-sharing callout shown at the bottom of the event page.</span>
       </legend>
       <label class="editor-toggle-row">
@@ -1782,7 +1788,15 @@ function renderFlickrBlock(flickr) {
         </span>
       </label>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-        <label class="editor-form-field md:col-span-2">
+        <label class="editor-form-field">
+          ${renderFieldIntro('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}
+          <input data-flickr-field="provider" type="text" value="${escapeAttr(flickr.provider)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="Flickr"${fieldDescriptionAttr(
+            'flickr',
+            'provider',
+            FLICKR_FIELD_CONFIG.provider
+          )}>
+        </label>
+        <label class="editor-form-field">
           ${renderFieldIntro('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}
           <input data-flickr-field="groupUrl" type="text" value="${escapeAttr(flickr.groupUrl)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white px-3" placeholder="https://flic.kr/g/..."${fieldDescriptionAttr(
             'flickr',
@@ -1807,8 +1821,8 @@ function renderFlickrBlock(flickr) {
           )}>
         </label>
         <div class="editor-form-field md:col-span-2 editor-flickr-defaults">
-          <span class="editor-field-label">Automated Flickr copy</span>
-          <span class="editor-field-description">The heading, description, button text, and mode are generated automatically from the event timing.</span>
+          <span class="editor-field-label">Automated copy preview</span>
+          <span class="editor-field-description">The heading, description, and button text are generated from the event timing and provider name above.</span>
           <div class="editor-flickr-defaults-grid">
             <div><span class="editor-flickr-defaults-label">Mode</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.mode === 'archive' ? 'Photo archive' : 'Share photos')}</span></div>
             <div><span class="editor-flickr-defaults-label">Heading</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.heading)}</span></div>

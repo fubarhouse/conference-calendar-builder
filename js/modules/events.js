@@ -381,10 +381,10 @@ function normalizeFlickrMeta(eventMeta = null) {
   if (flickr) {
     return {
       enabled: flickr.enabled !== false && String(flickr.enabled || '').toLowerCase() !== 'false',
+      provider: String(flickr.provider || '').trim() || 'Flickr',
       groupUrl: String(flickr.groupUrl || '').trim(),
       image: String(flickr.image || '').trim(),
-      imageAlt: String(flickr.imageAlt || '').trim(),
-      platform: 'flickr'
+      imageAlt: String(flickr.imageAlt || '').trim()
     };
   }
 
@@ -392,10 +392,10 @@ function normalizeFlickrMeta(eventMeta = null) {
   if (!promo || typeof promo !== 'object') return null;
   return {
     enabled: true,
+    provider: String(promo.platform || 'Flickr').trim() || 'Flickr',
     groupUrl: String(promo.groupUrl || '').trim(),
     image: String(promo.image || '').trim(),
-    imageAlt: String(promo.imageAlt || '').trim(),
-    platform: String(promo.platform || 'flickr').trim() || 'flickr'
+    imageAlt: String(promo.imageAlt || '').trim()
   };
 }
 
@@ -439,17 +439,18 @@ function getEventLabel(eventMeta = null) {
   return [designation, year, location].filter(Boolean).join(' ').trim() || 'Event';
 }
 
-function getFlickrDefaults(eventMeta = null, events = []) {
+function getFlickrDefaults(eventMeta = null, events = [], provider = 'Flickr') {
   const mode = getFlickrMode(eventMeta, events);
   const eventLabel = getEventLabel(eventMeta);
+  const p = String(provider || '').trim() || 'Flickr';
   return {
     mode,
     title: mode === 'archive' ? `${eventLabel} Photo Archive` : `Share Your ${eventLabel} Photos`,
     text:
       mode === 'archive'
-        ? `Browse the official Flickr group for photos from ${eventLabel}.`
-        : 'Join the official Flickr group and share your photos before, during, and after the event.',
-    buttonLabel: mode === 'archive' ? 'View Photo Archive' : 'Open Flickr Group'
+        ? `Browse the official ${p} page for photos from ${eventLabel}.`
+        : `Upload and share your photos on ${p} before, during, and after the event.`,
+    buttonLabel: mode === 'archive' ? 'View Photo Archive' : `Open on ${p}`
   };
 }
 
@@ -474,11 +475,11 @@ function renderEventMediaPromo(eventMeta = null, events = []) {
 
   const finalizeRender = (imageLoaded) => {
     if (hasPromo) {
-    const defaults = getFlickrDefaults(eventMeta, events);
+    const defaults = getFlickrDefaults(eventMeta, events, flickr.provider);
     const title = defaults.title;
     const text = defaults.text;
     const buttonLabel = defaults.buttonLabel;
-    const platformLabel = (flickr.platform || 'flickr').toUpperCase();
+    const platformLabel = flickr.provider.toUpperCase();
 
     const card = document.createElement('div');
     card.className = 'event-promo-card rounded-lg border border-gray-300 bg-white p-3 sm:p-4';
