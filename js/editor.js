@@ -836,6 +836,12 @@ function showWelcomeScreen2() {
         }
       });
     });
+
+    const searchInput = document.getElementById('welcomeEventSearch');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
+    }
   }
 
   const newEventBtn = document.getElementById('welcomeNewEvent');
@@ -3784,6 +3790,19 @@ function renderSitemap() {
 }
 
 function bindEvents() {
+  const welcomeSearch = document.getElementById('welcomeEventSearch');
+  if (welcomeSearch) {
+    welcomeSearch.addEventListener('input', () => {
+      const query = welcomeSearch.value.trim().toLowerCase();
+      const eventList = document.getElementById('welcomeEventList');
+      if (!eventList) return;
+      eventList.querySelectorAll('[data-welcome-load]').forEach((btn) => {
+        const label = btn.querySelector('.welcome-btn-label')?.textContent.toLowerCase() ?? '';
+        btn.style.display = Boolean(query) && !label.includes(query) ? 'none' : '';
+      });
+    });
+  }
+
   els.datasetSelect.addEventListener('change', async () => {
     const nextFile = String(els.datasetSelect.value || '').trim();
     const previousValue = state.lastDatasetSelectValue || '';

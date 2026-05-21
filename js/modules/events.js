@@ -253,7 +253,6 @@ export function getSearchableEvents() {
 export async function selectEventFromSearch(category, file) {
   state.currentEventCategory = category;
   setActiveTab(category);
-  populateEventSelector(category, file);
   localStorage.setItem('selectedEventFile', file);
   await loadEvent(file);
 }
@@ -629,6 +628,7 @@ export function setActiveTab(category) {
 
 export function populateEventSelector(category, preferredFile) {
   const eventSelector = document.getElementById('eventSelector');
+  if (!eventSelector) return;
   const categoryEvents = getManifestForCategory(category);
   eventSelector.innerHTML = '';
 
@@ -1098,31 +1098,7 @@ function parseAndApplyStartupModes(urlModes) {
   applyThemeClass(state.themeMode);
 }
 
-function wireEventListeners(eventSelector) {
-  eventSelector.addEventListener('change', () => {
-    localStorage.setItem('selectedEventFile', eventSelector.value);
-    loadEvent(eventSelector.value);
-  });
-
-  const eventCategorySelect = document.getElementById('eventCategorySelect');
-  if (eventCategorySelect) {
-    eventCategorySelect.addEventListener('change', async () => {
-      const category = eventCategorySelect.value;
-      if (!category || category === state.currentEventCategory) return;
-
-      state.currentEventCategory = category;
-      setActiveTab(category);
-
-      const currentSavedEvent = localStorage.getItem('selectedEventFile');
-      populateEventSelector(category, currentSavedEvent);
-
-      if (eventSelector.value) {
-        localStorage.setItem('selectedEventFile', eventSelector.value);
-        await loadEvent(eventSelector.value);
-      }
-    });
-  }
-
+function wireEventListeners() {
   setupEventListeners();
 }
 
@@ -1157,15 +1133,11 @@ export async function init() {
   parseAndApplyStartupModes(urlModes);
   await hydrateManifestCategories();
 
-  const eventSelector = document.getElementById('eventSelector');
   const fileFromUrl = getEventFileById(urlModes.id);
   const savedEvent = localStorage.getItem('selectedEventFile');
   const savedEventIsValid = savedEvent && eventCatalog.some((e) => e.file === savedEvent);
   const defaultEvent = eventCatalog.find((e) => e.default) || eventCatalog[0];
-  if (!defaultEvent) {
-    eventSelector.innerHTML = '';
-    return;
-  }
+  if (!defaultEvent) return;
 
   const initialFile = fileFromUrl || (savedEventIsValid ? savedEvent : defaultEvent.file);
   const initialManifestItem = eventCatalog.find((e) => e.file === initialFile) || defaultEvent;
@@ -1175,27 +1147,15 @@ export async function init() {
     ? initialCategory
     : availableCategories[0] || '';
 
-  renderCategoryOptions(availableCategories);
-
-  if (!safeInitialCategory) {
-    eventSelector.innerHTML = '';
-    return;
-  }
+  if (!safeInitialCategory) return;
 
   state.currentEventCategory = safeInitialCategory;
   setActiveTab(safeInitialCategory);
-  populateEventSelector(safeInitialCategory, initialFile);
   applyScheduleLockUi();
 
-  if (eventSelector.value) {
-    localStorage.setItem('selectedEventFile', eventSelector.value);
-  }
-
-  wireEventListeners(eventSelector);
-
-  if (eventSelector.value) {
-    await loadEvent(eventSelector.value);
-  }
+  localStorage.setItem('selectedEventFile', initialFile);
+  wireEventListeners();
+  await loadEvent(initialFile);
 }
 
 export function toggleEventSelectionPublic(eventId) {
