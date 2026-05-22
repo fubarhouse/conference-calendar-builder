@@ -1837,7 +1837,7 @@ async function uploadLogoImageFromPicker() {
     state.dataset.event.logo.imageAlt = `${state.dataset.event.designation || 'Event'} logo`;
   }
   markDirty(true);
-  renderEventMetaForm();
+  renderLogoForm();
 }
 
 async function uploadSponsorImageFromPicker(index) {
@@ -1994,50 +1994,33 @@ function renderFlickrBlock(flickr) {
 }
 
 function renderLogoBlock(logo) {
+  const imageSrc = (logo.image || '').trim();
   return `
-    <fieldset class="editor-flickr-block md:col-span-2 xl:col-span-3">
-      <legend>
-        <span class="editor-flickr-title"><i class="fas fa-image" aria-hidden="true"></i> Event logo</span>
-        <span class="editor-flickr-summary">Controls the header logo shown on the public event page.</span>
-      </legend>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-        <label class="editor-form-field md:col-span-2">
-          ${renderFieldIntro('logo', 'image', LOGO_FIELD_CONFIG.image)}
-          <input data-logo-field="image" type="text" value="${escapeAttr(logo.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/logos/.../logo.png"${fieldDescriptionAttr(
-            'logo',
-            'image',
-            LOGO_FIELD_CONFIG.image
-          )}>
-        </label>
-        <label class="editor-form-field md:col-span-2">
-          ${renderFieldIntro('logo', 'imageAlt', LOGO_FIELD_CONFIG.imageAlt)}
-          <input data-logo-field="imageAlt" type="text" value="${escapeAttr(logo.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr(
-            'logo',
-            'imageAlt',
-            LOGO_FIELD_CONFIG.imageAlt
-          )}>
-        </label>
-        <label class="editor-toggle-row md:col-span-2">
-          <input data-logo-field="usePlate" type="checkbox" class="h-4 w-4" ${logo.usePlate ? 'checked' : ''}${fieldDescriptionAttr(
-            'logo',
-            'usePlate',
-            LOGO_FIELD_CONFIG.usePlate
-          )}>
-          <span>
-            ${renderFieldIntro('logo', 'usePlate', LOGO_FIELD_CONFIG.usePlate)}
-          </span>
-        </label>
-        <div class="editor-form-field">
-          <span class="editor-field-label">Logo upload</span>
-          <span class="editor-field-description">Uploads to <code>img/logos/${escapeHtml(
-            slugify(state.dataset?.event?.designation || 'event') || 'event'
-          )}</code> and stores a relative path.</span>
-          <button id="logoImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-upload mr-2"></i>Upload Logo
-          </button>
-        </div>
-      </div>
-    </fieldset>
+    <label class="editor-form-field">
+      ${renderFieldIntro('logo', 'image', LOGO_FIELD_CONFIG.image)}
+      <input data-logo-field="image" type="text" value="${escapeAttr(logo.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/logos/.../logo.png"${fieldDescriptionAttr('logo', 'image', LOGO_FIELD_CONFIG.image)}>
+    </label>
+    <label class="editor-form-field">
+      ${renderFieldIntro('logo', 'imageAlt', LOGO_FIELD_CONFIG.imageAlt)}
+      <input data-logo-field="imageAlt" type="text" value="${escapeAttr(logo.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr('logo', 'imageAlt', LOGO_FIELD_CONFIG.imageAlt)}>
+    </label>
+    <label class="editor-toggle-row md:col-span-2">
+      <input data-logo-field="usePlate" type="checkbox" class="h-4 w-4" ${logo.usePlate ? 'checked' : ''}${fieldDescriptionAttr('logo', 'usePlate', LOGO_FIELD_CONFIG.usePlate)}>
+      <span>
+        ${renderFieldIntro('logo', 'usePlate', LOGO_FIELD_CONFIG.usePlate)}
+      </span>
+    </label>
+    <div class="editor-form-field">
+      <span class="editor-field-label">Logo upload</span>
+      <span class="editor-field-description">Uploads to <code>img/logos/${escapeHtml(
+        slugify(state.dataset?.event?.designation || 'event') || 'event'
+      )}</code> and stores a relative path.</span>
+      <button id="logoImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+        <i class="fas fa-upload mr-2"></i>Upload Logo
+      </button>
+      <img id="logoImagePreview" src="${escapeAttr(imageSrc)}" alt="${escapeAttr(logo.imageAlt || '')}"
+        class="mt-2 rounded border border-gray-200 max-h-[150px] max-w-[250px] object-contain block${imageSrc ? '' : ' hidden'}">
+    </div>
   `;
 }
 
@@ -2101,6 +2084,19 @@ function bindLogoFormEvents(container) {
       eventLogo[key] = key === 'usePlate' ? Boolean(input.checked) : input.value;
       state.dataset.event.logo = normalizeLogoObject(eventLogo);
       markDirty(true);
+
+      if (key === 'image') {
+        const imgPreview = container.querySelector('#logoImagePreview');
+        if (imgPreview) {
+          const newSrc = input.value.trim();
+          imgPreview.src = newSrc;
+          imgPreview.classList.toggle('hidden', !newSrc);
+        }
+      }
+      if (key === 'imageAlt') {
+        const imgPreview = container.querySelector('#logoImagePreview');
+        if (imgPreview) imgPreview.alt = input.value;
+      }
     };
     input.addEventListener('input', updateLogoField);
     input.addEventListener('change', updateLogoField);
