@@ -2389,20 +2389,15 @@ function setActiveEditorTab(tab) {
   }
 }
 
-async function switchEditorTab(tab) {
+function switchEditorTab(tab) {
   const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline'].includes(tab) ? tab : 'event';
-  if (nextTab === state.activeEditorTab) return true;
-  const allowed = await confirmDiscardPendingChanges(`${nextTab} form`);
-  if (!allowed) return false;
+  if (nextTab === state.activeEditorTab) return;
   setActiveEditorTab(nextTab);
-  return true;
 }
 
-async function selectSessionForm(index, options = {}) {
-  const { collapseWorkspace = false, promptLabel = 'another session form' } = options;
-  if (index === state.selectedIndex && !collapseWorkspace) return true;
-  const allowed = await confirmDiscardPendingChanges(promptLabel);
-  if (!allowed) return false;
+function selectSessionForm(index, options = {}) {
+  const { collapseWorkspace = false } = options;
+  if (index === state.selectedIndex && !collapseWorkspace) return;
   state.selectedIndex = index;
   if (!isQuickSessionEditEnabled()) {
     markSessionDirty(false);
@@ -2419,11 +2414,9 @@ async function selectSessionForm(index, options = {}) {
   return true;
 }
 
-async function selectSponsorForm(index, options = {}) {
-  const { collapseWorkspace = false, promptLabel = 'another sponsor form' } = options;
-  if (index === state.selectedSponsorIndex && !collapseWorkspace) return true;
-  const allowed = await confirmDiscardPendingChanges(promptLabel);
-  if (!allowed) return false;
+function selectSponsorForm(index, options = {}) {
+  const { collapseWorkspace = false } = options;
+  if (index === state.selectedSponsorIndex && !collapseWorkspace) return;
   state.selectedSponsorIndex = index;
   if (!isQuickSponsorEditEnabled()) {
     markSponsorDirty(false);
@@ -2627,7 +2620,7 @@ function renderSessionList() {
 
     row.addEventListener('click', async () => {
       if (index === state.selectedIndex) return;
-      await selectSessionForm(index, { collapseWorkspace: state.sessionListExpanded, promptLabel: 'another session form' });
+      selectSessionForm(index, { collapseWorkspace: state.sessionListExpanded });
     });
 
     row.addEventListener('dragstart', (event) => {
@@ -2708,12 +2701,10 @@ function renderSessionList() {
     const rowIndex = Number.parseInt(input.dataset.sessionIndex || '-1', 10);
     const key = input.dataset.inlineSessionField;
 
-    const selectRow = async () => {
+    const selectRow = () => {
       if (rowIndex === state.selectedIndex) return;
-      const allowed = await selectSessionForm(rowIndex, { promptLabel: 'another session form' });
-      if (!allowed) return false;
+      selectSessionForm(rowIndex);
       syncExpandedSelectionState();
-      return true;
     };
 
     input.addEventListener('click', (event) => {
@@ -2766,7 +2757,7 @@ function renderSessionList() {
       event.stopPropagation();
       const rowIndex = Number.parseInt(button.dataset.openSessionForm || '-1', 10);
       if (rowIndex < 0) return;
-      await selectSessionForm(rowIndex, { collapseWorkspace: true, promptLabel: 'the full session form' });
+      selectSessionForm(rowIndex, { collapseWorkspace: true });
     });
   });
 }
@@ -2903,8 +2894,8 @@ function renderSessionForm() {
     `;
     const openButton = document.getElementById('openSelectedSessionForm');
     if (openButton) {
-      openButton.addEventListener('click', async () => {
-        await selectSessionForm(state.selectedIndex, { collapseWorkspace: true, promptLabel: 'the full session form' });
+      openButton.addEventListener('click', () => {
+        selectSessionForm(state.selectedIndex, { collapseWorkspace: true });
       });
     }
     markSessionDirty(state.sessionDirty);
@@ -3096,7 +3087,7 @@ function renderSponsorList() {
 
     row.addEventListener('click', async () => {
       if (index === state.selectedSponsorIndex) return;
-      await selectSponsorForm(index, { collapseWorkspace: state.sponsorListExpanded, promptLabel: 'another sponsor form' });
+      selectSponsorForm(index, { collapseWorkspace: state.sponsorListExpanded });
     });
 
     row.addEventListener('dragstart', (event) => {
@@ -3153,12 +3144,10 @@ function renderSponsorList() {
     const rowIndex = Number.parseInt(input.dataset.sponsorIndex || '-1', 10);
     const key = input.dataset.inlineSponsorField;
 
-    const selectRow = async () => {
+    const selectRow = () => {
       if (rowIndex === state.selectedSponsorIndex) return;
-      const allowed = await selectSponsorForm(rowIndex, { promptLabel: 'another sponsor form' });
-      if (!allowed) return false;
+      selectSponsorForm(rowIndex);
       syncSponsorSelectionState();
-      return true;
     };
 
     input.addEventListener('click', (event) => {
@@ -3202,7 +3191,7 @@ function renderSponsorList() {
       event.stopPropagation();
       const rowIndex = Number.parseInt(button.dataset.openSponsorForm || '-1', 10);
       if (rowIndex < 0) return;
-      await selectSponsorForm(rowIndex, { collapseWorkspace: true, promptLabel: 'the full sponsor form' });
+      selectSponsorForm(rowIndex, { collapseWorkspace: true });
     });
   });
 }
@@ -3275,7 +3264,7 @@ function renderSponsorForm() {
     const openButton = document.getElementById('openSelectedSponsorForm');
     if (openButton) {
       openButton.addEventListener('click', async () => {
-        await selectSponsorForm(state.selectedSponsorIndex, { collapseWorkspace: true, promptLabel: 'the full sponsor form' });
+        selectSponsorForm(state.selectedSponsorIndex, { collapseWorkspace: true });
       });
     }
     markSponsorDirty(state.sponsorDirty);
@@ -4138,8 +4127,7 @@ function bindEvents() {
   }
 
   if (els.toggleSessionWorkspace) {
-    els.toggleSessionWorkspace.addEventListener('click', async () => {
-      if (!(await confirmDiscardPendingChanges('the session list view'))) return;
+    els.toggleSessionWorkspace.addEventListener('click', () => {
       setSessionWorkspaceExpanded(!state.sessionListExpanded);
       renderSessionList();
       renderSessionForm();
@@ -4149,17 +4137,15 @@ function bindEvents() {
   }
 
   if (els.toggleQuickSessionEdit) {
-    els.toggleQuickSessionEdit.addEventListener('click', async () => {
+    els.toggleQuickSessionEdit.addEventListener('click', () => {
       if (!state.sessionListExpanded || !isSessionEditorEnabled()) return;
-      if (!(await confirmDiscardPendingChanges('session quick edit'))) return;
       setQuickSessionEditEnabled(!state.sessionQuickEditEnabled);
       renderSessionList();
     });
   }
 
   if (els.toggleSponsorWorkspace) {
-    els.toggleSponsorWorkspace.addEventListener('click', async () => {
-      if (!(await confirmDiscardPendingChanges('the sponsor list view'))) return;
+    els.toggleSponsorWorkspace.addEventListener('click', () => {
       setSponsorWorkspaceExpanded(!state.sponsorListExpanded);
       renderSponsorList();
       renderSponsorForm();
@@ -4169,9 +4155,8 @@ function bindEvents() {
   }
 
   if (els.toggleQuickSponsorEdit) {
-    els.toggleQuickSponsorEdit.addEventListener('click', async () => {
+    els.toggleQuickSponsorEdit.addEventListener('click', () => {
       if (!state.sponsorListExpanded || !isSponsorEditorEnabled()) return;
-      if (!(await confirmDiscardPendingChanges('sponsor quick edit'))) return;
       setQuickSponsorEditEnabled(!state.sponsorQuickEditEnabled);
       renderSponsorList();
     });
@@ -4179,43 +4164,43 @@ function bindEvents() {
 
   if (els.showEventTab) {
     els.showEventTab.addEventListener('click', async () => {
-      await switchEditorTab('event');
+      switchEditorTab('event');
     });
   }
 
   if (els.showSessionsTab) {
     els.showSessionsTab.addEventListener('click', async () => {
-      await switchEditorTab('sessions');
+      switchEditorTab('sessions');
     });
   }
 
   if (els.showLogoTab) {
     els.showLogoTab.addEventListener('click', async () => {
-      await switchEditorTab('logo');
+      switchEditorTab('logo');
     });
   }
 
   if (els.showFlickrTab) {
     els.showFlickrTab.addEventListener('click', async () => {
-      await switchEditorTab('flickr');
+      switchEditorTab('flickr');
     });
   }
 
   if (els.showSponsorsTab) {
     els.showSponsorsTab.addEventListener('click', async () => {
-      await switchEditorTab('sponsors');
+      switchEditorTab('sponsors');
     });
   }
 
   if (els.showSitemapTab) {
     els.showSitemapTab.addEventListener('click', async () => {
-      await switchEditorTab('sitemap');
+      switchEditorTab('sitemap');
     });
   }
 
   if (els.showTimelineTab) {
     els.showTimelineTab.addEventListener('click', async () => {
-      await switchEditorTab('timeline');
+      switchEditorTab('timeline');
     });
   }
 
