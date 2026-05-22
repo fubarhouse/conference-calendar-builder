@@ -66,9 +66,22 @@
           <button id="saveAsDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
             <i class="fas fa-file-export mr-2"></i>Save As
           </button>
-          <button id="previewDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
-            <i class="fas fa-eye mr-2"></i>Preview
-          </button>
+          <div class="editor-preview-split" id="previewDatasetGroup">
+            <button id="previewDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-r-0 border-gray-300 rounded-l-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+              <i class="fas fa-eye mr-2"></i>Preview
+            </button>
+            <button id="previewDatasetToggle" type="button" aria-label="Preview options" aria-haspopup="true" aria-expanded="false" class="h-11 w-9 inline-flex items-center justify-center border border-gray-300 rounded-r-md text-gray-500 bg-white hover:bg-gray-50 transition-colors" disabled>
+              <i class="fas fa-chevron-down text-xs" aria-hidden="true"></i>
+            </button>
+            <div id="previewDatasetDropdown" class="editor-preview-dropdown hidden" role="menu">
+              <button type="button" role="menuitem" data-preview-mode="tab" class="editor-preview-dropdown-item">
+                <i class="fas fa-external-link-alt" aria-hidden="true"></i>Open in new tab
+              </button>
+              <button type="button" role="menuitem" data-preview-mode="same" class="editor-preview-dropdown-item">
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>Open in this tab
+              </button>
+            </div>
+          </div>
           <button id="undoAction" type="button" title="Nothing to undo" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed" disabled>
             <i class="fas fa-rotate-left mr-2"></i>Undo
           </button>
@@ -205,8 +218,8 @@
       <section class="bg-white rounded-lg shadow-md p-4">
         <div class="flex items-center justify-between mb-3">
           <div>
-            <h2 class="text-lg font-semibold text-gray-100">Flickr Block</h2>
-            <p class="text-sm text-gray-400">Manage the optional photo-sharing block shown on the public event page.</p>
+            <h2 class="text-lg font-semibold text-gray-100">Photos</h2>
+            <p class="text-sm text-gray-400">Optional photo-sharing callout shown at the bottom of the event page.</p>
           </div>
         </div>
         <div id="flickrForm" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>

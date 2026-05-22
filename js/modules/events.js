@@ -1106,9 +1106,19 @@ function wireEventListeners() {
 function showPreviewBanner() {
   const banner = document.createElement('div');
   banner.className = 'preview-banner';
-  banner.innerHTML = `<i class="fas fa-eye"></i><span><strong>Preview mode</strong> — these changes have not been saved yet.</span><a href="./editor.html" class="preview-banner-link">Back to editor</a>`;
+  const canReturn = Boolean(window.opener && !window.opener.closed);
+  const backControl = canReturn
+    ? `<button type="button" class="preview-banner-link" id="previewBannerBack">Back to editor</button>`
+    : `<a href="./editor.html" class="preview-banner-link">Back to editor</a>`;
+  banner.innerHTML = `<i class="fas fa-eye"></i><span><strong>Preview mode</strong> — these changes have not been saved yet.</span>${backControl}`;
   document.body.prepend(banner);
   document.body.classList.add('has-preview-banner');
+  if (canReturn) {
+    document.getElementById('previewBannerBack')?.addEventListener('click', () => {
+      window.opener.focus();
+      window.close();
+    });
+  }
 }
 
 export async function init() {
@@ -1126,6 +1136,7 @@ export async function init() {
         state.currentEventCategory = designation.includes('drupalcon') ? 'DrupalCon' : (data?.event?.designation || 'Conference');
       } catch { /* use defaults */ }
     }
+    wireEventListeners();
     await loadEvent('__preview__');
     showPreviewBanner();
     return;

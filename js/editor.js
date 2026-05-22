@@ -38,6 +38,8 @@ const state = {
 const UNDO_STACK = [];
 const UNDO_LIMIT = 50;
 const RECOVERY_KEY = '__editor_recovery__';
+const PHOTOS_BACKUP_KEY = '__photos_prev__';
+const LOGO_BACKUP_KEY = '__logo_prev__';
 const RECOVERY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const FILE_LINK_DB = 'dataset-editor-file-links';
@@ -202,6 +204,8 @@ const els = {
   saveDataset: document.getElementById('saveDataset'),
   saveAsDataset: document.getElementById('saveAsDataset'),
   previewDataset: document.getElementById('previewDataset'),
+  previewDatasetToggle: document.getElementById('previewDatasetToggle'),
+  previewDatasetDropdown: document.getElementById('previewDatasetDropdown'),
   undoAction: document.getElementById('undoAction'),
   revertDataset: document.getElementById('revertDataset'),
   exportDataset: document.getElementById('exportDataset'),
@@ -411,6 +415,23 @@ async function connectProjectFolder() {
   showWelcomeScreen2();
   void refreshEditorSearch();
 
+  const returnFile = localStorage.getItem('__editor_return_file__');
+  if (returnFile) {
+    localStorage.removeItem('__editor_return_file__');
+    const returnOption = Array.from(els.datasetSelect.options).find((o) => o.value === returnFile);
+    if (returnOption) {
+      closeWelcomeModal();
+      els.datasetSelect.value = returnFile;
+      state.lastDatasetSelectValue = returnFile;
+      try {
+        await loadDataset(returnFile);
+      } catch (error) {
+        window.alert(`Could not resume file: ${error.message}`);
+      }
+      return;
+    }
+  }
+
   const selectedFile = String(els.datasetSelect.value || '').trim();
   if (selectedFile) {
     if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${selectedFile}`))) {
@@ -492,6 +513,7 @@ function setEditorButtonsEnabled(enabled) {
   els.saveDataset.disabled = !enabled;
   els.saveAsDataset.disabled = !enabled;
   if (els.previewDataset) els.previewDataset.disabled = !enabled;
+  if (els.previewDatasetToggle) els.previewDatasetToggle.disabled = !enabled;
   if (els.revertDataset) els.revertDataset.disabled = true;
   if (els.timelineSaveBtn) els.timelineSaveBtn.disabled = !enabled;
   els.saveSession.disabled = !enabled || state.selectedIndex < 0;
@@ -1451,6 +1473,12 @@ async function loadDataset(file) {
   if (!state.projectDirHandle || !state.folderConnectedInSession) {
     throw new Error('Connect folder first.');
   }
+  if (localStorage.getItem(PHOTOS_BACKUP_KEY)) {
+    await revertPendingPhotoUpload();
+  }
+  if (localStorage.getItem(LOGO_BACKUP_KEY)) {
+    await revertPendingLogoUpload();
+  }
   if (!isEditorDatasetFile(file)) {
     throw new Error(`${file} is not an editable dataset.`);
   }
@@ -1601,6 +1629,98 @@ async function ensureDirectoryPath(baseDirHandle, segments) {
   return current;
 }
 
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+function dataUrlToBlob(dataUrl) {
+  const [header, base64] = dataUrl.split(',');
+  const mime = (header.match(/:(.*?);/) || [])[1] || 'image/jpeg';
+  const binary = atob(base64);
+  const buffer = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) buffer[i] = binary.charCodeAt(i);
+  return new Blob([buffer], { type: mime });
+}
+
+async function backupCurrentPhotoForRevert() {
+  const currentPath = String(state.dataset?.event?.flickr?.image || '').trim().replace(/^\.\//, '');
+  if (!currentPath || !state.projectDirHandle) return;
+  try {
+    const handle = await resolveFileHandleFromProjectDir(currentPath);
+    if (!handle) return;
+    const file = await handle.getFile();
+    const base64 = arrayBufferToBase64(await file.arrayBuffer());
+    localStorage.setItem(PHOTOS_BACKUP_KEY, JSON.stringify({
+      path: currentPath,
+      data: `data:${file.type || 'image/jpeg'};base64,${base64}`
+    }));
+  } catch {
+    // No existing file to back up, or too large — skip silently
+  }
+}
+
+async function revertPendingPhotoUpload() {
+  const raw = localStorage.getItem(PHOTOS_BACKUP_KEY);
+  localStorage.removeItem(PHOTOS_BACKUP_KEY);
+  if (!raw || !state.projectDirHandle) return;
+  try {
+    const { path, data } = JSON.parse(raw);
+    const segments = path.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const writable = await (await dir.getFileHandle(fileName, { create: true })).createWritable();
+    await writable.write(dataUrlToBlob(data));
+    await writable.close();
+  } catch {
+    // Revert failed — dataset path will still reload correctly from JSON
+  }
+}
+
+function clearPhotosBackup() {
+  localStorage.removeItem(PHOTOS_BACKUP_KEY);
+}
+
+async function backupCurrentLogoForRevert() {
+  const currentPath = String(state.dataset?.event?.logo?.image || '').trim().replace(/^\.\//, '');
+  if (!currentPath || !state.projectDirHandle) return;
+  try {
+    const handle = await resolveFileHandleFromProjectDir(currentPath);
+    if (!handle) return;
+    const file = await handle.getFile();
+    const base64 = arrayBufferToBase64(await file.arrayBuffer());
+    localStorage.setItem(LOGO_BACKUP_KEY, JSON.stringify({
+      path: currentPath,
+      data: `data:${file.type || 'image/png'};base64,${base64}`
+    }));
+  } catch {
+    // No existing file to back up, or too large — skip silently
+  }
+}
+
+async function revertPendingLogoUpload() {
+  const raw = localStorage.getItem(LOGO_BACKUP_KEY);
+  localStorage.removeItem(LOGO_BACKUP_KEY);
+  if (!raw || !state.projectDirHandle) return;
+  try {
+    const { path, data } = JSON.parse(raw);
+    const segments = path.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const writable = await (await dir.getFileHandle(fileName, { create: true })).createWritable();
+    await writable.write(dataUrlToBlob(data));
+    await writable.close();
+  } catch {
+    // Revert failed — dataset path will still reload correctly from JSON
+  }
+}
+
+function clearLogoBackup() {
+  localStorage.removeItem(LOGO_BACKUP_KEY);
+}
+
 async function uploadFlickrImageFromPicker() {
   if (!state.projectDirHandle || !state.folderConnectedInSession) {
     window.alert('Connect folder first to upload Flickr images.');
@@ -1618,6 +1738,7 @@ async function uploadFlickrImageFromPicker() {
   const file = picker.files && picker.files[0] ? picker.files[0] : null;
   if (!file) return;
 
+  await backupCurrentPhotoForRevert();
   const relativePath = getFlickrImageTargetPath();
   const segments = relativePath.split('/').filter(Boolean);
   const fileName = segments.pop();
@@ -1654,6 +1775,8 @@ async function uploadLogoImageFromPicker() {
 
   const file = picker.files && picker.files[0] ? picker.files[0] : null;
   if (!file) return;
+
+  await backupCurrentLogoForRevert();
 
   const relativePath = getLogoImageTargetPath(file);
   const segments = relativePath.split('/').filter(Boolean);
@@ -1772,75 +1895,48 @@ function getAutomatedFlickrCopy(eventMeta = null, items = [], provider = '') {
 function renderFlickrBlock(flickr) {
   const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickr.provider);
   return `
-    <fieldset class="editor-flickr-block md:col-span-2 xl:col-span-3">
-      <legend>
-        <span class="editor-flickr-title"><i class="fas fa-images" aria-hidden="true"></i> Photos block</span>
-        <span class="editor-flickr-summary">Optional photo-sharing callout shown at the bottom of the event page.</span>
-      </legend>
-      <label class="editor-toggle-row">
-        <input data-flickr-field="enabled" type="checkbox" class="h-4 w-4" ${flickr.enabled ? 'checked' : ''}${fieldDescriptionAttr(
-          'flickr',
-          'enabled',
-          FLICKR_FIELD_CONFIG.enabled
-        )}>
-        <span>
-          ${renderFieldIntro('flickr', 'enabled', FLICKR_FIELD_CONFIG.enabled)}
-        </span>
-      </label>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-        <label class="editor-form-field">
-          ${renderFieldIntro('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}
-          <input data-flickr-field="provider" type="text" value="${escapeAttr(flickr.provider)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="Flickr"${fieldDescriptionAttr(
-            'flickr',
-            'provider',
-            FLICKR_FIELD_CONFIG.provider
-          )}>
-        </label>
-        <label class="editor-form-field">
-          ${renderFieldIntro('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}
-          <input data-flickr-field="groupUrl" type="text" value="${escapeAttr(flickr.groupUrl)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white px-3" placeholder="https://flic.kr/g/..."${fieldDescriptionAttr(
-            'flickr',
-            'groupUrl',
-            FLICKR_FIELD_CONFIG.groupUrl
-          )}>
-        </label>
-        <label class="editor-form-field md:col-span-2">
-          ${renderFieldIntro('flickr', 'image', FLICKR_FIELD_CONFIG.image)}
-          <input data-flickr-field="image" type="text" value="${escapeAttr(flickr.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/flickr/.../image.jpg"${fieldDescriptionAttr(
-            'flickr',
-            'image',
-            FLICKR_FIELD_CONFIG.image
-          )}>
-        </label>
-        <label class="editor-form-field md:col-span-2">
-          ${renderFieldIntro('flickr', 'imageAlt', FLICKR_FIELD_CONFIG.imageAlt)}
-          <input data-flickr-field="imageAlt" type="text" value="${escapeAttr(flickr.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr(
-            'flickr',
-            'imageAlt',
-            FLICKR_FIELD_CONFIG.imageAlt
-          )}>
-        </label>
-        <div class="editor-form-field md:col-span-2 editor-flickr-defaults">
-          <span class="editor-field-label">Automated copy preview</span>
-          <span class="editor-field-description">The heading, description, and button text are generated from the event timing and provider name above.</span>
-          <div class="editor-flickr-defaults-grid">
-            <div><span class="editor-flickr-defaults-label">Mode</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.mode === 'archive' ? 'Photo archive' : 'Share photos')}</span></div>
-            <div><span class="editor-flickr-defaults-label">Heading</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.heading)}</span></div>
-            <div><span class="editor-flickr-defaults-label">Description</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.description)}</span></div>
-            <div><span class="editor-flickr-defaults-label">Button text</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.buttonText)}</span></div>
-          </div>
-        </div>
-        <div class="editor-form-field">
-          <span class="editor-field-label">Promo image upload</span>
-          <span class="editor-field-description">Uploads to <code>img/flickr/${escapeHtml(
-            slugify(state.dataset?.event?.designation || 'event') || 'event'
-          )}</code> and stores a relative path.</span>
-          <button id="flickrImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-image mr-2"></i>Upload 250x250 Image
-          </button>
-        </div>
+    <label class="editor-form-field md:col-span-2">
+      ${renderFieldIntro('flickr', 'enabled', FLICKR_FIELD_CONFIG.enabled)}
+      <span class="h-11 inline-flex items-center gap-3 rounded-md border border-gray-300 px-3 bg-white">
+        <input data-flickr-field="enabled" type="checkbox" class="h-4 w-4" ${flickr.enabled ? 'checked' : ''}${fieldDescriptionAttr('flickr', 'enabled', FLICKR_FIELD_CONFIG.enabled)}>
+        <span class="text-sm text-gray-700">Show this block on the event page</span>
+      </span>
+    </label>
+    <label class="editor-form-field">
+      ${renderFieldIntro('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}
+      <input data-flickr-field="provider" type="text" value="${escapeAttr(flickr.provider)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="Flickr"${fieldDescriptionAttr('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}>
+    </label>
+    <label class="editor-form-field">
+      ${renderFieldIntro('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}
+      <input data-flickr-field="groupUrl" type="text" value="${escapeAttr(flickr.groupUrl)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white px-3" placeholder="https://flic.kr/g/..."${fieldDescriptionAttr('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}>
+    </label>
+    <label class="editor-form-field">
+      ${renderFieldIntro('flickr', 'image', FLICKR_FIELD_CONFIG.image)}
+      <input data-flickr-field="image" type="text" value="${escapeAttr(flickr.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/flickr/.../image.jpg"${fieldDescriptionAttr('flickr', 'image', FLICKR_FIELD_CONFIG.image)}>
+    </label>
+    <label class="editor-form-field">
+      ${renderFieldIntro('flickr', 'imageAlt', FLICKR_FIELD_CONFIG.imageAlt)}
+      <input data-flickr-field="imageAlt" type="text" value="${escapeAttr(flickr.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr('flickr', 'imageAlt', FLICKR_FIELD_CONFIG.imageAlt)}>
+    </label>
+    <div class="editor-form-field">
+      <span class="editor-field-label">Promo image upload</span>
+      <span class="editor-field-description">Uploads to <code>img/flickr/${escapeHtml(
+        slugify(state.dataset?.event?.designation || 'event') || 'event'
+      )}</code> and stores a relative path.</span>
+      <button id="flickrImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+        <i class="fas fa-image mr-2"></i>Upload 250x250 Image
+      </button>
+    </div>
+    <div class="editor-form-field md:col-span-2">
+      <span class="editor-field-label">Automated copy preview</span>
+      <span class="editor-field-description">Generated from event timing and provider name. Updates when the dataset reloads.</span>
+      <div class="grid grid-cols-2 gap-x-6 gap-y-2 mt-1 p-3 rounded-md border border-gray-200 bg-gray-100 text-sm">
+        <div><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Mode</span><span class="text-gray-800">${escapeHtml(automated.mode === 'archive' ? 'Photo archive' : 'Share photos')}</span></div>
+        <div><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Button</span><span class="text-gray-800">${escapeHtml(automated.buttonText)}</span></div>
+        <div class="col-span-2"><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Heading</span><span class="text-gray-800">${escapeHtml(automated.heading)}</span></div>
+        <div class="col-span-2"><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Description</span><span class="text-gray-800">${escapeHtml(automated.description)}</span></div>
       </div>
-    </fieldset>
+    </div>
   `;
 }
 
@@ -1962,7 +2058,7 @@ function renderLogoForm() {
 function renderFlickrForm() {
   if (!els.flickrForm) return;
   if (!state.dataset) {
-    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Load a dataset to edit the Flickr block.</p>';
+    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Load a dataset to edit the photos block.</p>';
     return;
   }
   const flickr = normalizeFlickrObject(state.dataset?.event?.flickr);
@@ -3668,6 +3764,8 @@ async function saveDataset() {
     }
   }
   await writeFileHandle(state.fileHandle);
+  clearPhotosBackup();
+  clearLogoBackup();
   markDirty(false);
   resetSessionQuickEditState();
   resetSponsorQuickEditState();
@@ -3803,6 +3901,21 @@ function renderSitemap() {
   });
 }
 
+function doPreview(mode = 'tab') {
+  if (!state.dataset) return;
+  try {
+    localStorage.setItem('__preview__', JSON.stringify(state.dataset));
+    if (mode === 'same') {
+      if (state.file) localStorage.setItem('__editor_return_file__', state.file);
+      window.location.assign('./index.html?preview=1');
+    } else {
+      window.open('./index.html?preview=1', '_blank');
+    }
+  } catch (e) {
+    window.alert('Could not open preview: ' + e.message);
+  }
+}
+
 function bindEvents() {
   const welcomeSearch = document.getElementById('welcomeEventSearch');
   if (welcomeSearch) {
@@ -3872,14 +3985,28 @@ function bindEvents() {
   }
 
   if (els.previewDataset) {
-    els.previewDataset.addEventListener('click', () => {
-      if (!state.dataset) return;
-      try {
-        localStorage.setItem('__preview__', JSON.stringify(state.dataset));
-        window.open('./index.html?preview=1', '_blank');
-      } catch (e) {
-        window.alert('Could not open preview: ' + e.message);
-      }
+    els.previewDataset.addEventListener('click', () => doPreview('tab'));
+  }
+
+  if (els.previewDatasetToggle && els.previewDatasetDropdown) {
+    els.previewDatasetToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = !els.previewDatasetDropdown.classList.contains('hidden');
+      els.previewDatasetDropdown.classList.toggle('hidden', open);
+      els.previewDatasetToggle.setAttribute('aria-expanded', String(!open));
+    });
+
+    els.previewDatasetDropdown.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-preview-mode]');
+      if (!item) return;
+      els.previewDatasetDropdown.classList.add('hidden');
+      els.previewDatasetToggle.setAttribute('aria-expanded', 'false');
+      doPreview(item.dataset.previewMode);
+    });
+
+    document.addEventListener('click', () => {
+      els.previewDatasetDropdown.classList.add('hidden');
+      els.previewDatasetToggle.setAttribute('aria-expanded', 'false');
     });
   }
 
