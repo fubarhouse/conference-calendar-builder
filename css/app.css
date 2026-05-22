@@ -4062,3 +4062,99 @@ body.has-preview-banner { padding-top: 2.25rem; }
 .brand-drupalsouth { background: linear-gradient(135deg, rgba(88, 178, 248, 0.97), rgba(18, 78, 158, 0.99)) !important; }
 .brand-community   { background: linear-gradient(135deg, rgba(72, 202, 190, 0.97), rgba(20, 98, 116, 0.99)) !important; }
 .brand-drupalcon   { background: linear-gradient(135deg, rgba(148, 162, 200, 0.90), rgba(66, 84, 124, 0.98)) !important; }
+
+/* ── Index body: neon glass for content, modals, cards ──────────────────── */
+
+/* Modal overlay: stronger blur + darker backdrop */
+.session-modal-overlay {
+    background: rgba(1, 5, 14, 0.85) !important;
+    backdrop-filter: blur(14px) saturate(140%) !important;
+}
+
+/* Session modal card: deep glass with aurora corner glows */
+.theme-dark .session-modal-card {
+    background:
+        radial-gradient(ellipse at 95% 5%, rgba(0, 207, 255, 0.08), transparent 40%),
+        radial-gradient(ellipse at 5% 95%, rgba(124, 58, 237, 0.06), transparent 40%),
+        linear-gradient(160deg, rgba(4, 12, 26, 0.98), rgba(2, 7, 16, 0.99)) !important;
+    border: 1px solid rgba(0, 207, 255, 0.28) !important;
+    box-shadow:
+        0 36px 90px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(0, 207, 255, 0.06),
+        0 0 60px rgba(0, 207, 255, 0.08) !important;
+}
+
+/* Modal header: dark glass with accent separator */
+.theme-dark .session-modal-header {
+    background: rgba(2, 8, 18, 0.97) !important;
+    border-bottom-color: rgba(0, 207, 255, 0.22) !important;
+    box-shadow: 0 1px 0 rgba(0, 207, 255, 0.06) !important;
+}
+
+/* Modal buttons: neon glass style */
+.theme-dark .session-modal-back,
+.theme-dark .session-modal-close {
+    background: rgba(0, 207, 255, 0.08) !important;
+    border-color: rgba(0, 207, 255, 0.28) !important;
+    color: #b8e8ff !important;
+}
+
+/* Day headings: neon cyan accent */
+.design-drupalcon .schedule-day-heading {
+    border-color: rgba(0, 207, 255, 0.4) !important;
+    background:
+        radial-gradient(ellipse at 0% 50%, rgba(0, 207, 255, 0.12), transparent 55%),
+        linear-gradient(95deg, rgba(6, 20, 44, 0.92), rgba(3, 11, 26, 0.92)) !important;
+    box-shadow: 0 0 24px rgba(0, 207, 255, 0.1) !important;
+}
+
+/* Event cards: neon border + hover glow */
+.design-drupalcon .event-card-dc {
+    border-color: rgba(0, 207, 255, 0.2) !important;
+    background:
+        linear-gradient(160deg, rgba(4, 12, 26, 0.95), rgba(2, 8, 18, 0.93)),
+        linear-gradient(110deg, var(--event-color-a), var(--event-color-b)) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+}
+.design-drupalcon .event-card-dc:hover {
+    border-color: var(--event-color-a) !important;
+    box-shadow: 0 0 24px rgba(0, 207, 255, 0.16), 0 12px 36px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Filter panels: neon glass */
+.design-drupalcon #filtersPanel,
+.design-drupalcon #sessionFiltersPanel {
+    border-color: rgba(0, 207, 255, 0.28) !important;
+    background:
+        radial-gradient(circle at 92% -20%, rgba(0, 207, 255, 0.12), transparent 40%),
+        linear-gradient(165deg, rgba(4, 14, 30, 0.97), rgba(2, 8, 18, 0.95)) !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(0, 207, 255, 0.06) !important;
+}
+
+/* Sponsor surfaces: respect per-sponsor bgStyle; only style text outside the surface */
+.theme-dark .sponsor-card-title { color: #90d4ff !important; }
+.theme-dark .sponsor-tier-heading { color: rgba(0, 207, 255, 0.8) !important; }
+.theme-dark .sponsors-heading { color: #e8f4ff !important; }
+
+/* transparent bgStyle: give it a subtle dark tint in dark mode */
+.theme-dark .sponsor-bg-transparent {
+    background: rgba(0, 207, 255, 0.04) !important;
+    border-color: rgba(0, 207, 255, 0.22) !important;
+}
+
+/* Speaker session cards: neon glass */
+.theme-dark .speaker-session-card {
+    background: rgba(3, 10, 24, 0.92) !important;
+    border-color: rgba(0, 207, 255, 0.2) !important;
+}
+.theme-dark .speaker-session-card-current {
+    background: rgba(0, 207, 255, 0.1) !important;
+    border-color: rgba(0, 207, 255, 0.52) !important;
+    box-shadow: 0 0 22px rgba(0, 207, 255, 0.16), inset 0 0 0 1px rgba(0, 207, 255, 0.22) !important;
+}
+
+/* Slot headings: neon left accent */
+.slot-heading {
+    border-left-color: rgba(0, 207, 255, 0.72) !important;
+    box-shadow: -2px 0 14px rgba(0, 207, 255, 0.22) !important;
+}
