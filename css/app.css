@@ -1,16 +1,16 @@
         :root {
-            --bg-0: #07111d;
-            --bg-1: #0d1b2a;
-            --surface-0: rgba(11, 23, 37, 0.88);
-            --surface-1: rgba(20, 35, 52, 0.9);
-            --surface-2: rgba(30, 48, 69, 0.75);
-            --text-0: #e6edf7;
-            --text-1: #c9d7eb;
-            --text-2: #93abc8;
-            --text-3: #7a96b4;
-            --line-0: #2b4360;
-            --accent: #2ea3ff;
-            --accent-strong: #4fb2ff;
+            --bg-0: #030b16;
+            --bg-1: #060e1c;
+            --surface-0: rgba(6, 15, 28, 0.92);
+            --surface-1: rgba(11, 24, 44, 0.95);
+            --surface-2: rgba(18, 36, 60, 0.82);
+            --text-0: #e8f0fb;
+            --text-1: #ccd8ef;
+            --text-2: #8eaacc;
+            --text-3: #6a8cb0;
+            --line-0: #1c3154;
+            --accent: #3bbeff;
+            --accent-strong: #62cbff;
         }
         *,
         *::before,
@@ -166,13 +166,19 @@
         }
         body.theme-dark {
             color: var(--text-0);
-            background: var(--bg-0);
+            background:
+                radial-gradient(ellipse at 18% 0%, rgba(38, 108, 230, 0.14) 0%, transparent 55%),
+                radial-gradient(ellipse at 84% 95%, rgba(6, 145, 185, 0.09) 0%, transparent 48%),
+                var(--bg-0);
         }
         .theme-dark .bg-white {
-            background-color: var(--surface-0) !important;
-            border: 1px solid var(--line-0);
-            box-shadow: 0 14px 42px rgba(0, 0, 0, 0.28);
-            backdrop-filter: blur(5px);
+            background: rgba(6, 14, 26, 0.88) !important;
+            border: 1px solid rgba(59, 190, 255, 0.13) !important;
+            box-shadow:
+                0 22px 58px rgba(0, 0, 0, 0.44),
+                0 4px 18px rgba(0, 0, 0, 0.22),
+                inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+            backdrop-filter: blur(18px) saturate(150%) !important;
         }
         .theme-dark .bg-gray-100 { background-color: transparent !important; }
         .theme-dark .bg-black { background: linear-gradient(180deg, #0b1725, #09131f) !important; }
@@ -520,20 +526,22 @@
             box-shadow: 0 0 0 3px rgba(96, 179, 238, 0.18);
         }
         .editor-tab-button.is-active {
-            border-color: rgba(110, 192, 255, 0.62);
-            background: linear-gradient(180deg, rgba(19, 131, 210, 0.95), rgba(12, 106, 176, 0.95));
+            border-color: rgba(110, 192, 255, 0.75);
+            background: linear-gradient(180deg, rgba(22, 140, 222, 0.98), rgba(13, 108, 182, 0.98));
             color: #ffffff;
             box-shadow:
-                0 10px 22px rgba(13, 120, 204, 0.24),
-                inset 0 1px 0 rgba(255, 255, 255, 0.16);
+                0 10px 26px rgba(13, 120, 204, 0.32),
+                inset 0 1px 0 rgba(255, 255, 255, 0.22),
+                0 0 0 1px rgba(46, 163, 255, 0.18);
         }
         .editor-quick-edit-toggle-active {
-            border-color: rgba(110, 192, 255, 0.62) !important;
-            background: linear-gradient(180deg, rgba(19, 131, 210, 0.95), rgba(12, 106, 176, 0.95)) !important;
+            border-color: rgba(110, 192, 255, 0.75) !important;
+            background: linear-gradient(180deg, rgba(22, 140, 222, 0.98), rgba(13, 108, 182, 0.98)) !important;
             color: #ffffff !important;
             box-shadow:
-                0 10px 22px rgba(13, 120, 204, 0.24),
-                inset 0 1px 0 rgba(255, 255, 255, 0.16);
+                0 10px 26px rgba(13, 120, 204, 0.32),
+                inset 0 1px 0 rgba(255, 255, 255, 0.22),
+                0 0 0 1px rgba(46, 163, 255, 0.18);
         }
         .editor-quick-edit-toggle-active:hover,
         .editor-quick-edit-toggle-active:focus-visible {
@@ -663,10 +671,14 @@
             color: #bcd4ef !important;
         }
         .theme-dark .hover\:bg-gray-50:hover {
-            background-color: rgba(74, 118, 163, 0.22) !important;
+            background-color: rgba(46, 163, 255, 0.1) !important;
+            border-color: rgba(46, 163, 255, 0.32) !important;
         }
         .header-shell {
-            background: #040c18;
+            background:
+                radial-gradient(ellipse at 8% 55%, rgba(59, 190, 255, 0.13) 0%, transparent 46%),
+                radial-gradient(ellipse at 92% 45%, rgba(6, 182, 212, 0.07) 0%, transparent 38%),
+                linear-gradient(180deg, #050e1c 0%, #030b16 100%);
             border-bottom: none;
             position: relative;
         }
@@ -676,8 +688,9 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #2ea3ff 0%, #06b6d4 55%, transparent 100%);
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent) 0%, #06b6d4 42%, rgba(6, 182, 212, 0.12) 100%);
+            box-shadow: 0 0 22px rgba(59, 190, 255, 0.55), 0 -1px 8px rgba(59, 190, 255, 0.2);
         }
         .header-logo {
             width: 104px;
@@ -694,7 +707,9 @@
                 linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.08),
-                0 10px 24px rgba(0, 0, 0, 0.18);
+                0 10px 28px rgba(0, 0, 0, 0.24),
+                0 0 0 1px rgba(46, 163, 255, 0.14),
+                0 0 30px rgba(46, 163, 255, 0.1);
             overflow: hidden;
             flex-shrink: 0;
         }
@@ -747,7 +762,7 @@
             font-size: 0.72rem;
             letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: rgba(224, 242, 255, 0.92);
+            color: rgba(79, 178, 255, 0.92);
         }
         .mobile-accordion-toggle {
             display: inline-flex;
@@ -863,15 +878,30 @@
             margin-top: 2px;
             color: #f6fbff;
             text-wrap: balance;
-            text-shadow: 0 2px 18px rgba(0, 0, 0, 0.25);
         }
         .header-title .header-suffix {
-            color: rgba(188, 226, 255, 0.92);
-            font-weight: 500;
-            margin-left: 0.35rem;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.1em 0.55em 0.15em;
+            margin-left: 0.5rem;
+            border-radius: 0.35em;
+            border: 1px solid rgba(59, 190, 255, 0.38);
+            background: rgba(59, 190, 255, 0.12);
+            color: rgba(142, 212, 255, 0.95);
+            font-size: 0.55em;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            vertical-align: middle;
+            line-height: 1.4;
         }
         .header-title .header-event {
-            font-weight: 700;
+            background: linear-gradient(100deg, #e8f4ff 15%, #8ed0ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            letter-spacing: -0.01em;
         }
         .editor-access-button {
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -895,9 +925,9 @@
             cursor: not-allowed;
             box-shadow: none;
         }
-        .brand-drupalsouth { background: linear-gradient(150deg, rgba(91, 177, 242, 0.45), rgba(24, 87, 142, 0.55)); }
-        .brand-community { background: linear-gradient(150deg, rgba(86, 196, 184, 0.45), rgba(28, 105, 120, 0.55)); }
-        .brand-drupalcon { background: linear-gradient(150deg, rgba(160, 170, 196, 0.35), rgba(78, 93, 121, 0.55)); }
+        .brand-drupalsouth { background: linear-gradient(135deg, rgba(88, 178, 248, 0.94), rgba(18, 78, 158, 0.97)); }
+        .brand-community { background: linear-gradient(135deg, rgba(72, 202, 190, 0.94), rgba(20, 98, 116, 0.97)); }
+        .brand-drupalcon { background: linear-gradient(135deg, rgba(148, 162, 200, 0.84), rgba(66, 84, 124, 0.95)); }
 
         body.design-drupalcon #eventsContainer {
             background: transparent !important;
@@ -3818,13 +3848,14 @@ body.has-preview-banner { padding-top: 2.25rem; }
     bottom: 1.5rem;
     left: 50%;
     transform: translateX(-50%) translateY(0.5rem);
-    background: #1a2e40;
-    color: #fff;
+    background: linear-gradient(135deg, #0d1e32, #091628);
+    border: 1px solid rgba(46, 163, 255, 0.38);
+    color: #e6f4ff;
     padding: 0.55rem 1.2rem;
     border-radius: 2rem;
     font-size: 0.88rem;
     font-weight: 500;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 18px rgba(46, 163, 255, 0.14);
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.2s ease, transform 0.2s ease;
@@ -3880,3 +3911,100 @@ body.has-preview-banner { padding-top: 2.25rem; }
     border-color: #b45309;
 }
 .recovery-bar-btn--primary:hover { background: #b45309; }
+
+/* ── Retheme: accent, surface, and editor chrome ─────────────────────────── */
+
+/* Toolbar: distinct dark glass with accent-tinted border */
+.theme-dark #editorToolbar.bg-white,
+.theme-dark #editorToolbar {
+    background: rgba(4, 11, 22, 0.96) !important;
+    border-color: rgba(59, 190, 255, 0.22) !important;
+    box-shadow:
+        0 22px 58px rgba(0, 0, 0, 0.44),
+        inset 0 1px 0 rgba(59, 190, 255, 0.06) !important;
+}
+
+/* Editor sections panel: deep glass with vivid corner glow */
+.editor-meta-accordion {
+    background:
+        radial-gradient(circle at 98% 2%, rgba(59, 190, 255, 0.16), transparent 34%),
+        linear-gradient(165deg, rgba(10, 24, 42, 0.97), rgba(6, 15, 28, 0.99)) !important;
+    border: 1px solid rgba(59, 190, 255, 0.2) !important;
+    box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.32),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Tab row pill: accent-tinted border + subtle inner glow */
+.editor-tab-row {
+    border-color: rgba(59, 190, 255, 0.22) !important;
+    background: rgba(0, 10, 22, 0.55) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Tab hover: clear cyan feedback */
+.editor-tab-button:hover {
+    background: rgba(59, 190, 255, 0.12) !important;
+    color: #eef6ff !important;
+    border-color: rgba(59, 190, 255, 0.28) !important;
+}
+
+/* Active tab: vivid gradient, strong glow */
+.editor-tab-button.is-active {
+    background: linear-gradient(180deg, rgba(28, 148, 230, 1), rgba(14, 112, 192, 1)) !important;
+    border-color: rgba(59, 190, 255, 0.85) !important;
+    box-shadow:
+        0 6px 22px rgba(14, 120, 210, 0.45),
+        0 0 0 1px rgba(59, 190, 255, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+.editor-quick-edit-toggle-active {
+    background: linear-gradient(180deg, rgba(28, 148, 230, 1), rgba(14, 112, 192, 1)) !important;
+    border-color: rgba(59, 190, 255, 0.85) !important;
+    box-shadow:
+        0 6px 22px rgba(14, 120, 210, 0.45),
+        0 0 0 1px rgba(59, 190, 255, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Button hover: vivid cyan tint */
+.theme-dark .hover\:bg-gray-50:hover {
+    background-color: rgba(59, 190, 255, 0.1) !important;
+    border-color: rgba(59, 190, 255, 0.35) !important;
+}
+
+/* Dirty save button: amber glow */
+#saveDataset.is-dirty,
+#timelineSaveBtn.is-dirty {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.45), 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Dirty state badge: stronger amber */
+#dirtyState[data-dirty="true"] {
+    border-color: rgba(245, 158, 11, 0.75) !important;
+    background: rgba(245, 158, 11, 0.12) !important;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.18);
+}
+
+/* Session/sponsor list: accent border on hover */
+.theme-dark #sessionList li:hover,
+.theme-dark #sponsorList li:hover {
+    border-color: rgba(59, 190, 255, 0.32) !important;
+}
+
+/* Save toast: clean glass pill with accent */
+.save-toast {
+    background: linear-gradient(135deg, #081528, #05101e) !important;
+    border: 1px solid rgba(59, 190, 255, 0.42) !important;
+    color: #cce8ff !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.36), 0 0 20px rgba(59, 190, 255, 0.16) !important;
+}
+
+/* Input fields in editor: accent on hover/focus */
+.editor-form-field input:not([type="checkbox"]):focus,
+.editor-form-field select:focus,
+.editor-form-field textarea:focus {
+    border-color: rgba(59, 190, 255, 0.65) !important;
+    box-shadow: 0 0 0 3px rgba(59, 190, 255, 0.15), 0 0 10px rgba(59, 190, 255, 0.08) !important;
+    outline: none;
+}
