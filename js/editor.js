@@ -1804,8 +1804,9 @@ async function uploadFlickrImageFromPicker() {
   markDirty(true);
   state.imageCacheBust.set(`./${relativePath}`, Date.now());
   renderFlickrForm();
-  const flickrPreview = document.getElementById('flickrImagePreview');
-  if (flickrPreview) { flickrPreview.src = URL.createObjectURL(file); flickrPreview.classList.remove('hidden'); }
+  const blobUrl = URL.createObjectURL(file);
+  const frame = document.querySelector('.event-promo-image-frame');
+  if (frame) frame.innerHTML = `<img id="flickrImagePreview" class="event-promo-image" src="${blobUrl}" alt="${escapeAttr(state.dataset?.event?.flickr?.imageAlt || '')}">`;
 }
 
 async function uploadLogoImageFromPicker() {
@@ -1962,47 +1963,64 @@ function renderFlickrCopyPreviewContent(automated) {
 function renderFlickrBlock(flickr) {
   const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickr.provider);
   const imageSrc = (flickr.image || '').trim();
+  const providerLabel = (flickr.provider || 'Photos').toUpperCase();
   return `
-    <label class="editor-form-field md:col-span-2">
-      ${renderFieldIntro('flickr', 'enabled', FLICKR_FIELD_CONFIG.enabled)}
-      <span class="h-11 inline-flex items-center gap-3 rounded-md border border-gray-300 px-3 bg-white">
-        <input data-flickr-field="enabled" type="checkbox" class="h-4 w-4" ${flickr.enabled ? 'checked' : ''}${fieldDescriptionAttr('flickr', 'enabled', FLICKR_FIELD_CONFIG.enabled)}>
-        <span class="text-sm text-gray-700">Show this block on the event page</span>
-      </span>
-    </label>
-    <label class="editor-form-field">
-      ${renderFieldIntro('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}
-      <input data-flickr-field="provider" type="text" value="${escapeAttr(flickr.provider)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="Flickr"${fieldDescriptionAttr('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}>
-    </label>
-    <label class="editor-form-field">
-      ${renderFieldIntro('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}
-      <input data-flickr-field="groupUrl" type="text" value="${escapeAttr(flickr.groupUrl)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white px-3" placeholder="https://flic.kr/g/..."${fieldDescriptionAttr('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}>
-    </label>
-    <label class="editor-form-field">
-      ${renderFieldIntro('flickr', 'image', FLICKR_FIELD_CONFIG.image)}
-      <input data-flickr-field="image" type="text" value="${escapeAttr(flickr.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/flickr/.../image.jpg"${fieldDescriptionAttr('flickr', 'image', FLICKR_FIELD_CONFIG.image)}>
-    </label>
-    <label class="editor-form-field">
-      ${renderFieldIntro('flickr', 'imageAlt', FLICKR_FIELD_CONFIG.imageAlt)}
-      <input data-flickr-field="imageAlt" type="text" value="${escapeAttr(flickr.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr('flickr', 'imageAlt', FLICKR_FIELD_CONFIG.imageAlt)}>
-    </label>
-    <div class="editor-form-field">
-      <span class="editor-field-label">Promo image upload</span>
-      <span class="editor-field-description">Uploads to <code>img/flickr/${escapeHtml(
-        slugify(state.dataset?.event?.designation || 'event') || 'event'
-      )}</code> and stores a relative path.</span>
-      <button id="flickrImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-        <i class="fas fa-image mr-2"></i>Upload 250x250 Image
-      </button>
-      <img id="flickrImagePreview" src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(flickr.imageAlt || '')}"
-        class="mt-2 rounded border border-gray-200 max-h-[150px] max-w-[250px] object-cover block${imageSrc ? '' : ' hidden'}">
-    </div>
-    <div class="editor-form-field md:col-span-2">
-      <span class="editor-field-label">Automated copy preview</span>
-      <span class="editor-field-description">Generated from event timing and provider name. Updates live as you type.</span>
-      <div id="flickrCopyPreview" class="grid grid-cols-2 gap-x-6 gap-y-2 mt-1 p-3 rounded-md border border-gray-200 bg-gray-100 text-sm">
-        ${renderFlickrCopyPreviewContent(automated)}
+    <div class="col-span-full flex gap-5 items-start">
+      <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label class="editor-form-field md:col-span-2">
+          ${renderFieldIntro('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}
+          <input data-flickr-field="provider" type="text" value="${escapeAttr(flickr.provider)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="Flickr"${fieldDescriptionAttr('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}>
+        </label>
+        <label class="editor-form-field md:col-span-2">
+          ${renderFieldIntro('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}
+          <input data-flickr-field="groupUrl" type="text" value="${escapeAttr(flickr.groupUrl)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="https://flic.kr/g/..."${fieldDescriptionAttr('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}>
+        </label>
+        <label class="editor-form-field md:col-span-2">
+          ${renderFieldIntro('flickr', 'image', FLICKR_FIELD_CONFIG.image)}
+          <input data-flickr-field="image" type="text" value="${escapeAttr(flickr.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/flickr/.../image.jpg"${fieldDescriptionAttr('flickr', 'image', FLICKR_FIELD_CONFIG.image)}>
+        </label>
+        <label class="editor-form-field md:col-span-2">
+          ${renderFieldIntro('flickr', 'imageAlt', FLICKR_FIELD_CONFIG.imageAlt)}
+          <input data-flickr-field="imageAlt" type="text" value="${escapeAttr(flickr.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr('flickr', 'imageAlt', FLICKR_FIELD_CONFIG.imageAlt)}>
+        </label>
+        <div class="editor-form-field md:col-span-2">
+          <span class="editor-field-label">Promo image upload</span>
+          <span class="editor-field-description">Uploads to <code>img/flickr/${escapeHtml(
+            slugify(state.dataset?.event?.designation || 'event') || 'event'
+          )}</code> and stores a relative path.</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="h-9 inline-flex items-center gap-2.5 rounded-md border border-gray-300 px-3 bg-white cursor-pointer select-none">
+              <input data-flickr-field="enabled" type="checkbox" class="h-4 w-4" ${flickr.enabled ? 'checked' : ''}${fieldDescriptionAttr('flickr', 'enabled', FLICKR_FIELD_CONFIG.enabled)}>
+              <span class="text-sm text-gray-700">Enabled</span>
+            </label>
+            <button id="flickrImageUpload" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-upload mr-1.5 text-[0.72rem]"></i>Upload image
+            </button>
+            <button id="flickrImageClear" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors whitespace-nowrap"${!imageSrc ? ' disabled' : ''}>
+              <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete image
+            </button>
+          </div>
+        </div>
       </div>
+
+      <aside class="flickr-editor-sidebar">
+        <div class="flickr-preview-stage">
+          <div id="flickrPreviewCard" class="event-promo-card rounded-lg border border-gray-200 bg-white p-3${flickr.enabled ? '' : ' opacity-50'}">
+            <div class="event-promo-image-frame">
+              ${imageSrc
+                ? `<img id="flickrImagePreview" class="event-promo-image" src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(flickr.imageAlt || '')}">`
+                : `<div class="flickr-preview-placeholder"><i class="fas fa-image"></i></div>`}
+            </div>
+            <div class="event-promo-body min-w-0">
+              <div class="flickr-preview-provider text-xs font-semibold tracking-wide text-gray-500 uppercase mb-0.5">${escapeHtml(providerLabel)}</div>
+              <div class="flickr-preview-heading text-sm font-semibold text-gray-900 leading-snug">${escapeHtml(automated.heading)}</div>
+              <p class="flickr-preview-desc text-xs text-gray-600 mt-1 leading-snug">${escapeHtml(automated.description)}</p>
+              <span class="event-promo-action flickr-preview-btn mt-2">${escapeHtml(automated.buttonText)}</span>
+            </div>
+          </div>
+        </div>
+        <p class="flickr-preview-caption">Page preview</p>
+      </aside>
     </div>
   `;
 }
@@ -2069,25 +2087,40 @@ function bindFlickrFormEvents(container) {
       state.dataset.event.flickr = normalizeFlickrObject(eventFlickr);
       markDirty(true);
 
-      const copyPreview = container.querySelector('#flickrCopyPreview');
-      if (copyPreview) {
+      const card = container.querySelector('#flickrPreviewCard');
+
+      if (key === 'enabled') {
+        if (card) card.classList.toggle('opacity-50', !input.checked);
+      }
+
+      if (key === 'provider' || key === 'groupUrl') {
         const flickrNow = normalizeFlickrObject(state.dataset.event.flickr);
-        copyPreview.innerHTML = renderFlickrCopyPreviewContent(
-          getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickrNow.provider)
-        );
+        const auto = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickrNow.provider);
+        const providerEl = container.querySelector('.flickr-preview-provider');
+        const headingEl = container.querySelector('.flickr-preview-heading');
+        const descEl = container.querySelector('.flickr-preview-desc');
+        const btnEl = container.querySelector('.flickr-preview-btn');
+        if (providerEl) providerEl.textContent = (flickrNow.provider || 'Photos').toUpperCase();
+        if (headingEl) headingEl.textContent = auto.heading;
+        if (descEl) descEl.textContent = auto.description;
+        if (btnEl) btnEl.textContent = auto.buttonText;
       }
 
       if (key === 'image') {
-        const imgPreview = container.querySelector('#flickrImagePreview');
-        if (imgPreview) {
-          const newSrc = input.value.trim();
-          imgPreview.src = newSrc;
-          imgPreview.classList.toggle('hidden', !newSrc);
+        const newSrc = input.value.trim();
+        const frame = container.querySelector('.event-promo-image-frame');
+        const clearBtn = container.querySelector('#flickrImageClear');
+        if (frame) {
+          frame.innerHTML = newSrc
+            ? `<img id="flickrImagePreview" class="event-promo-image" src="${escapeAttr(newSrc)}" alt="${escapeAttr(eventFlickr.imageAlt || '')}">`
+            : `<div class="flickr-preview-placeholder"><i class="fas fa-image"></i></div>`;
         }
+        if (clearBtn) clearBtn.disabled = !newSrc;
       }
+
       if (key === 'imageAlt') {
-        const imgPreview = container.querySelector('#flickrImagePreview');
-        if (imgPreview) imgPreview.alt = input.value;
+        const img = container.querySelector('#flickrImagePreview');
+        if (img) img.alt = input.value;
       }
     };
     input.addEventListener('input', updateFlickrField);
@@ -2102,6 +2135,18 @@ function bindFlickrFormEvents(container) {
       } catch (error) {
         window.alert(`Flickr image upload failed: ${error.message}`);
       }
+    });
+  }
+
+  const clearButton = container.querySelector('#flickrImageClear');
+  if (clearButton) {
+    clearButton.addEventListener('click', () => {
+      const eventFlickr = normalizeFlickrObject(state.dataset.event.flickr);
+      eventFlickr.image = '';
+      eventFlickr.imageAlt = '';
+      state.dataset.event.flickr = normalizeFlickrObject(eventFlickr);
+      markDirty(true);
+      renderFlickrForm();
     });
   }
 }

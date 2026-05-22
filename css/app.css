@@ -4283,3 +4283,40 @@ body.has-preview-banner { padding-top: 2.25rem; }
     color: rgba(130, 170, 200, 0.6);
     margin: 0;
 }
+
+/* ── Flickr/photos editor sidebar ───────────────────────────── */
+.flickr-editor-sidebar {
+    flex: 0 0 33%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+}
+.flickr-preview-stage {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    background: rgba(6, 18, 36, 0.85);
+    border: 1px solid rgba(0, 207, 255, 0.14);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(0, 207, 255, 0.05);
+}
+.flickr-preview-stage .event-promo-card {
+    width: 100%;
+}
+.flickr-preview-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: rgba(120, 150, 175, 0.5);
+    font-size: 1.4rem;
+}
+.flickr-preview-caption {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(130, 170, 200, 0.6);
+    margin: 0;
+}
