@@ -3591,6 +3591,72 @@
 .preview-banner-link:hover { opacity: 0.75; }
 body.has-preview-banner { padding-top: 2.25rem; }
 
+/* ── Unsaved-changes confirm modal ──────────────────────────────────────── */
+.editor-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9100;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+.editor-confirm-overlay.hidden { display: none; }
+.editor-confirm-card {
+    background: #1a2e40;
+    border: 1px solid #2d4459;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+.editor-confirm-icon {
+    width: 3rem;
+    height: 3rem;
+    background: rgba(245, 158, 11, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    color: #f59e0b;
+    font-size: 1.2rem;
+}
+.editor-confirm-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #e2eaf3;
+    margin-bottom: 0.5rem;
+}
+.editor-confirm-body {
+    font-size: 0.875rem;
+    color: #9eb2c8;
+    margin-bottom: 1.5rem;
+    line-height: 1.55;
+}
+.editor-confirm-target { color: #e2eaf3; }
+.editor-confirm-actions { display: flex; flex-direction: column; gap: 0.6rem; }
+.editor-confirm-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: opacity 0.15s;
+}
+.editor-confirm-btn:hover { opacity: 0.82; }
+.editor-confirm-btn-save    { background: #f59e0b; color: #1a1200; border-color: #d97706; }
+.editor-confirm-btn-discard { background: #dc2626; color: #fff;    border-color: #b91c1c; }
+.editor-confirm-btn-cancel  { background: transparent; color: #9eb2c8; border-color: #2d4459; }
+
 /* ── Preview split button ───────────────────────────────────────────────── */
 .editor-preview-split {
     position: relative;

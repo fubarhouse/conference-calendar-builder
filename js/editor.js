@@ -516,10 +516,10 @@ function setEditorButtonsEnabled(enabled) {
   if (els.previewDatasetToggle) els.previewDatasetToggle.disabled = !enabled;
   if (els.revertDataset) els.revertDataset.disabled = true;
   if (els.timelineSaveBtn) els.timelineSaveBtn.disabled = !enabled;
-  els.saveSession.disabled = !enabled || state.selectedIndex < 0;
+  if (els.saveSession) els.saveSession.disabled = !enabled || state.selectedIndex < 0;
   els.addSession.disabled = !enabled;
   els.deleteSession.disabled = !enabled || state.selectedIndex < 0;
-  els.saveSponsor.disabled = !enabled || state.selectedSponsorIndex < 0;
+  if (els.saveSponsor) els.saveSponsor.disabled = !enabled || state.selectedSponsorIndex < 0;
   els.addSponsor.disabled = !enabled;
   els.deleteSponsor.disabled = !enabled || state.selectedSponsorIndex < 0;
   syncQuickSessionEditToggle();
@@ -777,23 +777,64 @@ async function performUndo() {
   if (els.deleteSponsor) els.deleteSponsor.disabled = state.selectedSponsorIndex < 0;
 }
 
-async function confirmDiscardPendingChanges(targetLabel = 'another form') {
-  if (!state.dirty) return true;
-  const proceed = window.confirm(
-    `You have pending changes in this form. They will not be saved if you move to ${targetLabel}. Continue and discard them?`
-  );
-  if (!proceed) return false;
-  await restorePersistedSnapshot();
-  return true;
+function confirmDiscardPendingChanges(targetLabel = 'another file') {
+  if (!state.dirty) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const modal = document.getElementById('unsavedChangesModal');
+    if (!modal) {
+      const proceed = window.confirm('You have unsaved changes. Discard and continue?');
+      if (proceed) restorePersistedSnapshot().then(() => resolve(true));
+      else resolve(false);
+      return;
+    }
+    const targetEl = document.getElementById('unsavedChangesTarget');
+    if (targetEl) targetEl.textContent = targetLabel;
+    modal.classList.remove('hidden');
+    document.body.classList.add('session-modal-open');
+
+    const close = () => {
+      modal.classList.add('hidden');
+      document.body.classList.remove('session-modal-open');
+    };
+
+    document.getElementById('unsavedModalSave').addEventListener('click', async () => {
+      close();
+      try { await saveDataset(); resolve(true); } catch { resolve(false); }
+    }, { once: true });
+
+    document.getElementById('unsavedModalDiscard').addEventListener('click', async () => {
+      close();
+      await restorePersistedSnapshot();
+      resolve(true);
+    }, { once: true });
+
+    document.getElementById('unsavedModalCancel').addEventListener('click', () => {
+      close(); resolve(false);
+    }, { once: true });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) { close(); resolve(false); }
+    }, { once: true });
+  });
 }
+
+let _lastSavedAt = null;
 
 function markDirty(nextDirty = true) {
   state.dirty = nextDirty;
   const color = nextDirty ? 'text-amber-300' : 'text-emerald-300';
-  const label = nextDirty ? 'Unsaved changes' : 'No changes';
+  let label;
+  if (nextDirty) {
+    label = 'Unsaved changes';
+  } else if (_lastSavedAt) {
+    label = `Saved ${_lastSavedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+  } else {
+    label = 'No changes';
+  }
   els.dirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-xs ${color}"></i><span>${label}</span>`;
   els.dirtyState.dataset.dirty = String(nextDirty);
   els.saveDataset.classList.toggle('is-dirty', nextDirty);
+  els.saveDataset.title = nextDirty ? 'Save changes (Ctrl+S)' : 'No unsaved changes';
   if (els.timelineSaveBtn) els.timelineSaveBtn.classList.toggle('is-dirty', nextDirty);
   if (els.revertDataset) {
     els.revertDataset.disabled = !nextDirty || !state.persistedSnapshot;
@@ -803,6 +844,7 @@ function markDirty(nextDirty = true) {
 let _saveToastTimer = null;
 function showSaveToast() {
   if (!els.saveToast) return;
+  _lastSavedAt = new Date();
   clearTimeout(_saveToastTimer);
   els.saveToast.classList.add('is-visible');
   _saveToastTimer = setTimeout(() => els.saveToast.classList.remove('is-visible'), 2500);
@@ -893,7 +935,7 @@ function markSessionDirty(nextDirty = true) {
       label = quickCount > 0 ? `${quickCount} item${quickCount === 1 ? '' : 's'} modified` : 'Unsaved quick edits';
     }
   } else if (state.sessionDirty || hasQuickChanges) {
-    label = 'Unsaved changes';
+    label = 'Modified';
   }
   els.sessionDirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-[0.55rem] ${color}"></i><span>${label}</span>`;
   syncSessionSaveButton();
@@ -911,7 +953,7 @@ function markSponsorDirty(nextDirty = true) {
       label = quickCount > 0 ? `${quickCount} item${quickCount === 1 ? '' : 's'} modified` : 'Unsaved quick edits';
     }
   } else if (state.sponsorDirty || hasQuickChanges) {
-    label = 'Unsaved changes';
+    label = 'Modified';
   }
   els.sponsorDirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-[0.55rem] ${color}"></i><span>${label}</span>`;
   syncSponsorSaveButton();
@@ -4030,20 +4072,16 @@ function bindEvents() {
   if (els.exportDataset) {
     els.exportDataset.addEventListener('click', exportDataset);
   }
-  els.saveSession.addEventListener('click', async () => {
-    try {
-      await saveCurrentSession();
-    } catch (error) {
-      window.alert(`Save session failed: ${error.message}`);
-    }
-  });
-  els.saveSponsor.addEventListener('click', async () => {
-    try {
-      await saveCurrentSponsor();
-    } catch (error) {
-      window.alert(`Save sponsor failed: ${error.message}`);
-    }
-  });
+  if (els.saveSession) {
+    els.saveSession.addEventListener('click', async () => {
+      try { await saveCurrentSession(); } catch (error) { window.alert(`Save failed: ${error.message}`); }
+    });
+  }
+  if (els.saveSponsor) {
+    els.saveSponsor.addEventListener('click', async () => {
+      try { await saveCurrentSponsor(); } catch (error) { window.alert(`Save failed: ${error.message}`); }
+    });
+  }
   els.addSession.addEventListener('click', async () => {
     try {
       await addSession();
