@@ -202,6 +202,8 @@ const els = {
   folderConnectionToggle: document.getElementById('folderConnectionToggle'),
   newDataset: document.getElementById('newDataset'),
   saveDataset: document.getElementById('saveDataset'),
+  saveDatasetToggle: document.getElementById('saveDatasetToggle'),
+  saveDatasetDropdown: document.getElementById('saveDatasetDropdown'),
   saveAsDataset: document.getElementById('saveAsDataset'),
   previewDataset: document.getElementById('previewDataset'),
   previewDatasetToggle: document.getElementById('previewDatasetToggle'),
@@ -511,7 +513,7 @@ function setEditorButtonsEnabled(enabled) {
     els.exportDataset.disabled = !enabled;
   }
   els.saveDataset.disabled = !enabled;
-  els.saveAsDataset.disabled = !enabled;
+  if (els.saveDatasetToggle) els.saveDatasetToggle.disabled = !enabled;
   if (els.previewDataset) els.previewDataset.disabled = !enabled;
   if (els.previewDatasetToggle) els.previewDatasetToggle.disabled = !enabled;
   if (els.revertDataset) els.revertDataset.disabled = true;
@@ -1798,7 +1800,7 @@ async function uploadFlickrImageFromPicker() {
     state.dataset.event.flickr.imageAlt = `${state.dataset.event.designation || 'Event'} Flickr image`;
   }
   markDirty(true);
-  renderEventMetaForm();
+  renderFlickrForm();
 }
 
 async function uploadLogoImageFromPicker() {
@@ -1934,8 +1936,18 @@ function getAutomatedFlickrCopy(eventMeta = null, items = [], provider = '') {
   };
 }
 
+function renderFlickrCopyPreviewContent(automated) {
+  return `
+    <div><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Mode</span><span class="text-gray-800">${escapeHtml(automated.mode === 'archive' ? 'Photo archive' : 'Share photos')}</span></div>
+    <div><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Button</span><span class="text-gray-800">${escapeHtml(automated.buttonText)}</span></div>
+    <div class="col-span-2"><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Heading</span><span class="text-gray-800">${escapeHtml(automated.heading)}</span></div>
+    <div class="col-span-2"><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Description</span><span class="text-gray-800">${escapeHtml(automated.description)}</span></div>
+  `;
+}
+
 function renderFlickrBlock(flickr) {
   const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickr.provider);
+  const imageSrc = (flickr.image || '').trim();
   return `
     <label class="editor-form-field md:col-span-2">
       ${renderFieldIntro('flickr', 'enabled', FLICKR_FIELD_CONFIG.enabled)}
@@ -1968,15 +1980,14 @@ function renderFlickrBlock(flickr) {
       <button id="flickrImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
         <i class="fas fa-image mr-2"></i>Upload 250x250 Image
       </button>
+      <img id="flickrImagePreview" src="${escapeAttr(imageSrc)}" alt="${escapeAttr(flickr.imageAlt || '')}"
+        class="mt-2 rounded border border-gray-200 max-h-[150px] max-w-[250px] object-cover block${imageSrc ? '' : ' hidden'}">
     </div>
     <div class="editor-form-field md:col-span-2">
       <span class="editor-field-label">Automated copy preview</span>
-      <span class="editor-field-description">Generated from event timing and provider name. Updates when the dataset reloads.</span>
-      <div class="grid grid-cols-2 gap-x-6 gap-y-2 mt-1 p-3 rounded-md border border-gray-200 bg-gray-100 text-sm">
-        <div><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Mode</span><span class="text-gray-800">${escapeHtml(automated.mode === 'archive' ? 'Photo archive' : 'Share photos')}</span></div>
-        <div><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Button</span><span class="text-gray-800">${escapeHtml(automated.buttonText)}</span></div>
-        <div class="col-span-2"><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Heading</span><span class="text-gray-800">${escapeHtml(automated.heading)}</span></div>
-        <div class="col-span-2"><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Description</span><span class="text-gray-800">${escapeHtml(automated.description)}</span></div>
+      <span class="editor-field-description">Generated from event timing and provider name. Updates live as you type.</span>
+      <div id="flickrCopyPreview" class="grid grid-cols-2 gap-x-6 gap-y-2 mt-1 p-3 rounded-md border border-gray-200 bg-gray-100 text-sm">
+        ${renderFlickrCopyPreviewContent(automated)}
       </div>
     </div>
   `;
@@ -2043,6 +2054,27 @@ function bindFlickrFormEvents(container) {
       }
       state.dataset.event.flickr = normalizeFlickrObject(eventFlickr);
       markDirty(true);
+
+      const copyPreview = container.querySelector('#flickrCopyPreview');
+      if (copyPreview) {
+        const flickrNow = normalizeFlickrObject(state.dataset.event.flickr);
+        copyPreview.innerHTML = renderFlickrCopyPreviewContent(
+          getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickrNow.provider)
+        );
+      }
+
+      if (key === 'image') {
+        const imgPreview = container.querySelector('#flickrImagePreview');
+        if (imgPreview) {
+          const newSrc = input.value.trim();
+          imgPreview.src = newSrc;
+          imgPreview.classList.toggle('hidden', !newSrc);
+        }
+      }
+      if (key === 'imageAlt') {
+        const imgPreview = container.querySelector('#flickrImagePreview');
+        if (imgPreview) imgPreview.alt = input.value;
+      }
     };
     input.addEventListener('input', updateFlickrField);
     input.addEventListener('change', updateFlickrField);
@@ -4041,6 +4073,20 @@ function bindEvents() {
     });
   }
 
+  if (els.saveDatasetToggle && els.saveDatasetDropdown) {
+    els.saveDatasetToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = !els.saveDatasetDropdown.classList.contains('hidden');
+      els.saveDatasetDropdown.classList.toggle('hidden', open);
+      els.saveDatasetToggle.setAttribute('aria-expanded', String(!open));
+    });
+
+    document.addEventListener('click', () => {
+      els.saveDatasetDropdown.classList.add('hidden');
+      if (els.saveDatasetToggle) els.saveDatasetToggle.setAttribute('aria-expanded', 'false');
+    });
+  }
+
   els.saveDataset.addEventListener('click', async () => {
     try {
       await saveDataset();
@@ -4049,14 +4095,20 @@ function bindEvents() {
     }
   });
 
-  els.saveAsDataset.addEventListener('click', async () => {
-    try {
-      await saveAsDataset();
-    } catch (error) {
-      if (error && error.name === 'AbortError') return;
-      window.alert(`Save As failed: ${error.message}`);
-    }
-  });
+  if (els.saveAsDataset) {
+    els.saveAsDataset.addEventListener('click', async () => {
+      if (els.saveDatasetDropdown) {
+        els.saveDatasetDropdown.classList.add('hidden');
+        if (els.saveDatasetToggle) els.saveDatasetToggle.setAttribute('aria-expanded', 'false');
+      }
+      try {
+        await saveAsDataset();
+      } catch (error) {
+        if (error && error.name === 'AbortError') return;
+        window.alert(`Save As failed: ${error.message}`);
+      }
+    });
+  }
 
   if (els.exportDataset) {
     els.exportDataset.addEventListener('click', exportDataset);

@@ -55,17 +55,24 @@
             <i class="fas fa-search mr-2"></i>Find event
           </button>
           <button id="newDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-file-circle-plus mr-2"></i>New
+            <i class="fas fa-plus mr-2"></i>New
           </button>
           <button id="folderConnectionToggle" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
             <i class="fas fa-link mr-2"></i>Connect Folder
           </button>
-          <button id="saveDataset" type="button" title="Save (Ctrl+S)" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
-            <i class="fas fa-floppy-disk mr-2"></i>Save
-          </button>
-          <button id="saveAsDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
-            <i class="fas fa-file-export mr-2"></i>Save As
-          </button>
+          <div class="editor-preview-split" id="saveDatasetGroup">
+            <button id="saveDataset" type="button" title="Save (Ctrl+S)" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-r-0 border-gray-300 rounded-l-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+              <i class="fas fa-floppy-disk mr-2"></i>Save
+            </button>
+            <button id="saveDatasetToggle" type="button" aria-label="Save options" aria-haspopup="true" aria-expanded="false" class="h-11 w-9 inline-flex items-center justify-center border border-gray-300 rounded-r-md text-gray-500 bg-white hover:bg-gray-50 transition-colors" disabled>
+              <i class="fas fa-chevron-down text-xs" aria-hidden="true"></i>
+            </button>
+            <div id="saveDatasetDropdown" class="editor-preview-dropdown hidden" role="menu">
+              <button id="saveAsDataset" type="button" role="menuitem" class="editor-preview-dropdown-item">
+                <i class="fas fa-file-export" aria-hidden="true"></i>Save As
+              </button>
+            </div>
+          </div>
           <div class="editor-preview-split" id="previewDatasetGroup">
             <button id="previewDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-r-0 border-gray-300 rounded-l-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
               <i class="fas fa-eye mr-2"></i>Preview
