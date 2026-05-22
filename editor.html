@@ -49,29 +49,46 @@
 
     <div id="editorApp" class="space-y-4">
       <section id="editorToolbar" class="bg-white rounded-lg shadow-md p-4">
-        <div class="grid grid-cols-1 xl:grid-cols-[1fr_auto_auto_auto_auto_auto_auto_auto] gap-2 items-end">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="datasetSelect">Event</label>
-            <select id="datasetSelect" class="w-full h-11 pr-10 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white"></select>
-          </div>
+        <select id="datasetSelect" hidden aria-hidden="true"></select>
+        <div class="flex flex-wrap gap-2 items-center">
           <button id="editorSearchEvents" type="button" class="h-11 inline-flex items-center justify-center px-5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed" disabled>
             <i class="fas fa-search mr-2"></i>Find event
           </button>
           <button id="newDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-file-circle-plus mr-2"></i>New
+            <i class="fas fa-plus mr-2"></i>New
           </button>
           <button id="folderConnectionToggle" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
             <i class="fas fa-link mr-2"></i>Connect Folder
           </button>
-          <button id="saveDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
-            <i class="fas fa-floppy-disk mr-2"></i>Save
-          </button>
-          <button id="saveAsDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
-            <i class="fas fa-file-export mr-2"></i>Save As
-          </button>
-          <button id="previewDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
-            <i class="fas fa-eye mr-2"></i>Preview
-          </button>
+          <div class="editor-preview-split" id="saveDatasetGroup">
+            <button id="saveDataset" type="button" title="Save (Ctrl+S)" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-r-0 border-gray-300 rounded-l-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+              <i class="fas fa-floppy-disk mr-2"></i>Save
+            </button>
+            <button id="saveDatasetToggle" type="button" aria-label="Save options" aria-haspopup="true" aria-expanded="false" class="h-11 w-9 inline-flex items-center justify-center border border-gray-300 rounded-r-md text-gray-500 bg-white hover:bg-gray-50 transition-colors" disabled>
+              <i class="fas fa-chevron-down text-xs" aria-hidden="true"></i>
+            </button>
+            <div id="saveDatasetDropdown" class="editor-preview-dropdown hidden" role="menu">
+              <button id="saveAsDataset" type="button" role="menuitem" class="editor-preview-dropdown-item">
+                <i class="fas fa-file-export" aria-hidden="true"></i>Save As
+              </button>
+            </div>
+          </div>
+          <div class="editor-preview-split" id="previewDatasetGroup">
+            <button id="previewDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-r-0 border-gray-300 rounded-l-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
+              <i class="fas fa-eye mr-2"></i>Preview
+            </button>
+            <button id="previewDatasetToggle" type="button" aria-label="Preview options" aria-haspopup="true" aria-expanded="false" class="h-11 w-9 inline-flex items-center justify-center border border-gray-300 rounded-r-md text-gray-500 bg-white hover:bg-gray-50 transition-colors" disabled>
+              <i class="fas fa-chevron-down text-xs" aria-hidden="true"></i>
+            </button>
+            <div id="previewDatasetDropdown" class="editor-preview-dropdown hidden" role="menu">
+              <button type="button" role="menuitem" data-preview-mode="tab" class="editor-preview-dropdown-item">
+                <i class="fas fa-external-link-alt" aria-hidden="true"></i>Open in new tab
+              </button>
+              <button type="button" role="menuitem" data-preview-mode="same" class="editor-preview-dropdown-item">
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>Open in this tab
+              </button>
+            </div>
+          </div>
           <button id="undoAction" type="button" title="Nothing to undo" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed" disabled>
             <i class="fas fa-rotate-left mr-2"></i>Undo
           </button>
@@ -113,7 +130,7 @@
               <i class="fas fa-image mr-2 text-[0.72rem]"></i>Logo
             </button>
             <button id="showFlickrTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="flickrWorkspacePanel">
-              <i class="fab fa-flickr mr-2 text-[0.72rem]"></i>Flickr
+              <i class="fas fa-images mr-2 text-[0.72rem]"></i>Photos
             </button>
             <button id="showSessionsTab" type="button" class="editor-tab-button is-active" role="tab" aria-selected="true" aria-controls="sessionWorkspacePanel">
               <i class="fas fa-calendar-day mr-2 text-[0.72rem]"></i>Sessions
@@ -157,12 +174,9 @@
                 </button>
               </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
               <button id="addSession" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
                 <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add
-              </button>
-              <button id="saveSession" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
-                <i class="fas fa-floppy-disk mr-1.5 text-[0.72rem]"></i><span id="saveSessionLabel">Save</span>
               </button>
               <button id="deleteSession" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
                 <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete
@@ -208,8 +222,8 @@
       <section class="bg-white rounded-lg shadow-md p-4">
         <div class="flex items-center justify-between mb-3">
           <div>
-            <h2 class="text-lg font-semibold text-gray-100">Flickr Block</h2>
-            <p class="text-sm text-gray-400">Manage the optional photo-sharing block shown on the public event page.</p>
+            <h2 class="text-lg font-semibold text-gray-100">Photos</h2>
+            <p class="text-sm text-gray-400">Optional photo-sharing callout shown at the bottom of the event page.</p>
           </div>
         </div>
         <div id="flickrForm" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
@@ -234,12 +248,9 @@
                 </button>
               </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
               <button id="addSponsor" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
                 <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add
-              </button>
-              <button id="saveSponsor" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
-                <i class="fas fa-floppy-disk mr-1.5 text-[0.72rem]"></i><span id="saveSponsorLabel">Save</span>
               </button>
               <button id="deleteSponsor" type="button" class="h-10 w-full inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
                 <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete
@@ -336,6 +347,10 @@
         <div class="editor-welcome-icon editor-welcome-icon--success"><i class="fas fa-folder-open"></i></div>
         <h2 class="editor-welcome-heading">Choose an event</h2>
         <p class="editor-welcome-lead">Your project folder is connected. Select an event to start editing, or create a new one.</p>
+        <div class="editor-welcome-search-wrap">
+          <i class="fas fa-search editor-welcome-search-icon" aria-hidden="true"></i>
+          <input id="welcomeEventSearch" type="search" placeholder="Filter events..." class="editor-welcome-search">
+        </div>
         <div id="welcomeEventList" class="editor-welcome-event-list"></div>
         <div class="editor-welcome-new-row">
           <span class="editor-welcome-or-label">or</span>
@@ -397,6 +412,27 @@
   </div>
 
   <div id="saveToast" class="save-toast"><i class="fas fa-check mr-2"></i>Saved successfully</div>
+
+  <div id="unsavedChangesModal" class="editor-confirm-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="unsavedChangesTitle">
+    <div class="editor-confirm-card">
+      <div class="editor-confirm-icon" aria-hidden="true">
+        <i class="fas fa-triangle-exclamation"></i>
+      </div>
+      <h2 id="unsavedChangesTitle" class="editor-confirm-title">Unsaved changes</h2>
+      <p class="editor-confirm-body">You have unsaved changes. What would you like to do before switching to <strong id="unsavedChangesTarget" class="editor-confirm-target">another file</strong>?</p>
+      <div class="editor-confirm-actions">
+        <button id="unsavedModalSave" type="button" class="editor-confirm-btn editor-confirm-btn-save">
+          <i class="fas fa-floppy-disk"></i>Save &amp; continue
+        </button>
+        <button id="unsavedModalDiscard" type="button" class="editor-confirm-btn editor-confirm-btn-discard">
+          <i class="fas fa-trash"></i>Discard changes
+        </button>
+        <button id="unsavedModalCancel" type="button" class="editor-confirm-btn editor-confirm-btn-cancel">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="./js/editor.js"></script>
 </body>

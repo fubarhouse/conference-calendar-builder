@@ -32,12 +32,16 @@ const state = {
   sponsorStructureDirty: false,
   timezones: [],
   sponsorSessionPickerOpen: false,
-  sessionSponsorPickerOpen: false
+  sessionSponsorPickerOpen: false,
+  imageCacheBust: new Map(),
+  sponsorEventCounts: null
 };
 
 const UNDO_STACK = [];
 const UNDO_LIMIT = 50;
 const RECOVERY_KEY = '__editor_recovery__';
+const PHOTOS_BACKUP_KEY = '__photos_prev__';
+const LOGO_BACKUP_KEY = '__logo_prev__';
 const RECOVERY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const FILE_LINK_DB = 'dataset-editor-file-links';
@@ -117,16 +121,20 @@ const EVENT_META_FIELD_CONFIG = {
 };
 const FLICKR_FIELD_CONFIG = {
   enabled: {
-    label: 'Show Flickr block',
-    description: 'Displays the Flickr callout on the public event page when a group URL is provided.'
+    label: 'Show photos block',
+    description: 'Displays the photo callout on the public event page when a URL is provided.'
+  },
+  provider: {
+    label: 'Photo provider',
+    description: 'Name of the photo platform shown in the callout (e.g. Flickr, Google Photos, SmugMug).'
   },
   groupUrl: {
-    label: 'Flickr group URL',
-    description: 'The public Flickr group or album link used by the call-to-action button.'
+    label: 'Photos URL',
+    description: 'The public link to the photo album, group, or gallery used by the call-to-action button.'
   },
   image: {
     label: 'Promo image path',
-    description: 'A relative path to the square promo image shown beside the Flickr text.'
+    description: 'A relative path to the square promo image shown beside the photos block text.'
   },
   imageAlt: {
     label: 'Image alternative text',
@@ -196,8 +204,12 @@ const els = {
   folderConnectionToggle: document.getElementById('folderConnectionToggle'),
   newDataset: document.getElementById('newDataset'),
   saveDataset: document.getElementById('saveDataset'),
+  saveDatasetToggle: document.getElementById('saveDatasetToggle'),
+  saveDatasetDropdown: document.getElementById('saveDatasetDropdown'),
   saveAsDataset: document.getElementById('saveAsDataset'),
   previewDataset: document.getElementById('previewDataset'),
+  previewDatasetToggle: document.getElementById('previewDatasetToggle'),
+  previewDatasetDropdown: document.getElementById('previewDatasetDropdown'),
   undoAction: document.getElementById('undoAction'),
   revertDataset: document.getElementById('revertDataset'),
   exportDataset: document.getElementById('exportDataset'),
@@ -407,6 +419,23 @@ async function connectProjectFolder() {
   showWelcomeScreen2();
   void refreshEditorSearch();
 
+  const returnFile = localStorage.getItem('__editor_return_file__');
+  if (returnFile) {
+    localStorage.removeItem('__editor_return_file__');
+    const returnOption = Array.from(els.datasetSelect.options).find((o) => o.value === returnFile);
+    if (returnOption) {
+      closeWelcomeModal();
+      els.datasetSelect.value = returnFile;
+      state.lastDatasetSelectValue = returnFile;
+      try {
+        await loadDataset(returnFile);
+      } catch (error) {
+        window.alert(`Could not resume file: ${error.message}`);
+      }
+      return;
+    }
+  }
+
   const selectedFile = String(els.datasetSelect.value || '').trim();
   if (selectedFile) {
     if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${selectedFile}`))) {
@@ -486,14 +515,15 @@ function setEditorButtonsEnabled(enabled) {
     els.exportDataset.disabled = !enabled;
   }
   els.saveDataset.disabled = !enabled;
-  els.saveAsDataset.disabled = !enabled;
+  if (els.saveDatasetToggle) els.saveDatasetToggle.disabled = !enabled;
   if (els.previewDataset) els.previewDataset.disabled = !enabled;
+  if (els.previewDatasetToggle) els.previewDatasetToggle.disabled = !enabled;
   if (els.revertDataset) els.revertDataset.disabled = true;
   if (els.timelineSaveBtn) els.timelineSaveBtn.disabled = !enabled;
-  els.saveSession.disabled = !enabled || state.selectedIndex < 0;
+  if (els.saveSession) els.saveSession.disabled = !enabled || state.selectedIndex < 0;
   els.addSession.disabled = !enabled;
   els.deleteSession.disabled = !enabled || state.selectedIndex < 0;
-  els.saveSponsor.disabled = !enabled || state.selectedSponsorIndex < 0;
+  if (els.saveSponsor) els.saveSponsor.disabled = !enabled || state.selectedSponsorIndex < 0;
   els.addSponsor.disabled = !enabled;
   els.deleteSponsor.disabled = !enabled || state.selectedSponsorIndex < 0;
   syncQuickSessionEditToggle();
@@ -751,23 +781,64 @@ async function performUndo() {
   if (els.deleteSponsor) els.deleteSponsor.disabled = state.selectedSponsorIndex < 0;
 }
 
-async function confirmDiscardPendingChanges(targetLabel = 'another form') {
-  if (!state.dirty) return true;
-  const proceed = window.confirm(
-    `You have pending changes in this form. They will not be saved if you move to ${targetLabel}. Continue and discard them?`
-  );
-  if (!proceed) return false;
-  await restorePersistedSnapshot();
-  return true;
+function confirmDiscardPendingChanges(targetLabel = 'another file') {
+  if (!state.dirty) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const modal = document.getElementById('unsavedChangesModal');
+    if (!modal) {
+      const proceed = window.confirm('You have unsaved changes. Discard and continue?');
+      if (proceed) restorePersistedSnapshot().then(() => resolve(true));
+      else resolve(false);
+      return;
+    }
+    const targetEl = document.getElementById('unsavedChangesTarget');
+    if (targetEl) targetEl.textContent = targetLabel;
+    modal.classList.remove('hidden');
+    document.body.classList.add('session-modal-open');
+
+    const close = () => {
+      modal.classList.add('hidden');
+      document.body.classList.remove('session-modal-open');
+    };
+
+    document.getElementById('unsavedModalSave').addEventListener('click', async () => {
+      close();
+      try { await saveDataset(); resolve(true); } catch { resolve(false); }
+    }, { once: true });
+
+    document.getElementById('unsavedModalDiscard').addEventListener('click', async () => {
+      close();
+      await restorePersistedSnapshot();
+      resolve(true);
+    }, { once: true });
+
+    document.getElementById('unsavedModalCancel').addEventListener('click', () => {
+      close(); resolve(false);
+    }, { once: true });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) { close(); resolve(false); }
+    }, { once: true });
+  });
 }
+
+let _lastSavedAt = null;
 
 function markDirty(nextDirty = true) {
   state.dirty = nextDirty;
   const color = nextDirty ? 'text-amber-300' : 'text-emerald-300';
-  const label = nextDirty ? 'Unsaved changes' : 'No changes';
+  let label;
+  if (nextDirty) {
+    label = 'Unsaved changes';
+  } else if (_lastSavedAt) {
+    label = `Saved ${_lastSavedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+  } else {
+    label = 'No changes';
+  }
   els.dirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-xs ${color}"></i><span>${label}</span>`;
   els.dirtyState.dataset.dirty = String(nextDirty);
   els.saveDataset.classList.toggle('is-dirty', nextDirty);
+  els.saveDataset.title = nextDirty ? 'Save changes (Ctrl+S)' : 'No unsaved changes';
   if (els.timelineSaveBtn) els.timelineSaveBtn.classList.toggle('is-dirty', nextDirty);
   if (els.revertDataset) {
     els.revertDataset.disabled = !nextDirty || !state.persistedSnapshot;
@@ -777,6 +848,7 @@ function markDirty(nextDirty = true) {
 let _saveToastTimer = null;
 function showSaveToast() {
   if (!els.saveToast) return;
+  _lastSavedAt = new Date();
   clearTimeout(_saveToastTimer);
   els.saveToast.classList.add('is-visible');
   _saveToastTimer = setTimeout(() => els.saveToast.classList.remove('is-visible'), 2500);
@@ -836,6 +908,12 @@ function showWelcomeScreen2() {
         }
       });
     });
+
+    const searchInput = document.getElementById('welcomeEventSearch');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
+    }
   }
 
   const newEventBtn = document.getElementById('welcomeNewEvent');
@@ -861,7 +939,7 @@ function markSessionDirty(nextDirty = true) {
       label = quickCount > 0 ? `${quickCount} item${quickCount === 1 ? '' : 's'} modified` : 'Unsaved quick edits';
     }
   } else if (state.sessionDirty || hasQuickChanges) {
-    label = 'Unsaved changes';
+    label = 'Modified';
   }
   els.sessionDirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-[0.55rem] ${color}"></i><span>${label}</span>`;
   syncSessionSaveButton();
@@ -879,7 +957,7 @@ function markSponsorDirty(nextDirty = true) {
       label = quickCount > 0 ? `${quickCount} item${quickCount === 1 ? '' : 's'} modified` : 'Unsaved quick edits';
     }
   } else if (state.sponsorDirty || hasQuickChanges) {
-    label = 'Unsaved changes';
+    label = 'Modified';
   }
   els.sponsorDirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-[0.55rem] ${color}"></i><span>${label}</span>`;
   syncSponsorSaveButton();
@@ -993,6 +1071,7 @@ function normalizeFlickrObject(raw = null) {
   const enabled = !(input.enabled === false || String(input.enabled || '').toLowerCase() === 'false');
   return {
     enabled,
+    provider: String(input.provider || '').trim(),
     groupUrl: String(input.groupUrl || '').trim(),
     image: String(input.image || '').trim(),
     imageAlt: String(input.imageAlt || '').trim()
@@ -1440,6 +1519,12 @@ async function loadDataset(file) {
   if (!state.projectDirHandle || !state.folderConnectedInSession) {
     throw new Error('Connect folder first.');
   }
+  if (localStorage.getItem(PHOTOS_BACKUP_KEY)) {
+    await revertPendingPhotoUpload();
+  }
+  if (localStorage.getItem(LOGO_BACKUP_KEY)) {
+    await revertPendingLogoUpload();
+  }
   if (!isEditorDatasetFile(file)) {
     throw new Error(`${file} is not an editable dataset.`);
   }
@@ -1590,6 +1675,98 @@ async function ensureDirectoryPath(baseDirHandle, segments) {
   return current;
 }
 
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+function dataUrlToBlob(dataUrl) {
+  const [header, base64] = dataUrl.split(',');
+  const mime = (header.match(/:(.*?);/) || [])[1] || 'image/jpeg';
+  const binary = atob(base64);
+  const buffer = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) buffer[i] = binary.charCodeAt(i);
+  return new Blob([buffer], { type: mime });
+}
+
+async function backupCurrentPhotoForRevert() {
+  const currentPath = String(state.dataset?.event?.flickr?.image || '').trim().replace(/^\.\//, '');
+  if (!currentPath || !state.projectDirHandle) return;
+  try {
+    const handle = await resolveFileHandleFromProjectDir(currentPath);
+    if (!handle) return;
+    const file = await handle.getFile();
+    const base64 = arrayBufferToBase64(await file.arrayBuffer());
+    localStorage.setItem(PHOTOS_BACKUP_KEY, JSON.stringify({
+      path: currentPath,
+      data: `data:${file.type || 'image/jpeg'};base64,${base64}`
+    }));
+  } catch {
+    // No existing file to back up, or too large — skip silently
+  }
+}
+
+async function revertPendingPhotoUpload() {
+  const raw = localStorage.getItem(PHOTOS_BACKUP_KEY);
+  localStorage.removeItem(PHOTOS_BACKUP_KEY);
+  if (!raw || !state.projectDirHandle) return;
+  try {
+    const { path, data } = JSON.parse(raw);
+    const segments = path.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const writable = await (await dir.getFileHandle(fileName, { create: true })).createWritable();
+    await writable.write(dataUrlToBlob(data));
+    await writable.close();
+  } catch {
+    // Revert failed — dataset path will still reload correctly from JSON
+  }
+}
+
+function clearPhotosBackup() {
+  localStorage.removeItem(PHOTOS_BACKUP_KEY);
+}
+
+async function backupCurrentLogoForRevert() {
+  const currentPath = String(state.dataset?.event?.logo?.image || '').trim().replace(/^\.\//, '');
+  if (!currentPath || !state.projectDirHandle) return;
+  try {
+    const handle = await resolveFileHandleFromProjectDir(currentPath);
+    if (!handle) return;
+    const file = await handle.getFile();
+    const base64 = arrayBufferToBase64(await file.arrayBuffer());
+    localStorage.setItem(LOGO_BACKUP_KEY, JSON.stringify({
+      path: currentPath,
+      data: `data:${file.type || 'image/png'};base64,${base64}`
+    }));
+  } catch {
+    // No existing file to back up, or too large — skip silently
+  }
+}
+
+async function revertPendingLogoUpload() {
+  const raw = localStorage.getItem(LOGO_BACKUP_KEY);
+  localStorage.removeItem(LOGO_BACKUP_KEY);
+  if (!raw || !state.projectDirHandle) return;
+  try {
+    const { path, data } = JSON.parse(raw);
+    const segments = path.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const writable = await (await dir.getFileHandle(fileName, { create: true })).createWritable();
+    await writable.write(dataUrlToBlob(data));
+    await writable.close();
+  } catch {
+    // Revert failed — dataset path will still reload correctly from JSON
+  }
+}
+
+function clearLogoBackup() {
+  localStorage.removeItem(LOGO_BACKUP_KEY);
+}
+
 async function uploadFlickrImageFromPicker() {
   if (!state.projectDirHandle || !state.folderConnectedInSession) {
     window.alert('Connect folder first to upload Flickr images.');
@@ -1607,6 +1784,7 @@ async function uploadFlickrImageFromPicker() {
   const file = picker.files && picker.files[0] ? picker.files[0] : null;
   if (!file) return;
 
+  await backupCurrentPhotoForRevert();
   const relativePath = getFlickrImageTargetPath();
   const segments = relativePath.split('/').filter(Boolean);
   const fileName = segments.pop();
@@ -1624,7 +1802,11 @@ async function uploadFlickrImageFromPicker() {
     state.dataset.event.flickr.imageAlt = `${state.dataset.event.designation || 'Event'} Flickr image`;
   }
   markDirty(true);
-  renderEventMetaForm();
+  state.imageCacheBust.set(`./${relativePath}`, Date.now());
+  renderFlickrForm();
+  const blobUrl = URL.createObjectURL(file);
+  const frame = document.querySelector('.event-promo-image-frame');
+  if (frame) frame.innerHTML = `<img id="flickrImagePreview" class="event-promo-image" src="${blobUrl}" alt="${escapeAttr(state.dataset?.event?.flickr?.imageAlt || '')}">`;
 }
 
 async function uploadLogoImageFromPicker() {
@@ -1644,6 +1826,8 @@ async function uploadLogoImageFromPicker() {
   const file = picker.files && picker.files[0] ? picker.files[0] : null;
   if (!file) return;
 
+  await backupCurrentLogoForRevert();
+
   const relativePath = getLogoImageTargetPath(file);
   const segments = relativePath.split('/').filter(Boolean);
   const fileName = segments.pop();
@@ -1659,7 +1843,10 @@ async function uploadLogoImageFromPicker() {
     state.dataset.event.logo.imageAlt = `${state.dataset.event.designation || 'Event'} logo`;
   }
   markDirty(true);
-  renderEventMetaForm();
+  state.imageCacheBust.set(`./${relativePath}`, Date.now());
+  renderLogoForm();
+  const logoPreview = document.getElementById('logoImagePreview');
+  if (logoPreview) { logoPreview.src = URL.createObjectURL(file); logoPreview.classList.remove('hidden'); }
 }
 
 async function uploadSponsorImageFromPicker(index) {
@@ -1697,9 +1884,15 @@ async function uploadSponsorImageFromPicker(index) {
   }
   markDirty(true);
   markSponsorDirty(true);
+  state.imageCacheBust.set(`./${relativePath}`, Date.now());
   renderSponsorList();
   renderSponsorForm();
   renderSessionForm();
+  const blobUrl = URL.createObjectURL(file);
+  const surface = document.getElementById('sponsorPreviewSurface');
+  if (surface) surface.innerHTML = `<img id="sponsorImagePreview" src="${blobUrl}" alt="${escapeAttr(sponsor?.imageAlt || '')}" class="sponsor-logo-image">`;
+  const inline = document.getElementById('sponsorInlinePreview');
+  if (inline) inline.innerHTML = `<img src="${blobUrl}" alt="${escapeAttr(sponsor?.imageAlt || '')}" class="sponsor-inline-image">`;
 }
 
 function fieldDescriptionId(scope, key) {
@@ -1743,132 +1936,140 @@ function getFlickrEventLabel(eventMeta = null) {
   return [eventMeta?.designation, eventMeta?.year, eventMeta?.location].filter(Boolean).join(' ').trim() || 'Event';
 }
 
-function getAutomatedFlickrCopy(eventMeta = null, items = []) {
+function getAutomatedFlickrCopy(eventMeta = null, items = [], provider = '') {
   const mode = inferFlickrMode(eventMeta, items);
   const eventLabel = getFlickrEventLabel(eventMeta);
+  const p = String(provider || '').trim() || 'Flickr';
   return {
     mode,
     heading: mode === 'archive' ? `${eventLabel} Photo Archive` : `Share Your ${eventLabel} Photos`,
     description:
       mode === 'archive'
-        ? `Browse the official Flickr group for photos from ${eventLabel}.`
-        : 'Join the official Flickr group and share your photos before, during, and after the event.',
-    buttonText: mode === 'archive' ? 'View Photo Archive' : 'Open Flickr Group'
+        ? `Browse the official ${p} page for photos from ${eventLabel}.`
+        : `Upload and share your photos on ${p} before, during, and after the event.`,
+    buttonText: mode === 'archive' ? 'View Photo Archive' : `Open on ${p}`
   };
 }
 
-function renderFlickrBlock(flickr) {
-  const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items);
+function renderFlickrCopyPreviewContent(automated) {
   return `
-    <fieldset class="editor-flickr-block md:col-span-2 xl:col-span-3">
-      <legend>
-        <span class="editor-flickr-title"><i class="fab fa-flickr" aria-hidden="true"></i> Flickr block</span>
-        <span class="editor-flickr-summary">Optional photo-sharing callout shown at the bottom of the event page.</span>
-      </legend>
-      <label class="editor-toggle-row">
-        <input data-flickr-field="enabled" type="checkbox" class="h-4 w-4" ${flickr.enabled ? 'checked' : ''}${fieldDescriptionAttr(
-          'flickr',
-          'enabled',
-          FLICKR_FIELD_CONFIG.enabled
-        )}>
-        <span>
-          ${renderFieldIntro('flickr', 'enabled', FLICKR_FIELD_CONFIG.enabled)}
-        </span>
-      </label>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+    <div><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Mode</span><span class="text-gray-800">${escapeHtml(automated.mode === 'archive' ? 'Photo archive' : 'Share photos')}</span></div>
+    <div><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Button</span><span class="text-gray-800">${escapeHtml(automated.buttonText)}</span></div>
+    <div class="col-span-2"><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Heading</span><span class="text-gray-800">${escapeHtml(automated.heading)}</span></div>
+    <div class="col-span-2"><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Description</span><span class="text-gray-800">${escapeHtml(automated.description)}</span></div>
+  `;
+}
+
+function renderFlickrBlock(flickr) {
+  const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickr.provider);
+  const imageSrc = (flickr.image || '').trim();
+  const providerLabel = (flickr.provider || 'Photos').toUpperCase();
+  return `
+    <div class="col-span-full flex gap-5 items-start">
+      <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label class="editor-form-field md:col-span-2">
+          ${renderFieldIntro('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}
+          <input data-flickr-field="provider" type="text" value="${escapeAttr(flickr.provider)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="Flickr"${fieldDescriptionAttr('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}>
+        </label>
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}
-          <input data-flickr-field="groupUrl" type="text" value="${escapeAttr(flickr.groupUrl)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white px-3" placeholder="https://flic.kr/g/..."${fieldDescriptionAttr(
-            'flickr',
-            'groupUrl',
-            FLICKR_FIELD_CONFIG.groupUrl
-          )}>
+          <input data-flickr-field="groupUrl" type="text" value="${escapeAttr(flickr.groupUrl)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="https://flic.kr/g/..."${fieldDescriptionAttr('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}>
         </label>
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('flickr', 'image', FLICKR_FIELD_CONFIG.image)}
-          <input data-flickr-field="image" type="text" value="${escapeAttr(flickr.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/flickr/.../image.jpg"${fieldDescriptionAttr(
-            'flickr',
-            'image',
-            FLICKR_FIELD_CONFIG.image
-          )}>
+          <input data-flickr-field="image" type="text" value="${escapeAttr(flickr.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/flickr/.../image.jpg"${fieldDescriptionAttr('flickr', 'image', FLICKR_FIELD_CONFIG.image)}>
         </label>
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('flickr', 'imageAlt', FLICKR_FIELD_CONFIG.imageAlt)}
-          <input data-flickr-field="imageAlt" type="text" value="${escapeAttr(flickr.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr(
-            'flickr',
-            'imageAlt',
-            FLICKR_FIELD_CONFIG.imageAlt
-          )}>
+          <input data-flickr-field="imageAlt" type="text" value="${escapeAttr(flickr.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr('flickr', 'imageAlt', FLICKR_FIELD_CONFIG.imageAlt)}>
         </label>
-        <div class="editor-form-field md:col-span-2 editor-flickr-defaults">
-          <span class="editor-field-label">Automated Flickr copy</span>
-          <span class="editor-field-description">The heading, description, button text, and mode are generated automatically from the event timing.</span>
-          <div class="editor-flickr-defaults-grid">
-            <div><span class="editor-flickr-defaults-label">Mode</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.mode === 'archive' ? 'Photo archive' : 'Share photos')}</span></div>
-            <div><span class="editor-flickr-defaults-label">Heading</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.heading)}</span></div>
-            <div><span class="editor-flickr-defaults-label">Description</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.description)}</span></div>
-            <div><span class="editor-flickr-defaults-label">Button text</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.buttonText)}</span></div>
-          </div>
-        </div>
-        <div class="editor-form-field">
+        <div class="editor-form-field md:col-span-2">
           <span class="editor-field-label">Promo image upload</span>
           <span class="editor-field-description">Uploads to <code>img/flickr/${escapeHtml(
             slugify(state.dataset?.event?.designation || 'event') || 'event'
           )}</code> and stores a relative path.</span>
-          <button id="flickrImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-image mr-2"></i>Upload 250x250 Image
-          </button>
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="h-9 inline-flex items-center gap-2.5 rounded-md border border-gray-300 px-3 bg-white cursor-pointer select-none">
+              <input data-flickr-field="enabled" type="checkbox" class="h-4 w-4" ${flickr.enabled ? 'checked' : ''}${fieldDescriptionAttr('flickr', 'enabled', FLICKR_FIELD_CONFIG.enabled)}>
+              <span class="text-sm text-gray-700">Enabled</span>
+            </label>
+            <button id="flickrImageUpload" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-upload mr-1.5 text-[0.72rem]"></i>Upload image
+            </button>
+            <button id="flickrImageClear" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors whitespace-nowrap"${!imageSrc ? ' disabled' : ''}>
+              <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete image
+            </button>
+          </div>
         </div>
       </div>
-    </fieldset>
+
+      <aside class="flickr-editor-sidebar">
+        <div class="flickr-preview-stage">
+          <div id="flickrPreviewCard" class="event-promo-card rounded-lg border border-gray-200 bg-white p-3${flickr.enabled ? '' : ' opacity-50'}">
+            <div class="event-promo-image-frame">
+              ${imageSrc
+                ? `<img id="flickrImagePreview" class="event-promo-image" src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(flickr.imageAlt || '')}">`
+                : `<div class="flickr-preview-placeholder"><i class="fas fa-image"></i></div>`}
+            </div>
+            <div class="event-promo-body min-w-0">
+              <div class="flickr-preview-provider text-xs font-semibold tracking-wide text-gray-500 uppercase mb-0.5">${escapeHtml(providerLabel)}</div>
+              <div class="flickr-preview-heading text-sm font-semibold text-gray-900 leading-snug">${escapeHtml(automated.heading)}</div>
+              <p class="flickr-preview-desc text-xs text-gray-600 mt-1 leading-snug">${escapeHtml(automated.description)}</p>
+              <span class="event-promo-action flickr-preview-btn mt-2">${escapeHtml(automated.buttonText)}</span>
+            </div>
+          </div>
+        </div>
+        <p class="flickr-preview-caption">Page preview</p>
+      </aside>
+    </div>
   `;
 }
 
 function renderLogoBlock(logo) {
+  const imageSrc = (logo.image || '').trim();
+  const plateClass = logo.usePlate ? ' header-logo-use-plate' : '';
   return `
-    <fieldset class="editor-flickr-block md:col-span-2 xl:col-span-3">
-      <legend>
-        <span class="editor-flickr-title"><i class="fas fa-image" aria-hidden="true"></i> Event logo</span>
-        <span class="editor-flickr-summary">Controls the header logo shown on the public event page.</span>
-      </legend>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+    <div class="col-span-full flex gap-5 items-start">
+      <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-3">
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('logo', 'image', LOGO_FIELD_CONFIG.image)}
-          <input data-logo-field="image" type="text" value="${escapeAttr(logo.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/logos/.../logo.png"${fieldDescriptionAttr(
-            'logo',
-            'image',
-            LOGO_FIELD_CONFIG.image
-          )}>
+          <input data-logo-field="image" type="text" value="${escapeAttr(logo.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/logos/.../logo.png"${fieldDescriptionAttr('logo', 'image', LOGO_FIELD_CONFIG.image)}>
         </label>
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('logo', 'imageAlt', LOGO_FIELD_CONFIG.imageAlt)}
-          <input data-logo-field="imageAlt" type="text" value="${escapeAttr(logo.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr(
-            'logo',
-            'imageAlt',
-            LOGO_FIELD_CONFIG.imageAlt
-          )}>
+          <input data-logo-field="imageAlt" type="text" value="${escapeAttr(logo.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr('logo', 'imageAlt', LOGO_FIELD_CONFIG.imageAlt)}>
         </label>
-        <label class="editor-toggle-row md:col-span-2">
-          <input data-logo-field="usePlate" type="checkbox" class="h-4 w-4" ${logo.usePlate ? 'checked' : ''}${fieldDescriptionAttr(
-            'logo',
-            'usePlate',
-            LOGO_FIELD_CONFIG.usePlate
-          )}>
-          <span>
-            ${renderFieldIntro('logo', 'usePlate', LOGO_FIELD_CONFIG.usePlate)}
-          </span>
-        </label>
-        <div class="editor-form-field">
+        <div class="editor-form-field md:col-span-2">
           <span class="editor-field-label">Logo upload</span>
           <span class="editor-field-description">Uploads to <code>img/logos/${escapeHtml(
             slugify(state.dataset?.event?.designation || 'event') || 'event'
           )}</code> and stores a relative path.</span>
-          <button id="logoImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-upload mr-2"></i>Upload Logo
-          </button>
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="h-9 inline-flex items-center gap-2.5 rounded-md border border-gray-300 px-3 bg-white cursor-pointer select-none">
+              <input data-logo-field="usePlate" type="checkbox" class="h-4 w-4" ${logo.usePlate ? 'checked' : ''}${fieldDescriptionAttr('logo', 'usePlate', LOGO_FIELD_CONFIG.usePlate)}>
+              <span class="text-sm text-gray-700">Background plate</span>
+            </label>
+            <button id="logoImageUpload" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-upload mr-1.5 text-[0.72rem]"></i>Upload logo
+            </button>
+            <button id="logoImageClear" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors whitespace-nowrap"${!imageSrc ? ' disabled' : ''}>
+              <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete logo
+            </button>
+          </div>
         </div>
       </div>
-    </fieldset>
+
+      <aside class="logo-editor-sidebar">
+        <div class="logo-preview-stage">
+          <div id="logoPreviewContainer" class="header-logo${escapeAttr(plateClass)}">
+            <i class="fas fa-image${imageSrc ? ' hidden' : ''}"></i>
+            <img id="logoImagePreview" class="header-logo-image${imageSrc ? '' : ' hidden'}"
+              src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(logo.imageAlt || '')}">
+          </div>
+        </div>
+        <p class="logo-preview-caption">Header preview</p>
+      </aside>
+    </div>
   `;
 }
 
@@ -1885,6 +2086,42 @@ function bindFlickrFormEvents(container) {
       }
       state.dataset.event.flickr = normalizeFlickrObject(eventFlickr);
       markDirty(true);
+
+      const card = container.querySelector('#flickrPreviewCard');
+
+      if (key === 'enabled') {
+        if (card) card.classList.toggle('opacity-50', !input.checked);
+      }
+
+      if (key === 'provider' || key === 'groupUrl') {
+        const flickrNow = normalizeFlickrObject(state.dataset.event.flickr);
+        const auto = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickrNow.provider);
+        const providerEl = container.querySelector('.flickr-preview-provider');
+        const headingEl = container.querySelector('.flickr-preview-heading');
+        const descEl = container.querySelector('.flickr-preview-desc');
+        const btnEl = container.querySelector('.flickr-preview-btn');
+        if (providerEl) providerEl.textContent = (flickrNow.provider || 'Photos').toUpperCase();
+        if (headingEl) headingEl.textContent = auto.heading;
+        if (descEl) descEl.textContent = auto.description;
+        if (btnEl) btnEl.textContent = auto.buttonText;
+      }
+
+      if (key === 'image') {
+        const newSrc = input.value.trim();
+        const frame = container.querySelector('.event-promo-image-frame');
+        const clearBtn = container.querySelector('#flickrImageClear');
+        if (frame) {
+          frame.innerHTML = newSrc
+            ? `<img id="flickrImagePreview" class="event-promo-image" src="${escapeAttr(newSrc)}" alt="${escapeAttr(eventFlickr.imageAlt || '')}">`
+            : `<div class="flickr-preview-placeholder"><i class="fas fa-image"></i></div>`;
+        }
+        if (clearBtn) clearBtn.disabled = !newSrc;
+      }
+
+      if (key === 'imageAlt') {
+        const img = container.querySelector('#flickrImagePreview');
+        if (img) img.alt = input.value;
+      }
     };
     input.addEventListener('input', updateFlickrField);
     input.addEventListener('change', updateFlickrField);
@@ -1900,6 +2137,18 @@ function bindFlickrFormEvents(container) {
       }
     });
   }
+
+  const clearButton = container.querySelector('#flickrImageClear');
+  if (clearButton) {
+    clearButton.addEventListener('click', () => {
+      const eventFlickr = normalizeFlickrObject(state.dataset.event.flickr);
+      eventFlickr.image = '';
+      eventFlickr.imageAlt = '';
+      state.dataset.event.flickr = normalizeFlickrObject(eventFlickr);
+      markDirty(true);
+      renderFlickrForm();
+    });
+  }
 }
 
 function bindLogoFormEvents(container) {
@@ -1911,6 +2160,24 @@ function bindLogoFormEvents(container) {
       eventLogo[key] = key === 'usePlate' ? Boolean(input.checked) : input.value;
       state.dataset.event.logo = normalizeLogoObject(eventLogo);
       markDirty(true);
+
+      if (key === 'image') {
+        const newSrc = input.value.trim();
+        const img = container.querySelector('#logoImagePreview');
+        const icon = container.querySelector('#logoPreviewContainer > i');
+        const clearBtn = container.querySelector('#logoImageClear');
+        if (img) { img.src = newSrc; img.classList.toggle('hidden', !newSrc); }
+        if (icon) icon.classList.toggle('hidden', Boolean(newSrc));
+        if (clearBtn) clearBtn.disabled = !newSrc;
+      }
+      if (key === 'imageAlt') {
+        const img = container.querySelector('#logoImagePreview');
+        if (img) img.alt = input.value;
+      }
+      if (key === 'usePlate') {
+        const preview = container.querySelector('#logoPreviewContainer');
+        if (preview) preview.classList.toggle('header-logo-use-plate', input.checked);
+      }
     };
     input.addEventListener('input', updateLogoField);
     input.addEventListener('change', updateLogoField);
@@ -1924,6 +2191,17 @@ function bindLogoFormEvents(container) {
       } catch (error) {
         window.alert(`Logo upload failed: ${error.message}`);
       }
+    });
+  }
+
+  const logoClearButton = container.querySelector('#logoImageClear');
+  if (logoClearButton) {
+    logoClearButton.addEventListener('click', () => {
+      const eventLogo = normalizeLogoObject(state.dataset.event.logo);
+      eventLogo.image = '';
+      state.dataset.event.logo = normalizeLogoObject(eventLogo);
+      markDirty(true);
+      renderLogoForm();
     });
   }
 }
@@ -1942,7 +2220,7 @@ function renderLogoForm() {
 function renderFlickrForm() {
   if (!els.flickrForm) return;
   if (!state.dataset) {
-    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Load a dataset to edit the Flickr block.</p>';
+    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Load a dataset to edit the photos block.</p>';
     return;
   }
   const flickr = normalizeFlickrObject(state.dataset?.event?.flickr);
@@ -2231,20 +2509,15 @@ function setActiveEditorTab(tab) {
   }
 }
 
-async function switchEditorTab(tab) {
+function switchEditorTab(tab) {
   const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline'].includes(tab) ? tab : 'event';
-  if (nextTab === state.activeEditorTab) return true;
-  const allowed = await confirmDiscardPendingChanges(`${nextTab} form`);
-  if (!allowed) return false;
+  if (nextTab === state.activeEditorTab) return;
   setActiveEditorTab(nextTab);
-  return true;
 }
 
-async function selectSessionForm(index, options = {}) {
-  const { collapseWorkspace = false, promptLabel = 'another session form' } = options;
-  if (index === state.selectedIndex && !collapseWorkspace) return true;
-  const allowed = await confirmDiscardPendingChanges(promptLabel);
-  if (!allowed) return false;
+function selectSessionForm(index, options = {}) {
+  const { collapseWorkspace = false } = options;
+  if (index === state.selectedIndex && !collapseWorkspace) return;
   state.selectedIndex = index;
   if (!isQuickSessionEditEnabled()) {
     markSessionDirty(false);
@@ -2261,11 +2534,9 @@ async function selectSessionForm(index, options = {}) {
   return true;
 }
 
-async function selectSponsorForm(index, options = {}) {
-  const { collapseWorkspace = false, promptLabel = 'another sponsor form' } = options;
-  if (index === state.selectedSponsorIndex && !collapseWorkspace) return true;
-  const allowed = await confirmDiscardPendingChanges(promptLabel);
-  if (!allowed) return false;
+function selectSponsorForm(index, options = {}) {
+  const { collapseWorkspace = false } = options;
+  if (index === state.selectedSponsorIndex && !collapseWorkspace) return;
   state.selectedSponsorIndex = index;
   if (!isQuickSponsorEditEnabled()) {
     markSponsorDirty(false);
@@ -2469,7 +2740,7 @@ function renderSessionList() {
 
     row.addEventListener('click', async () => {
       if (index === state.selectedIndex) return;
-      await selectSessionForm(index, { collapseWorkspace: state.sessionListExpanded, promptLabel: 'another session form' });
+      selectSessionForm(index, { collapseWorkspace: state.sessionListExpanded });
     });
 
     row.addEventListener('dragstart', (event) => {
@@ -2550,12 +2821,10 @@ function renderSessionList() {
     const rowIndex = Number.parseInt(input.dataset.sessionIndex || '-1', 10);
     const key = input.dataset.inlineSessionField;
 
-    const selectRow = async () => {
+    const selectRow = () => {
       if (rowIndex === state.selectedIndex) return;
-      const allowed = await selectSessionForm(rowIndex, { promptLabel: 'another session form' });
-      if (!allowed) return false;
+      selectSessionForm(rowIndex);
       syncExpandedSelectionState();
-      return true;
     };
 
     input.addEventListener('click', (event) => {
@@ -2608,7 +2877,7 @@ function renderSessionList() {
       event.stopPropagation();
       const rowIndex = Number.parseInt(button.dataset.openSessionForm || '-1', 10);
       if (rowIndex < 0) return;
-      await selectSessionForm(rowIndex, { collapseWorkspace: true, promptLabel: 'the full session form' });
+      selectSessionForm(rowIndex, { collapseWorkspace: true });
     });
   });
 }
@@ -2633,7 +2902,7 @@ function renderSessionField(field, item) {
             </button>
           </div>
         `).join('')}</div>`
-      : '<p class="speaker-session-summary">No sponsors linked to this session yet.</p>';
+      : '';
     return `
       <div class="${spanClass}">
         <div class="rounded-md border border-gray-700 bg-gray-900/30 px-3 py-3 text-sm text-gray-200 space-y-3">
@@ -2678,8 +2947,8 @@ function renderSessionField(field, item) {
     return `
       <label class="editor-form-field ${spanClass}">
         ${renderFieldIntro('session', field.key, field)}
-        <input data-session-field="${field.key}" type="datetime-local" value="${escapeAttr(localValue)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${describedBy}>
         ${tzHint}
+        <input data-session-field="${field.key}" type="datetime-local" value="${escapeAttr(localValue)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${describedBy}>
       </label>
     `;
   }
@@ -2745,8 +3014,8 @@ function renderSessionForm() {
     `;
     const openButton = document.getElementById('openSelectedSessionForm');
     if (openButton) {
-      openButton.addEventListener('click', async () => {
-        await selectSessionForm(state.selectedIndex, { collapseWorkspace: true, promptLabel: 'the full session form' });
+      openButton.addEventListener('click', () => {
+        selectSessionForm(state.selectedIndex, { collapseWorkspace: true });
       });
     }
     markSessionDirty(state.sessionDirty);
@@ -2938,7 +3207,7 @@ function renderSponsorList() {
 
     row.addEventListener('click', async () => {
       if (index === state.selectedSponsorIndex) return;
-      await selectSponsorForm(index, { collapseWorkspace: state.sponsorListExpanded, promptLabel: 'another sponsor form' });
+      selectSponsorForm(index, { collapseWorkspace: state.sponsorListExpanded });
     });
 
     row.addEventListener('dragstart', (event) => {
@@ -2995,12 +3264,10 @@ function renderSponsorList() {
     const rowIndex = Number.parseInt(input.dataset.sponsorIndex || '-1', 10);
     const key = input.dataset.inlineSponsorField;
 
-    const selectRow = async () => {
+    const selectRow = () => {
       if (rowIndex === state.selectedSponsorIndex) return;
-      const allowed = await selectSponsorForm(rowIndex, { promptLabel: 'another sponsor form' });
-      if (!allowed) return false;
+      selectSponsorForm(rowIndex);
       syncSponsorSelectionState();
-      return true;
     };
 
     input.addEventListener('click', (event) => {
@@ -3044,7 +3311,7 @@ function renderSponsorList() {
       event.stopPropagation();
       const rowIndex = Number.parseInt(button.dataset.openSponsorForm || '-1', 10);
       if (rowIndex < 0) return;
-      await selectSponsorForm(rowIndex, { collapseWorkspace: true, promptLabel: 'the full sponsor form' });
+      selectSponsorForm(rowIndex, { collapseWorkspace: true });
     });
   });
 }
@@ -3117,7 +3384,7 @@ function renderSponsorForm() {
     const openButton = document.getElementById('openSelectedSponsorForm');
     if (openButton) {
       openButton.addEventListener('click', async () => {
-        await selectSponsorForm(state.selectedSponsorIndex, { collapseWorkspace: true, promptLabel: 'the full sponsor form' });
+        selectSponsorForm(state.selectedSponsorIndex, { collapseWorkspace: true });
       });
     }
     markSponsorDirty(state.sponsorDirty);
@@ -3132,50 +3399,91 @@ function renderSponsorForm() {
   els.sponsorIndexBadge.textContent = `Sponsor ${state.selectedSponsorIndex + 1} of ${state.dataset.event.sponsors.length}`;
   syncSponsorSaveButton();
   els.deleteSponsor.disabled = false;
+
+  if (!state.sponsorEventCounts) {
+    const selectedAtLoad = state.selectedSponsorIndex;
+    buildSponsorEventCounts()
+      .catch(() => { state.sponsorEventCounts = new Map(); })
+      .then(() => { if (state.selectedSponsorIndex === selectedAtLoad) renderSponsorForm(); });
+  }
+
+  const imageSrc = (sponsor.image || '').trim();
+  const bgStyle = sponsor.bgStyle || 'auto';
+  const aspect = sponsor.aspect || 'auto';
+  const eventCount = getSponsorEventCount(sponsor.title);
+  const eventCountDisplay = eventCount === null ? '—' : String(eventCount);
+
   els.sponsorForm.innerHTML = `
-    ${SPONSOR_FIELDS.map((field) => renderSponsorField(field, sponsor)).join('')}
-    <div class="editor-form-field md:col-span-2 xl:col-span-3">
-      <span class="editor-field-label">Sponsor image upload</span>
-      <span class="editor-field-description">Uploads to <code>img/sponsors/${escapeHtml(
-        slugify(state.dataset?.event?.designation || 'event') || 'event'
-      )}</code> and stores a relative path.</span>
-      <div class="flex flex-wrap items-center gap-2">
-        <button id="sponsorImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-          <i class="fas fa-upload mr-2"></i>Upload Sponsor Image
-        </button>
-        <span class="text-xs text-gray-400">${escapeHtml(getSponsorListLabel(sponsor, state.selectedSponsorIndex))}</span>
-      </div>
-    </div>
-    <div class="editor-form-field md:col-span-2 xl:col-span-3">
-      <span class="editor-field-label">Linked sessions</span>
-      <span class="editor-field-description">Manage sessions currently referencing <code>${escapeHtml(sponsor.id || '(missing id)')}</code>.</span>
-      <div class="rounded-md border border-gray-700 bg-gray-900/30 px-3 py-3 text-sm text-gray-200 space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <span class="text-xs text-gray-400">${linkedSessions.length ? `${linkedSessions.length} linked session${linkedSessions.length === 1 ? '' : 's'}` : 'No sessions linked yet.'}</span>
-          <button id="addLinkedSponsorSession" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add session
-          </button>
+    <div class="col-span-full flex gap-5 items-start">
+      <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+        ${SPONSOR_FIELDS.filter((f) => f.key !== 'enabled').map((field) => renderSponsorField(field, sponsor)).join('')}
+        <div class="editor-form-field md:col-span-2">
+          <span class="editor-field-label">Sponsor image</span>
+          <span class="editor-field-description">Uploads to <code>img/sponsors/${escapeHtml(
+            slugify(state.dataset?.event?.designation || 'event') || 'event'
+          )}</code> and stores a relative path.</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="h-9 inline-flex items-center gap-2.5 rounded-md border border-gray-300 px-3 bg-white cursor-pointer select-none">
+              <input data-sponsor-field="enabled" type="checkbox" class="h-4 w-4" ${sponsor.enabled ? 'checked' : ''}>
+              <span class="text-sm text-gray-700">Enabled</span>
+            </label>
+            <button id="sponsorImageUpload" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-upload mr-1.5 text-[0.72rem]"></i>Upload image
+            </button>
+            <button id="sponsorImageClear" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors whitespace-nowrap"${!imageSrc ? ' disabled' : ''}>
+              <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete image
+            </button>
+            <div id="sponsorInlinePreview" class="sponsor-inline-preview sponsor-bg-${escapeAttr(bgStyle)} sponsor-aspect-${escapeAttr(aspect)} ml-auto">
+              ${imageSrc
+                ? `<img src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-inline-image">`
+                : `<i class="fas fa-image sponsor-preview-empty-icon"></i>`}
+            </div>
+          </div>
         </div>
-        <div class="space-y-2">
-          ${
-            linkedSessions.length
-              ? linkedSessions
-                .map(({ item, index }) => `
-                  <div class="editor-linked-item">
-                    <div class="editor-linked-item-copy">
-                      <div class="editor-linked-item-title">${escapeHtml(item?.title || '(Untitled session)')}</div>
-                      <div class="editor-linked-item-meta">${escapeHtml(formatSponsorLinkedSessionMeta(item, index))}</div>
+        <div class="editor-form-field md:col-span-2">
+          <span class="editor-field-label">Linked sessions</span>
+          <span class="editor-field-description">Manage sessions currently referencing <code>${escapeHtml(sponsor.id || '(missing id)')}</code>.</span>
+          <div class="rounded-md border border-gray-700 bg-gray-900/30 px-3 py-3 text-sm text-gray-200 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs text-gray-400">${linkedSessions.length ? `${linkedSessions.length} linked session${linkedSessions.length === 1 ? '' : 's'}` : 'No sessions linked yet.'}</span>
+              <button id="addLinkedSponsorSession" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add session
+              </button>
+            </div>
+            <div class="space-y-2">
+              ${linkedSessions.length
+                ? linkedSessions.map(({ item, index }) => `
+                    <div class="editor-linked-item">
+                      <div class="editor-linked-item-copy">
+                        <div class="editor-linked-item-title">${escapeHtml(item?.title || '(Untitled session)')}</div>
+                        <div class="editor-linked-item-meta">${escapeHtml(formatSponsorLinkedSessionMeta(item, index))}</div>
+                      </div>
+                      <button type="button" class="editor-linked-item-action" data-remove-linked-session="${index}" aria-label="Remove linked session ${escapeAttr(item?.title || '(Untitled session)')}">
+                        <i class="fas fa-trash"></i><span>Remove</span>
+                      </button>
                     </div>
-                    <button type="button" class="editor-linked-item-action" data-remove-linked-session="${index}" aria-label="Remove linked session ${escapeAttr(item?.title || '(Untitled session)')}">
-                      <i class="fas fa-trash"></i><span>Remove</span>
-                    </button>
-                  </div>
-                `)
-                .join('')
-              : '<div class="text-sm text-gray-400">No sessions linked yet.</div>'
-          }
+                  `).join('')
+                : ''}
+            </div>
+          </div>
         </div>
       </div>
+
+      <aside class="sponsor-editor-sidebar">
+        <div id="sponsorPreviewSurface" class="sponsor-preview-surface sponsor-bg-${escapeAttr(bgStyle)} sponsor-aspect-${escapeAttr(aspect)}">
+          ${imageSrc
+            ? `<img id="sponsorImagePreview" src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-logo-image">`
+            : `<div id="sponsorImagePreview" class="sponsor-preview-empty">
+                 <i class="fas fa-image text-2xl"></i>
+                 <span>No image set</span>
+               </div>`}
+        </div>
+        <div class="sponsor-event-stat">
+          <i class="fas fa-trophy sponsor-event-stat-icon"></i>
+          <span class="sponsor-event-stat-count">${escapeHtml(eventCountDisplay)}</span>
+          <span class="sponsor-event-stat-label">Events Sponsored</span>
+        </div>
+      </aside>
     </div>
   `;
 
@@ -3202,8 +3510,45 @@ function renderSponsorForm() {
         }
       } else if (key === 'title') {
         sponsor[key] = input.value;
+        const countEl = els.sponsorForm.querySelector('.sponsor-event-stat-count');
+        if (countEl) {
+          const c = getSponsorEventCount(input.value);
+          countEl.textContent = c === null ? '—' : String(c);
+        }
       } else {
         sponsor[key] = input.value;
+      }
+      if (key === 'image') {
+        const surface = els.sponsorForm.querySelector('#sponsorPreviewSurface');
+        const inline = els.sponsorForm.querySelector('#sponsorInlinePreview');
+        const newSrc = input.value.trim();
+        if (surface) {
+          surface.innerHTML = newSrc
+            ? `<img id="sponsorImagePreview" src="${escapeAttr(newSrc)}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-logo-image">`
+            : `<div id="sponsorImagePreview" class="sponsor-preview-empty"><i class="fas fa-image text-2xl"></i><span>No image set</span></div>`;
+        }
+        if (inline) {
+          inline.innerHTML = newSrc
+            ? `<img src="${escapeAttr(newSrc)}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-inline-image">`
+            : `<i class="fas fa-image sponsor-preview-empty-icon"></i>`;
+        }
+        const clearBtn = els.sponsorForm.querySelector('#sponsorImageClear');
+        if (clearBtn) clearBtn.disabled = !newSrc;
+      }
+      if (key === 'imageAlt') {
+        els.sponsorForm.querySelectorAll('#sponsorImagePreview, #sponsorInlinePreview img').forEach((el) => { el.alt = input.value; });
+      }
+      if (key === 'bgStyle') {
+        const val = input.value || 'auto';
+        els.sponsorForm.querySelectorAll('#sponsorPreviewSurface, #sponsorInlinePreview').forEach((el) => {
+          el.className = el.className.replace(/\bsponsor-bg-\S+/g, `sponsor-bg-${val}`);
+        });
+      }
+      if (key === 'aspect') {
+        const val = input.value || 'auto';
+        els.sponsorForm.querySelectorAll('#sponsorPreviewSurface, #sponsorInlinePreview').forEach((el) => {
+          el.className = el.className.replace(/\bsponsor-aspect-\S+/g, `sponsor-aspect-${val}`);
+        });
       }
       markDirty(true);
       markSponsorDirty(true);
@@ -3230,6 +3575,19 @@ function renderSponsorForm() {
       } catch (error) {
         window.alert(`Sponsor image upload failed: ${error.message}`);
       }
+    });
+  }
+
+  const clearButton = els.sponsorForm.querySelector('#sponsorImageClear');
+  if (clearButton) {
+    clearButton.addEventListener('click', () => {
+      sponsor.image = '';
+      sponsor.imageAlt = '';
+      markDirty(true);
+      markSponsorDirty(true);
+      trackQuickSponsorChange(state.selectedSponsorIndex);
+      renderSponsorList();
+      renderSponsorForm();
     });
   }
 
@@ -3648,6 +4006,8 @@ async function saveDataset() {
     }
   }
   await writeFileHandle(state.fileHandle);
+  clearPhotosBackup();
+  clearLogoBackup();
   markDirty(false);
   resetSessionQuickEditState();
   resetSponsorQuickEditState();
@@ -3674,6 +4034,58 @@ function promptForNewFilename() {
   const value = window.prompt('New dataset path (.json):', 'data/new-event.json');
   if (value == null) return '';
   return normalizeOutputPath(value, 'data/new-event.json');
+}
+
+async function buildSponsorEventCounts() {
+  const files = eventCatalog
+    .map((e) => e.file)
+    .filter((f) => f && f.endsWith('.json') && f !== 'sponsors.json');
+  const results = await Promise.allSettled(
+    files.map((f) => fetch(`./data/${f}`).then((r) => r.json()))
+  );
+  const counts = new Map();
+  for (const result of results) {
+    if (result.status !== 'fulfilled') continue;
+    const sponsors = result.value?.event?.sponsors;
+    if (!Array.isArray(sponsors)) continue;
+    const seen = new Set(
+      sponsors.map((s) => (s.title || '').toLowerCase().trim()).filter(Boolean)
+    );
+    for (const t of seen) counts.set(t, (counts.get(t) || 0) + 1);
+  }
+  state.sponsorEventCounts = counts;
+}
+
+function getSponsorEventCount(title) {
+  if (!state.sponsorEventCounts) return null;
+  return state.sponsorEventCounts.get((title || '').toLowerCase().trim()) || 0;
+}
+
+function bustSrc(src) {
+  if (!src) return src;
+  const ts = state.imageCacheBust.get(src);
+  return ts ? `${src}?cb=${ts}` : src;
+}
+
+function bustDatasetForPreview(dataset) {
+  if (!state.imageCacheBust.size) return dataset;
+  const walk = (obj) => {
+    if (!obj || typeof obj !== 'object') return;
+    for (const key of Object.keys(obj)) {
+      const val = obj[key];
+      if (typeof val === 'string' && key === 'image') {
+        const ts = state.imageCacheBust.get(val);
+        if (ts) obj[key] = `${val}?cb=${ts}`;
+      } else if (Array.isArray(val)) {
+        val.forEach(walk);
+      } else if (val && typeof val === 'object') {
+        walk(val);
+      }
+    }
+  };
+  const clone = JSON.parse(JSON.stringify(dataset));
+  walk(clone);
+  return clone;
 }
 
 function escapeHtml(value) {
@@ -3783,7 +4195,35 @@ function renderSitemap() {
   });
 }
 
+function doPreview(mode = 'tab') {
+  if (!state.dataset) return;
+  try {
+    localStorage.setItem('__preview__', JSON.stringify(bustDatasetForPreview(state.dataset)));
+    if (mode === 'same') {
+      if (state.file) localStorage.setItem('__editor_return_file__', state.file);
+      window.location.assign('./index.html?preview=1');
+    } else {
+      window.open('./index.html?preview=1', '_blank');
+    }
+  } catch (e) {
+    window.alert('Could not open preview: ' + e.message);
+  }
+}
+
 function bindEvents() {
+  const welcomeSearch = document.getElementById('welcomeEventSearch');
+  if (welcomeSearch) {
+    welcomeSearch.addEventListener('input', () => {
+      const query = welcomeSearch.value.trim().toLowerCase();
+      const eventList = document.getElementById('welcomeEventList');
+      if (!eventList) return;
+      eventList.querySelectorAll('[data-welcome-load]').forEach((btn) => {
+        const label = btn.querySelector('.welcome-btn-label')?.textContent.toLowerCase() ?? '';
+        btn.style.display = Boolean(query) && !label.includes(query) ? 'none' : '';
+      });
+    });
+  }
+
   els.datasetSelect.addEventListener('change', async () => {
     const nextFile = String(els.datasetSelect.value || '').trim();
     const previousValue = state.lastDatasetSelectValue || '';
@@ -3839,14 +4279,42 @@ function bindEvents() {
   }
 
   if (els.previewDataset) {
-    els.previewDataset.addEventListener('click', () => {
-      if (!state.dataset) return;
-      try {
-        localStorage.setItem('__preview__', JSON.stringify(state.dataset));
-        window.open('./index.html?preview=1', '_blank');
-      } catch (e) {
-        window.alert('Could not open preview: ' + e.message);
-      }
+    els.previewDataset.addEventListener('click', () => doPreview('tab'));
+  }
+
+  if (els.previewDatasetToggle && els.previewDatasetDropdown) {
+    els.previewDatasetToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = !els.previewDatasetDropdown.classList.contains('hidden');
+      els.previewDatasetDropdown.classList.toggle('hidden', open);
+      els.previewDatasetToggle.setAttribute('aria-expanded', String(!open));
+    });
+
+    els.previewDatasetDropdown.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-preview-mode]');
+      if (!item) return;
+      els.previewDatasetDropdown.classList.add('hidden');
+      els.previewDatasetToggle.setAttribute('aria-expanded', 'false');
+      doPreview(item.dataset.previewMode);
+    });
+
+    document.addEventListener('click', () => {
+      els.previewDatasetDropdown.classList.add('hidden');
+      els.previewDatasetToggle.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  if (els.saveDatasetToggle && els.saveDatasetDropdown) {
+    els.saveDatasetToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = !els.saveDatasetDropdown.classList.contains('hidden');
+      els.saveDatasetDropdown.classList.toggle('hidden', open);
+      els.saveDatasetToggle.setAttribute('aria-expanded', String(!open));
+    });
+
+    document.addEventListener('click', () => {
+      els.saveDatasetDropdown.classList.add('hidden');
+      if (els.saveDatasetToggle) els.saveDatasetToggle.setAttribute('aria-expanded', 'false');
     });
   }
 
@@ -3858,32 +4326,34 @@ function bindEvents() {
     }
   });
 
-  els.saveAsDataset.addEventListener('click', async () => {
-    try {
-      await saveAsDataset();
-    } catch (error) {
-      if (error && error.name === 'AbortError') return;
-      window.alert(`Save As failed: ${error.message}`);
-    }
-  });
+  if (els.saveAsDataset) {
+    els.saveAsDataset.addEventListener('click', async () => {
+      if (els.saveDatasetDropdown) {
+        els.saveDatasetDropdown.classList.add('hidden');
+        if (els.saveDatasetToggle) els.saveDatasetToggle.setAttribute('aria-expanded', 'false');
+      }
+      try {
+        await saveAsDataset();
+      } catch (error) {
+        if (error && error.name === 'AbortError') return;
+        window.alert(`Save As failed: ${error.message}`);
+      }
+    });
+  }
 
   if (els.exportDataset) {
     els.exportDataset.addEventListener('click', exportDataset);
   }
-  els.saveSession.addEventListener('click', async () => {
-    try {
-      await saveCurrentSession();
-    } catch (error) {
-      window.alert(`Save session failed: ${error.message}`);
-    }
-  });
-  els.saveSponsor.addEventListener('click', async () => {
-    try {
-      await saveCurrentSponsor();
-    } catch (error) {
-      window.alert(`Save sponsor failed: ${error.message}`);
-    }
-  });
+  if (els.saveSession) {
+    els.saveSession.addEventListener('click', async () => {
+      try { await saveCurrentSession(); } catch (error) { window.alert(`Save failed: ${error.message}`); }
+    });
+  }
+  if (els.saveSponsor) {
+    els.saveSponsor.addEventListener('click', async () => {
+      try { await saveCurrentSponsor(); } catch (error) { window.alert(`Save failed: ${error.message}`); }
+    });
+  }
   els.addSession.addEventListener('click', async () => {
     try {
       await addSession();
@@ -3940,8 +4410,7 @@ function bindEvents() {
   }
 
   if (els.toggleSessionWorkspace) {
-    els.toggleSessionWorkspace.addEventListener('click', async () => {
-      if (!(await confirmDiscardPendingChanges('the session list view'))) return;
+    els.toggleSessionWorkspace.addEventListener('click', () => {
       setSessionWorkspaceExpanded(!state.sessionListExpanded);
       renderSessionList();
       renderSessionForm();
@@ -3951,17 +4420,15 @@ function bindEvents() {
   }
 
   if (els.toggleQuickSessionEdit) {
-    els.toggleQuickSessionEdit.addEventListener('click', async () => {
+    els.toggleQuickSessionEdit.addEventListener('click', () => {
       if (!state.sessionListExpanded || !isSessionEditorEnabled()) return;
-      if (!(await confirmDiscardPendingChanges('session quick edit'))) return;
       setQuickSessionEditEnabled(!state.sessionQuickEditEnabled);
       renderSessionList();
     });
   }
 
   if (els.toggleSponsorWorkspace) {
-    els.toggleSponsorWorkspace.addEventListener('click', async () => {
-      if (!(await confirmDiscardPendingChanges('the sponsor list view'))) return;
+    els.toggleSponsorWorkspace.addEventListener('click', () => {
       setSponsorWorkspaceExpanded(!state.sponsorListExpanded);
       renderSponsorList();
       renderSponsorForm();
@@ -3971,9 +4438,8 @@ function bindEvents() {
   }
 
   if (els.toggleQuickSponsorEdit) {
-    els.toggleQuickSponsorEdit.addEventListener('click', async () => {
+    els.toggleQuickSponsorEdit.addEventListener('click', () => {
       if (!state.sponsorListExpanded || !isSponsorEditorEnabled()) return;
-      if (!(await confirmDiscardPendingChanges('sponsor quick edit'))) return;
       setQuickSponsorEditEnabled(!state.sponsorQuickEditEnabled);
       renderSponsorList();
     });
@@ -3981,43 +4447,43 @@ function bindEvents() {
 
   if (els.showEventTab) {
     els.showEventTab.addEventListener('click', async () => {
-      await switchEditorTab('event');
+      switchEditorTab('event');
     });
   }
 
   if (els.showSessionsTab) {
     els.showSessionsTab.addEventListener('click', async () => {
-      await switchEditorTab('sessions');
+      switchEditorTab('sessions');
     });
   }
 
   if (els.showLogoTab) {
     els.showLogoTab.addEventListener('click', async () => {
-      await switchEditorTab('logo');
+      switchEditorTab('logo');
     });
   }
 
   if (els.showFlickrTab) {
     els.showFlickrTab.addEventListener('click', async () => {
-      await switchEditorTab('flickr');
+      switchEditorTab('flickr');
     });
   }
 
   if (els.showSponsorsTab) {
     els.showSponsorsTab.addEventListener('click', async () => {
-      await switchEditorTab('sponsors');
+      switchEditorTab('sponsors');
     });
   }
 
   if (els.showSitemapTab) {
     els.showSitemapTab.addEventListener('click', async () => {
-      await switchEditorTab('sitemap');
+      switchEditorTab('sitemap');
     });
   }
 
   if (els.showTimelineTab) {
     els.showTimelineTab.addEventListener('click', async () => {
-      await switchEditorTab('timeline');
+      switchEditorTab('timeline');
     });
   }
 
