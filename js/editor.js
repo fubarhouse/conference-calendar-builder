@@ -2947,8 +2947,8 @@ function renderSessionField(field, item) {
     return `
       <label class="editor-form-field ${spanClass}">
         ${renderFieldIntro('session', field.key, field)}
-        <input data-session-field="${field.key}" type="datetime-local" value="${escapeAttr(localValue)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${describedBy}>
         ${tzHint}
+        <input data-session-field="${field.key}" type="datetime-local" value="${escapeAttr(localValue)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${describedBy}>
       </label>
     `;
   }
