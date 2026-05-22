@@ -244,9 +244,9 @@
       "imageAlt": ""
     },
     "logo": {
-      "image": "",
-      "imageAlt": "",
-      "usePlate": false
+      "image": "./img/logos/drupalcamp/2019-nagoya.png",
+      "imageAlt": "DrupalCamp logo",
+      "usePlate": true
     }
   },
   "items": [
