@@ -457,6 +457,16 @@ function _bindAll() {
     col.addEventListener('mousemove', _onColHover);
     col.addEventListener('mouseleave', _onColLeave);
   });
+
+  const scrollWrap = _el.querySelector('.tl-scroll-wrap');
+  if (scrollWrap) {
+    scrollWrap.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault();
+        window.scrollBy({ top: e.deltaY, behavior: 'instant' });
+      }
+    }, { passive: false });
+  }
 }
 
 let _roomDragIdx = null;

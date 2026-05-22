@@ -4158,3 +4158,128 @@ body.has-preview-banner { padding-top: 2.25rem; }
     border-left-color: rgba(0, 207, 255, 0.72) !important;
     box-shadow: -2px 0 14px rgba(0, 207, 255, 0.22) !important;
 }
+
+/* ── Sponsor editor sidebar ────────────────────────────────── */
+.sponsor-editor-sidebar {
+    width: 200px;
+    min-width: 160px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+.sponsor-preview-surface {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    border-radius: 0.65rem;
+    overflow: hidden;
+}
+.sponsor-preview-surface .sponsor-logo-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    max-height: 120px;
+    object-fit: contain;
+    object-position: center;
+}
+.sponsor-preview-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0;
+    color: rgba(120, 150, 175, 0.65);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.sponsor-inline-preview {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 184px;
+    min-height: 104px;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(187, 205, 223, 0.95);
+    border-radius: 0.6rem;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.sponsor-inline-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 148px;
+    max-height: 68px;
+    object-fit: contain;
+    object-position: center;
+}
+.sponsor-preview-empty-icon {
+    font-size: 1.4rem;
+    color: rgba(120, 150, 175, 0.5);
+}
+.sponsor-event-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.9rem 0.75rem 0.8rem;
+    border-radius: 0.65rem;
+    border: 1px solid rgba(0, 207, 255, 0.2);
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(0, 207, 255, 0.1), transparent 65%),
+        rgba(2, 10, 22, 0.7);
+    text-align: center;
+    gap: 0.1rem;
+}
+.sponsor-event-stat-icon {
+    font-size: 1rem;
+    color: rgba(0, 207, 255, 0.5);
+    margin-bottom: 0.3rem;
+}
+.sponsor-event-stat-count {
+    font-size: 1.7rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #b8dff5;
+    letter-spacing: -0.03em;
+}
+.sponsor-event-stat-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(130, 170, 200, 0.65);
+    margin-top: 0.15rem;
+}
+
+/* ── Logo editor sidebar ────────────────────────────────────── */
+.logo-editor-sidebar {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+}
+.logo-preview-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #010e22 0%, #090c38 50%, #041932 100%);
+    border: 1px solid rgba(0, 207, 255, 0.18);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(0, 207, 255, 0.06);
+}
+.logo-preview-caption {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(130, 170, 200, 0.6);
+    margin: 0;
+}

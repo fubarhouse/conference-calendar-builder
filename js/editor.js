@@ -32,7 +32,9 @@ const state = {
   sponsorStructureDirty: false,
   timezones: [],
   sponsorSessionPickerOpen: false,
-  sessionSponsorPickerOpen: false
+  sessionSponsorPickerOpen: false,
+  imageCacheBust: new Map(),
+  sponsorEventCounts: null
 };
 
 const UNDO_STACK = [];
@@ -1800,7 +1802,10 @@ async function uploadFlickrImageFromPicker() {
     state.dataset.event.flickr.imageAlt = `${state.dataset.event.designation || 'Event'} Flickr image`;
   }
   markDirty(true);
+  state.imageCacheBust.set(`./${relativePath}`, Date.now());
   renderFlickrForm();
+  const flickrPreview = document.getElementById('flickrImagePreview');
+  if (flickrPreview) { flickrPreview.src = URL.createObjectURL(file); flickrPreview.classList.remove('hidden'); }
 }
 
 async function uploadLogoImageFromPicker() {
@@ -1837,7 +1842,10 @@ async function uploadLogoImageFromPicker() {
     state.dataset.event.logo.imageAlt = `${state.dataset.event.designation || 'Event'} logo`;
   }
   markDirty(true);
+  state.imageCacheBust.set(`./${relativePath}`, Date.now());
   renderLogoForm();
+  const logoPreview = document.getElementById('logoImagePreview');
+  if (logoPreview) { logoPreview.src = URL.createObjectURL(file); logoPreview.classList.remove('hidden'); }
 }
 
 async function uploadSponsorImageFromPicker(index) {
@@ -1875,9 +1883,15 @@ async function uploadSponsorImageFromPicker(index) {
   }
   markDirty(true);
   markSponsorDirty(true);
+  state.imageCacheBust.set(`./${relativePath}`, Date.now());
   renderSponsorList();
   renderSponsorForm();
   renderSessionForm();
+  const blobUrl = URL.createObjectURL(file);
+  const surface = document.getElementById('sponsorPreviewSurface');
+  if (surface) surface.innerHTML = `<img id="sponsorImagePreview" src="${blobUrl}" alt="${escapeAttr(sponsor?.imageAlt || '')}" class="sponsor-logo-image">`;
+  const inline = document.getElementById('sponsorInlinePreview');
+  if (inline) inline.innerHTML = `<img src="${blobUrl}" alt="${escapeAttr(sponsor?.imageAlt || '')}" class="sponsor-inline-image">`;
 }
 
 function fieldDescriptionId(scope, key) {
@@ -1980,7 +1994,7 @@ function renderFlickrBlock(flickr) {
       <button id="flickrImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
         <i class="fas fa-image mr-2"></i>Upload 250x250 Image
       </button>
-      <img id="flickrImagePreview" src="${escapeAttr(imageSrc)}" alt="${escapeAttr(flickr.imageAlt || '')}"
+      <img id="flickrImagePreview" src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(flickr.imageAlt || '')}"
         class="mt-2 rounded border border-gray-200 max-h-[150px] max-w-[250px] object-cover block${imageSrc ? '' : ' hidden'}">
     </div>
     <div class="editor-form-field md:col-span-2">
@@ -1995,31 +2009,48 @@ function renderFlickrBlock(flickr) {
 
 function renderLogoBlock(logo) {
   const imageSrc = (logo.image || '').trim();
+  const plateClass = logo.usePlate ? ' header-logo-use-plate' : '';
   return `
-    <label class="editor-form-field">
-      ${renderFieldIntro('logo', 'image', LOGO_FIELD_CONFIG.image)}
-      <input data-logo-field="image" type="text" value="${escapeAttr(logo.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/logos/.../logo.png"${fieldDescriptionAttr('logo', 'image', LOGO_FIELD_CONFIG.image)}>
-    </label>
-    <label class="editor-form-field">
-      ${renderFieldIntro('logo', 'imageAlt', LOGO_FIELD_CONFIG.imageAlt)}
-      <input data-logo-field="imageAlt" type="text" value="${escapeAttr(logo.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr('logo', 'imageAlt', LOGO_FIELD_CONFIG.imageAlt)}>
-    </label>
-    <label class="editor-toggle-row md:col-span-2">
-      <input data-logo-field="usePlate" type="checkbox" class="h-4 w-4" ${logo.usePlate ? 'checked' : ''}${fieldDescriptionAttr('logo', 'usePlate', LOGO_FIELD_CONFIG.usePlate)}>
-      <span>
-        ${renderFieldIntro('logo', 'usePlate', LOGO_FIELD_CONFIG.usePlate)}
-      </span>
-    </label>
-    <div class="editor-form-field">
-      <span class="editor-field-label">Logo upload</span>
-      <span class="editor-field-description">Uploads to <code>img/logos/${escapeHtml(
-        slugify(state.dataset?.event?.designation || 'event') || 'event'
-      )}</code> and stores a relative path.</span>
-      <button id="logoImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-        <i class="fas fa-upload mr-2"></i>Upload Logo
-      </button>
-      <img id="logoImagePreview" src="${escapeAttr(imageSrc)}" alt="${escapeAttr(logo.imageAlt || '')}"
-        class="mt-2 rounded border border-gray-200 max-h-[150px] max-w-[250px] object-contain block${imageSrc ? '' : ' hidden'}">
+    <div class="col-span-full flex gap-5 items-start">
+      <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label class="editor-form-field md:col-span-2">
+          ${renderFieldIntro('logo', 'image', LOGO_FIELD_CONFIG.image)}
+          <input data-logo-field="image" type="text" value="${escapeAttr(logo.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/logos/.../logo.png"${fieldDescriptionAttr('logo', 'image', LOGO_FIELD_CONFIG.image)}>
+        </label>
+        <label class="editor-form-field md:col-span-2">
+          ${renderFieldIntro('logo', 'imageAlt', LOGO_FIELD_CONFIG.imageAlt)}
+          <input data-logo-field="imageAlt" type="text" value="${escapeAttr(logo.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr('logo', 'imageAlt', LOGO_FIELD_CONFIG.imageAlt)}>
+        </label>
+        <div class="editor-form-field md:col-span-2">
+          <span class="editor-field-label">Logo upload</span>
+          <span class="editor-field-description">Uploads to <code>img/logos/${escapeHtml(
+            slugify(state.dataset?.event?.designation || 'event') || 'event'
+          )}</code> and stores a relative path.</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="h-9 inline-flex items-center gap-2.5 rounded-md border border-gray-300 px-3 bg-white cursor-pointer select-none">
+              <input data-logo-field="usePlate" type="checkbox" class="h-4 w-4" ${logo.usePlate ? 'checked' : ''}${fieldDescriptionAttr('logo', 'usePlate', LOGO_FIELD_CONFIG.usePlate)}>
+              <span class="text-sm text-gray-700">Background plate</span>
+            </label>
+            <button id="logoImageUpload" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-upload mr-1.5 text-[0.72rem]"></i>Upload logo
+            </button>
+            <button id="logoImageClear" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors whitespace-nowrap"${!imageSrc ? ' disabled' : ''}>
+              <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete logo
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="logo-editor-sidebar">
+        <div class="logo-preview-stage">
+          <div id="logoPreviewContainer" class="header-logo${escapeAttr(plateClass)}">
+            <i class="fas fa-image${imageSrc ? ' hidden' : ''}"></i>
+            <img id="logoImagePreview" class="header-logo-image${imageSrc ? '' : ' hidden'}"
+              src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(logo.imageAlt || '')}">
+          </div>
+        </div>
+        <p class="logo-preview-caption">Header preview</p>
+      </aside>
     </div>
   `;
 }
@@ -2086,16 +2117,21 @@ function bindLogoFormEvents(container) {
       markDirty(true);
 
       if (key === 'image') {
-        const imgPreview = container.querySelector('#logoImagePreview');
-        if (imgPreview) {
-          const newSrc = input.value.trim();
-          imgPreview.src = newSrc;
-          imgPreview.classList.toggle('hidden', !newSrc);
-        }
+        const newSrc = input.value.trim();
+        const img = container.querySelector('#logoImagePreview');
+        const icon = container.querySelector('#logoPreviewContainer > i');
+        const clearBtn = container.querySelector('#logoImageClear');
+        if (img) { img.src = newSrc; img.classList.toggle('hidden', !newSrc); }
+        if (icon) icon.classList.toggle('hidden', Boolean(newSrc));
+        if (clearBtn) clearBtn.disabled = !newSrc;
       }
       if (key === 'imageAlt') {
-        const imgPreview = container.querySelector('#logoImagePreview');
-        if (imgPreview) imgPreview.alt = input.value;
+        const img = container.querySelector('#logoImagePreview');
+        if (img) img.alt = input.value;
+      }
+      if (key === 'usePlate') {
+        const preview = container.querySelector('#logoPreviewContainer');
+        if (preview) preview.classList.toggle('header-logo-use-plate', input.checked);
       }
     };
     input.addEventListener('input', updateLogoField);
@@ -2110,6 +2146,17 @@ function bindLogoFormEvents(container) {
       } catch (error) {
         window.alert(`Logo upload failed: ${error.message}`);
       }
+    });
+  }
+
+  const logoClearButton = container.querySelector('#logoImageClear');
+  if (logoClearButton) {
+    logoClearButton.addEventListener('click', () => {
+      const eventLogo = normalizeLogoObject(state.dataset.event.logo);
+      eventLogo.image = '';
+      state.dataset.event.logo = normalizeLogoObject(eventLogo);
+      markDirty(true);
+      renderLogoForm();
     });
   }
 }
@@ -2810,7 +2857,7 @@ function renderSessionField(field, item) {
             </button>
           </div>
         `).join('')}</div>`
-      : '<p class="speaker-session-summary">No sponsors linked to this session yet.</p>';
+      : '';
     return `
       <div class="${spanClass}">
         <div class="rounded-md border border-gray-700 bg-gray-900/30 px-3 py-3 text-sm text-gray-200 space-y-3">
@@ -3307,50 +3354,91 @@ function renderSponsorForm() {
   els.sponsorIndexBadge.textContent = `Sponsor ${state.selectedSponsorIndex + 1} of ${state.dataset.event.sponsors.length}`;
   syncSponsorSaveButton();
   els.deleteSponsor.disabled = false;
+
+  if (!state.sponsorEventCounts) {
+    const selectedAtLoad = state.selectedSponsorIndex;
+    buildSponsorEventCounts()
+      .catch(() => { state.sponsorEventCounts = new Map(); })
+      .then(() => { if (state.selectedSponsorIndex === selectedAtLoad) renderSponsorForm(); });
+  }
+
+  const imageSrc = (sponsor.image || '').trim();
+  const bgStyle = sponsor.bgStyle || 'auto';
+  const aspect = sponsor.aspect || 'auto';
+  const eventCount = getSponsorEventCount(sponsor.title);
+  const eventCountDisplay = eventCount === null ? '—' : String(eventCount);
+
   els.sponsorForm.innerHTML = `
-    ${SPONSOR_FIELDS.map((field) => renderSponsorField(field, sponsor)).join('')}
-    <div class="editor-form-field md:col-span-2 xl:col-span-3">
-      <span class="editor-field-label">Sponsor image upload</span>
-      <span class="editor-field-description">Uploads to <code>img/sponsors/${escapeHtml(
-        slugify(state.dataset?.event?.designation || 'event') || 'event'
-      )}</code> and stores a relative path.</span>
-      <div class="flex flex-wrap items-center gap-2">
-        <button id="sponsorImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-          <i class="fas fa-upload mr-2"></i>Upload Sponsor Image
-        </button>
-        <span class="text-xs text-gray-400">${escapeHtml(getSponsorListLabel(sponsor, state.selectedSponsorIndex))}</span>
-      </div>
-    </div>
-    <div class="editor-form-field md:col-span-2 xl:col-span-3">
-      <span class="editor-field-label">Linked sessions</span>
-      <span class="editor-field-description">Manage sessions currently referencing <code>${escapeHtml(sponsor.id || '(missing id)')}</code>.</span>
-      <div class="rounded-md border border-gray-700 bg-gray-900/30 px-3 py-3 text-sm text-gray-200 space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <span class="text-xs text-gray-400">${linkedSessions.length ? `${linkedSessions.length} linked session${linkedSessions.length === 1 ? '' : 's'}` : 'No sessions linked yet.'}</span>
-          <button id="addLinkedSponsorSession" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add session
-          </button>
+    <div class="col-span-full flex gap-5 items-start">
+      <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+        ${SPONSOR_FIELDS.filter((f) => f.key !== 'enabled').map((field) => renderSponsorField(field, sponsor)).join('')}
+        <div class="editor-form-field md:col-span-2">
+          <span class="editor-field-label">Sponsor image</span>
+          <span class="editor-field-description">Uploads to <code>img/sponsors/${escapeHtml(
+            slugify(state.dataset?.event?.designation || 'event') || 'event'
+          )}</code> and stores a relative path.</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="h-9 inline-flex items-center gap-2.5 rounded-md border border-gray-300 px-3 bg-white cursor-pointer select-none">
+              <input data-sponsor-field="enabled" type="checkbox" class="h-4 w-4" ${sponsor.enabled ? 'checked' : ''}>
+              <span class="text-sm text-gray-700">Enabled</span>
+            </label>
+            <button id="sponsorImageUpload" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-upload mr-1.5 text-[0.72rem]"></i>Upload image
+            </button>
+            <button id="sponsorImageClear" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors whitespace-nowrap"${!imageSrc ? ' disabled' : ''}>
+              <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete image
+            </button>
+            <div id="sponsorInlinePreview" class="sponsor-inline-preview sponsor-bg-${escapeAttr(bgStyle)} sponsor-aspect-${escapeAttr(aspect)} ml-auto">
+              ${imageSrc
+                ? `<img src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-inline-image">`
+                : `<i class="fas fa-image sponsor-preview-empty-icon"></i>`}
+            </div>
+          </div>
         </div>
-        <div class="space-y-2">
-          ${
-            linkedSessions.length
-              ? linkedSessions
-                .map(({ item, index }) => `
-                  <div class="editor-linked-item">
-                    <div class="editor-linked-item-copy">
-                      <div class="editor-linked-item-title">${escapeHtml(item?.title || '(Untitled session)')}</div>
-                      <div class="editor-linked-item-meta">${escapeHtml(formatSponsorLinkedSessionMeta(item, index))}</div>
+        <div class="editor-form-field md:col-span-2">
+          <span class="editor-field-label">Linked sessions</span>
+          <span class="editor-field-description">Manage sessions currently referencing <code>${escapeHtml(sponsor.id || '(missing id)')}</code>.</span>
+          <div class="rounded-md border border-gray-700 bg-gray-900/30 px-3 py-3 text-sm text-gray-200 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs text-gray-400">${linkedSessions.length ? `${linkedSessions.length} linked session${linkedSessions.length === 1 ? '' : 's'}` : 'No sessions linked yet.'}</span>
+              <button id="addLinkedSponsorSession" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add session
+              </button>
+            </div>
+            <div class="space-y-2">
+              ${linkedSessions.length
+                ? linkedSessions.map(({ item, index }) => `
+                    <div class="editor-linked-item">
+                      <div class="editor-linked-item-copy">
+                        <div class="editor-linked-item-title">${escapeHtml(item?.title || '(Untitled session)')}</div>
+                        <div class="editor-linked-item-meta">${escapeHtml(formatSponsorLinkedSessionMeta(item, index))}</div>
+                      </div>
+                      <button type="button" class="editor-linked-item-action" data-remove-linked-session="${index}" aria-label="Remove linked session ${escapeAttr(item?.title || '(Untitled session)')}">
+                        <i class="fas fa-trash"></i><span>Remove</span>
+                      </button>
                     </div>
-                    <button type="button" class="editor-linked-item-action" data-remove-linked-session="${index}" aria-label="Remove linked session ${escapeAttr(item?.title || '(Untitled session)')}">
-                      <i class="fas fa-trash"></i><span>Remove</span>
-                    </button>
-                  </div>
-                `)
-                .join('')
-              : '<div class="text-sm text-gray-400">No sessions linked yet.</div>'
-          }
+                  `).join('')
+                : ''}
+            </div>
+          </div>
         </div>
       </div>
+
+      <aside class="sponsor-editor-sidebar">
+        <div id="sponsorPreviewSurface" class="sponsor-preview-surface sponsor-bg-${escapeAttr(bgStyle)} sponsor-aspect-${escapeAttr(aspect)}">
+          ${imageSrc
+            ? `<img id="sponsorImagePreview" src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-logo-image">`
+            : `<div id="sponsorImagePreview" class="sponsor-preview-empty">
+                 <i class="fas fa-image text-2xl"></i>
+                 <span>No image set</span>
+               </div>`}
+        </div>
+        <div class="sponsor-event-stat">
+          <i class="fas fa-trophy sponsor-event-stat-icon"></i>
+          <span class="sponsor-event-stat-count">${escapeHtml(eventCountDisplay)}</span>
+          <span class="sponsor-event-stat-label">Events Sponsored</span>
+        </div>
+      </aside>
     </div>
   `;
 
@@ -3377,8 +3465,45 @@ function renderSponsorForm() {
         }
       } else if (key === 'title') {
         sponsor[key] = input.value;
+        const countEl = els.sponsorForm.querySelector('.sponsor-event-stat-count');
+        if (countEl) {
+          const c = getSponsorEventCount(input.value);
+          countEl.textContent = c === null ? '—' : String(c);
+        }
       } else {
         sponsor[key] = input.value;
+      }
+      if (key === 'image') {
+        const surface = els.sponsorForm.querySelector('#sponsorPreviewSurface');
+        const inline = els.sponsorForm.querySelector('#sponsorInlinePreview');
+        const newSrc = input.value.trim();
+        if (surface) {
+          surface.innerHTML = newSrc
+            ? `<img id="sponsorImagePreview" src="${escapeAttr(newSrc)}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-logo-image">`
+            : `<div id="sponsorImagePreview" class="sponsor-preview-empty"><i class="fas fa-image text-2xl"></i><span>No image set</span></div>`;
+        }
+        if (inline) {
+          inline.innerHTML = newSrc
+            ? `<img src="${escapeAttr(newSrc)}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-inline-image">`
+            : `<i class="fas fa-image sponsor-preview-empty-icon"></i>`;
+        }
+        const clearBtn = els.sponsorForm.querySelector('#sponsorImageClear');
+        if (clearBtn) clearBtn.disabled = !newSrc;
+      }
+      if (key === 'imageAlt') {
+        els.sponsorForm.querySelectorAll('#sponsorImagePreview, #sponsorInlinePreview img').forEach((el) => { el.alt = input.value; });
+      }
+      if (key === 'bgStyle') {
+        const val = input.value || 'auto';
+        els.sponsorForm.querySelectorAll('#sponsorPreviewSurface, #sponsorInlinePreview').forEach((el) => {
+          el.className = el.className.replace(/\bsponsor-bg-\S+/g, `sponsor-bg-${val}`);
+        });
+      }
+      if (key === 'aspect') {
+        const val = input.value || 'auto';
+        els.sponsorForm.querySelectorAll('#sponsorPreviewSurface, #sponsorInlinePreview').forEach((el) => {
+          el.className = el.className.replace(/\bsponsor-aspect-\S+/g, `sponsor-aspect-${val}`);
+        });
       }
       markDirty(true);
       markSponsorDirty(true);
@@ -3405,6 +3530,19 @@ function renderSponsorForm() {
       } catch (error) {
         window.alert(`Sponsor image upload failed: ${error.message}`);
       }
+    });
+  }
+
+  const clearButton = els.sponsorForm.querySelector('#sponsorImageClear');
+  if (clearButton) {
+    clearButton.addEventListener('click', () => {
+      sponsor.image = '';
+      sponsor.imageAlt = '';
+      markDirty(true);
+      markSponsorDirty(true);
+      trackQuickSponsorChange(state.selectedSponsorIndex);
+      renderSponsorList();
+      renderSponsorForm();
     });
   }
 
@@ -3853,6 +3991,58 @@ function promptForNewFilename() {
   return normalizeOutputPath(value, 'data/new-event.json');
 }
 
+async function buildSponsorEventCounts() {
+  const files = eventCatalog
+    .map((e) => e.file)
+    .filter((f) => f && f.endsWith('.json') && f !== 'sponsors.json');
+  const results = await Promise.allSettled(
+    files.map((f) => fetch(`./data/${f}`).then((r) => r.json()))
+  );
+  const counts = new Map();
+  for (const result of results) {
+    if (result.status !== 'fulfilled') continue;
+    const sponsors = result.value?.event?.sponsors;
+    if (!Array.isArray(sponsors)) continue;
+    const seen = new Set(
+      sponsors.map((s) => (s.title || '').toLowerCase().trim()).filter(Boolean)
+    );
+    for (const t of seen) counts.set(t, (counts.get(t) || 0) + 1);
+  }
+  state.sponsorEventCounts = counts;
+}
+
+function getSponsorEventCount(title) {
+  if (!state.sponsorEventCounts) return null;
+  return state.sponsorEventCounts.get((title || '').toLowerCase().trim()) || 0;
+}
+
+function bustSrc(src) {
+  if (!src) return src;
+  const ts = state.imageCacheBust.get(src);
+  return ts ? `${src}?cb=${ts}` : src;
+}
+
+function bustDatasetForPreview(dataset) {
+  if (!state.imageCacheBust.size) return dataset;
+  const walk = (obj) => {
+    if (!obj || typeof obj !== 'object') return;
+    for (const key of Object.keys(obj)) {
+      const val = obj[key];
+      if (typeof val === 'string' && key === 'image') {
+        const ts = state.imageCacheBust.get(val);
+        if (ts) obj[key] = `${val}?cb=${ts}`;
+      } else if (Array.isArray(val)) {
+        val.forEach(walk);
+      } else if (val && typeof val === 'object') {
+        walk(val);
+      }
+    }
+  };
+  const clone = JSON.parse(JSON.stringify(dataset));
+  walk(clone);
+  return clone;
+}
+
 function escapeHtml(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -3963,7 +4153,7 @@ function renderSitemap() {
 function doPreview(mode = 'tab') {
   if (!state.dataset) return;
   try {
-    localStorage.setItem('__preview__', JSON.stringify(state.dataset));
+    localStorage.setItem('__preview__', JSON.stringify(bustDatasetForPreview(state.dataset)));
     if (mode === 'same') {
       if (state.file) localStorage.setItem('__editor_return_file__', state.file);
       window.location.assign('./index.html?preview=1');
