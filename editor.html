@@ -60,6 +60,9 @@
           <button id="folderConnectionToggle" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
             <i class="fas fa-link mr-2"></i>Connect Folder
           </button>
+          <button id="apiSettingsBtn" type="button" title="Configure API server for Firefox-compatible saving" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+            <i class="fas fa-server mr-2"></i>API Server<span id="apiStatusDot" class="ml-2 w-2 h-2 rounded-full bg-gray-300 inline-block"></span>
+          </button>
           <div class="editor-preview-split" id="saveDatasetGroup">
             <button id="saveDataset" type="button" title="Save (Ctrl+S)" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-r-0 border-gray-300 rounded-l-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
               <i class="fas fa-floppy-disk mr-2"></i>Save
@@ -337,9 +340,15 @@
             </div>
           </div>
         </div>
-        <button type="button" class="editor-welcome-cta" id="welcomeConnectFolder">
-          <i class="fas fa-folder-open"></i>Open Project Folder
-        </button>
+        <div class="editor-welcome-new-row">
+          <button type="button" class="editor-welcome-cta" id="welcomeConnectFolder">
+            <i class="fas fa-folder-open"></i>Open Project Folder
+          </button>
+          <span class="editor-welcome-or-label">or</span>
+          <button type="button" class="editor-welcome-cta-secondary" id="welcomeApiSettings">
+            <i class="fas fa-server"></i>Connect to API server
+          </button>
+        </div>
       </div>
 
       <!-- Screen 2: Select event -->
@@ -430,6 +439,38 @@
         <button id="unsavedModalCancel" type="button" class="editor-confirm-btn editor-confirm-btn-cancel">
           Cancel
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Server Settings Modal -->
+  <div id="apiSettingsModal" class="session-modal-overlay hidden" aria-hidden="true">
+    <div class="session-modal-card" role="dialog" aria-modal="true" aria-labelledby="apiSettingsTitle" style="width: min(520px, 100%)">
+      <div class="session-modal-header">
+        <h2 id="apiSettingsTitle" class="session-modal-title">API Server</h2>
+        <button id="closeApiSettings" type="button" class="session-modal-close" aria-label="Close API settings">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="session-modal-body space-y-4">
+        <p class="text-sm text-gray-500">Connect to a local API server for Firefox-compatible saving and image uploads. Start the server with <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">npm start</code> or <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">docker compose up</code>.</p>
+        <label class="block">
+          <span class="block text-sm font-medium text-gray-700 mb-1">Server endpoint URL</span>
+          <input id="apiEndpointInput" type="url" placeholder="http://localhost:8080" autocomplete="off"
+            class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3">
+        </label>
+        <div class="flex gap-2 flex-wrap items-center">
+          <button id="apiTestBtn" type="button" class="h-9 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <i class="fas fa-plug mr-1.5"></i>Test connection
+          </button>
+          <button id="apiSaveBtn" type="button" class="h-9 px-4 border border-blue-600 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+            <i class="fas fa-check mr-1.5"></i>Save
+          </button>
+          <button id="apiClearBtn" type="button" class="h-9 px-4 border border-gray-300 rounded-md text-sm font-medium text-red-600 bg-white hover:bg-red-50 transition-colors">
+            <i class="fas fa-times mr-1.5"></i>Clear
+          </button>
+        </div>
+        <p id="apiTestResult" class="text-sm hidden"></p>
       </div>
     </div>
   </div>

@@ -34,7 +34,8 @@ const state = {
   sponsorSessionPickerOpen: false,
   sessionSponsorPickerOpen: false,
   imageCacheBust: new Map(),
-  sponsorEventCounts: null
+  sponsorEventCounts: null,
+  apiEndpoint: localStorage.getItem('editorApiEndpoint') || ''
 };
 
 const UNDO_STACK = [];
@@ -604,6 +605,11 @@ function setQuickSponsorEditEnabled(enabled) {
 
 function setFolderConnectionButtonState() {
   if (!els.folderConnectionToggle) return;
+  if (isApiMode()) {
+    els.folderConnectionToggle.classList.add('hidden');
+    return;
+  }
+  els.folderConnectionToggle.classList.remove('hidden');
   if (state.folderConnectedInSession && state.projectDirHandle) {
     els.folderConnectionToggle.innerHTML = '<i class="fas fa-unlink mr-2"></i>Disconnect folder';
   } else {
@@ -856,10 +862,17 @@ function showSaveToast() {
 
 function syncWelcomePanel() {
   if (!els.welcome) return;
-  const show = (!state.folderConnectedInSession || !state.projectDirHandle) && !state.dataset;
+  const show = isApiMode()
+    ? !state.dataset
+    : (!state.folderConnectedInSession || !state.projectDirHandle) && !state.dataset;
   if (show) {
-    document.getElementById('welcomeScreen1')?.classList.remove('hidden');
-    document.getElementById('welcomeScreen2')?.classList.add('hidden');
+    if (isApiMode()) {
+      document.getElementById('welcomeScreen1')?.classList.add('hidden');
+      showWelcomeScreen2();
+    } else {
+      document.getElementById('welcomeScreen1')?.classList.remove('hidden');
+      document.getElementById('welcomeScreen2')?.classList.add('hidden');
+    }
   }
   els.welcome.classList.toggle('hidden', !show);
   els.welcome.setAttribute('aria-hidden', String(!show));
@@ -877,7 +890,15 @@ function showWelcomeScreen2() {
   if (!els.welcome) return;
   document.getElementById('welcomeScreen1')?.classList.add('hidden');
   const screen2 = document.getElementById('welcomeScreen2');
-  if (screen2) screen2.classList.remove('hidden');
+  if (screen2) {
+    screen2.classList.remove('hidden');
+    const lead = screen2.querySelector('.editor-welcome-lead');
+    if (lead) {
+      lead.textContent = isApiMode()
+        ? 'API server connected. Select an event to start editing, or create a new one.'
+        : 'Your project folder is connected. Select an event to start editing, or create a new one.';
+    }
+  }
 
   const eventList = document.getElementById('welcomeEventList');
   if (eventList) {
@@ -1436,21 +1457,47 @@ async function loadDatasetMetaForGrouping(files) {
   return records;
 }
 
+async function loadDatasetMetaForGroupingViaFetch(files) {
+  const records = await Promise.all(
+    files.map(async (file) => {
+      try {
+        const res = await fetch(`./data/${file}`);
+        if (!res.ok) throw new Error();
+        const parsed = await res.json();
+        validateDatasetSchema(parsed, file);
+        const eventMeta = parsed && typeof parsed === 'object' ? parsed.event || {} : {};
+        return { file, group: getDatasetGroupName(eventMeta), label: buildDatasetOptionLabel(file, eventMeta) };
+      } catch {
+        return { file, group: 'Other', label: getManifestLabelByFile(file) };
+      }
+    })
+  );
+  records.sort((a, b) => {
+    const groupCmp = a.group.localeCompare(b.group);
+    return groupCmp !== 0 ? groupCmp : a.label.localeCompare(b.label);
+  });
+  return records;
+}
+
 async function renderDatasetOptionsFromConnectedFolder(preferred = '') {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
     els.datasetSelect.innerHTML = '<option value="">Connect folder to load datasets</option>';
     els.datasetSelect.value = '';
     return;
   }
 
-  const files = await listDatasetFilesFromConnectedFolder();
+  const files = isApiMode()
+    ? eventCatalog.map((e) => e.file).filter((f) => f && isEditorDatasetFile(f)).sort((a, b) => a.localeCompare(b))
+    : await listDatasetFilesFromConnectedFolder();
   if (files.length === 0) {
     els.datasetSelect.innerHTML = '<option value="">No JSON files found in data/</option>';
     els.datasetSelect.value = '';
     return;
   }
 
-  const groupedRecords = await loadDatasetMetaForGrouping(files);
+  const groupedRecords = isApiMode()
+    ? await loadDatasetMetaForGroupingViaFetch(files)
+    : await loadDatasetMetaForGrouping(files);
   const groups = new Map();
   groupedRecords.forEach((record) => {
     if (!groups.has(record.group)) groups.set(record.group, []);
@@ -1516,7 +1563,7 @@ function normalizeDatasetShape() {
 }
 
 async function loadDataset(file) {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
     throw new Error('Connect folder first.');
   }
   if (localStorage.getItem(PHOTOS_BACKUP_KEY)) {
@@ -1529,10 +1576,17 @@ async function loadDataset(file) {
     throw new Error(`${file} is not an editable dataset.`);
   }
   const targetPath = normalizeOutputPath(`data/${file}`);
-  const handle = await resolveFileHandleFromProjectDir(targetPath);
-  const fileBlob = await handle.getFile();
-  const content = await fileBlob.text();
-  const parsed = JSON.parse(content);
+  let handle = null;
+  let parsed;
+  if (isApiMode()) {
+    const res = await fetch(`./data/${file}`);
+    if (!res.ok) throw new Error(`Failed to load ${file}: HTTP ${res.status}`);
+    parsed = await res.json();
+  } else {
+    handle = await resolveFileHandleFromProjectDir(targetPath);
+    const fileBlob = await handle.getFile();
+    parsed = JSON.parse(await fileBlob.text());
+  }
   validateDatasetSchema(parsed, file);
   state.dataset = parsed;
   state.file = file;
@@ -1543,16 +1597,18 @@ async function loadDataset(file) {
   state.selectedSponsorIndex = -1;
   state.sessionSearchQuery = '';
   normalizeDatasetShape();
-  await restoreLinkedHandleForCurrentPath();
-  if (!state.fileHandle && state.projectDirHandle) {
-    try {
-      const fromDir = await resolveFileHandleFromProjectDir(state.outputPath);
-      if (fromDir) {
-        state.fileHandle = fromDir;
-        await setLinkedHandle(getFileLinkKey(), fromDir);
+  if (!isApiMode()) {
+    await restoreLinkedHandleForCurrentPath();
+    if (!state.fileHandle && state.projectDirHandle) {
+      try {
+        const fromDir = await resolveFileHandleFromProjectDir(state.outputPath);
+        if (fromDir) {
+          state.fileHandle = fromDir;
+          await setLinkedHandle(getFileLinkKey(), fromDir);
+        }
+      } catch {
+        // Keep fallback behavior.
       }
-    } catch {
-      // Keep fallback behavior.
     }
   }
   markDirty(false);
@@ -1768,8 +1824,8 @@ function clearLogoBackup() {
 }
 
 async function uploadFlickrImageFromPicker() {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    window.alert('Connect folder first to upload Flickr images.');
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
+    window.alert('Connect folder or configure an API server to upload images.');
     return;
   }
   const picker = document.createElement('input');
@@ -1786,13 +1842,17 @@ async function uploadFlickrImageFromPicker() {
 
   await backupCurrentPhotoForRevert();
   const relativePath = getFlickrImageTargetPath();
-  const segments = relativePath.split('/').filter(Boolean);
-  const fileName = segments.pop();
-  const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
-  const handle = await dir.getFileHandle(fileName, { create: true });
-  const writable = await handle.createWritable();
-  await writable.write(file);
-  await writable.close();
+  if (isApiMode()) {
+    await uploadViaApi(file, relativePath);
+  } else {
+    const segments = relativePath.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const handle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(file);
+    await writable.close();
+  }
 
   if (!state.dataset.event.flickr || typeof state.dataset.event.flickr !== 'object') {
     state.dataset.event.flickr = normalizeFlickrObject();
@@ -1810,8 +1870,8 @@ async function uploadFlickrImageFromPicker() {
 }
 
 async function uploadLogoImageFromPicker() {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    window.alert('Connect folder first to upload event logos.');
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
+    window.alert('Connect folder or configure an API server to upload images.');
     return;
   }
   const picker = document.createElement('input');
@@ -1829,13 +1889,17 @@ async function uploadLogoImageFromPicker() {
   await backupCurrentLogoForRevert();
 
   const relativePath = getLogoImageTargetPath(file);
-  const segments = relativePath.split('/').filter(Boolean);
-  const fileName = segments.pop();
-  const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
-  const handle = await dir.getFileHandle(fileName, { create: true });
-  const writable = await handle.createWritable();
-  await writable.write(file);
-  await writable.close();
+  if (isApiMode()) {
+    await uploadViaApi(file, relativePath);
+  } else {
+    const segments = relativePath.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const handle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(file);
+    await writable.close();
+  }
 
   state.dataset.event.logo = normalizeLogoObject(state.dataset.event.logo);
   state.dataset.event.logo.image = `./${relativePath}`;
@@ -1850,8 +1914,8 @@ async function uploadLogoImageFromPicker() {
 }
 
 async function uploadSponsorImageFromPicker(index) {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    window.alert('Connect folder first to upload sponsor images.');
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
+    window.alert('Connect folder or configure an API server to upload images.');
     return;
   }
   const sponsor = state.dataset?.event?.sponsors?.[index];
@@ -1870,13 +1934,17 @@ async function uploadSponsorImageFromPicker(index) {
   if (!file) return;
 
   const relativePath = getSponsorImageTargetPath(file, sponsor);
-  const segments = relativePath.split('/').filter(Boolean);
-  const fileName = segments.pop();
-  const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
-  const handle = await dir.getFileHandle(fileName, { create: true });
-  const writable = await handle.createWritable();
-  await writable.write(file);
-  await writable.close();
+  if (isApiMode()) {
+    await uploadViaApi(file, relativePath);
+  } else {
+    const segments = relativePath.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const handle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(file);
+    await writable.close();
+  }
 
   sponsor.image = `./${relativePath}`;
   if (!sponsor.imageAlt) {
@@ -3942,6 +4010,28 @@ async function writeFileHandle(handle) {
 async function saveAsDataset() {
   if (!state.dataset) return;
 
+  if (isApiMode()) {
+    const suggested = outputBasename(state.outputPath) || state.file || 'new-event.json';
+    const raw = window.prompt('Save As — enter filename (in data/):', suggested);
+    if (!raw) return;
+    const cleanName = String(raw).trim().toLowerCase().replace(/\.json$/i, '').replace(/[^a-z0-9-]/g, '-') + '.json';
+    state.outputPath = `data/${cleanName}`;
+    state.file = cleanName;
+    setCurrentFilenameLabel();
+    await saveViaApi();
+    clearPhotosBackup();
+    clearLogoBackup();
+    markDirty(false);
+    resetSessionQuickEditState();
+    resetSponsorQuickEditState();
+    markSessionDirty(false);
+    markSponsorDirty(false);
+    capturePersistedSnapshot();
+    clearRecoverySnapshot();
+    showSaveToast();
+    return;
+  }
+
   if (typeof window.showSaveFilePicker !== 'function') {
     exportDataset();
     markDirty(false);
@@ -3981,6 +4071,20 @@ async function saveAsDataset() {
 
 async function saveDataset() {
   if (!state.dataset) return;
+  if (isApiMode()) {
+    await saveViaApi();
+    clearPhotosBackup();
+    clearLogoBackup();
+    markDirty(false);
+    resetSessionQuickEditState();
+    resetSponsorQuickEditState();
+    markSessionDirty(false);
+    markSponsorDirty(false);
+    capturePersistedSnapshot();
+    clearRecoverySnapshot();
+    showSaveToast();
+    return;
+  }
   if (!state.fileHandle) {
     if (state.projectDirHandle) {
       try {
@@ -4086,6 +4190,45 @@ function bustDatasetForPreview(dataset) {
   const clone = JSON.parse(JSON.stringify(dataset));
   walk(clone);
   return clone;
+}
+
+function isApiMode() {
+  return Boolean(state.apiEndpoint);
+}
+
+async function saveViaApi() {
+  const filename = outputBasename(state.outputPath) || state.file;
+  if (!filename) throw new Error('No output filename configured.');
+  const res = await fetch(`${state.apiEndpoint}/api/data/${encodeURIComponent(filename)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: datasetJsonText(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+}
+
+async function uploadViaApi(file, relativePath) {
+  const form = new FormData();
+  form.append('file', file, file.name || 'upload');
+  form.append('targetPath', relativePath.replace(/^\.\//, ''));
+  const res = await fetch(`${state.apiEndpoint}/api/upload`, { method: 'POST', body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+}
+
+function syncApiModeUI() {
+  const dot = document.getElementById('apiStatusDot');
+  if (dot) {
+    dot.className = `ml-2 w-2 h-2 rounded-full ${isApiMode() ? 'bg-green-500' : 'bg-gray-300'} inline-block`;
+  }
+  if (els.folderConnectionToggle) {
+    els.folderConnectionToggle.classList.toggle('hidden', isApiMode());
+  }
 }
 
 function escapeHtml(value) {
@@ -4276,6 +4419,109 @@ function bindEvents() {
   const welcomeConnectBtn = document.getElementById('welcomeConnectFolder');
   if (welcomeConnectBtn) {
     welcomeConnectBtn.addEventListener('click', () => handleConnectFolder());
+  }
+
+  const welcomeApiSettingsBtn = document.getElementById('welcomeApiSettings');
+  if (welcomeApiSettingsBtn) {
+    welcomeApiSettingsBtn.addEventListener('click', () => {
+      const modal = document.getElementById('apiSettingsModal');
+      const input = document.getElementById('apiEndpointInput');
+      const result = document.getElementById('apiTestResult');
+      if (input) input.value = state.apiEndpoint;
+      if (result) { result.textContent = ''; result.className = 'text-sm hidden'; }
+      if (modal) { modal.classList.remove('hidden'); modal.setAttribute('aria-hidden', 'false'); }
+    });
+  }
+
+  const apiSettingsBtn = document.getElementById('apiSettingsBtn');
+  const apiSettingsModal = document.getElementById('apiSettingsModal');
+  const closeApiSettingsBtn = document.getElementById('closeApiSettings');
+  const apiEndpointInput = document.getElementById('apiEndpointInput');
+  const apiTestBtn = document.getElementById('apiTestBtn');
+  const apiSaveBtn = document.getElementById('apiSaveBtn');
+  const apiClearBtn = document.getElementById('apiClearBtn');
+  const apiTestResult = document.getElementById('apiTestResult');
+
+  if (apiSettingsBtn && apiSettingsModal) {
+    const openApiModal = () => {
+      if (apiEndpointInput) apiEndpointInput.value = state.apiEndpoint;
+      if (apiTestResult) { apiTestResult.textContent = ''; apiTestResult.className = 'text-sm hidden'; }
+      apiSettingsModal.classList.remove('hidden');
+      apiSettingsModal.setAttribute('aria-hidden', 'false');
+    };
+    const closeApiModal = () => {
+      apiSettingsModal.classList.add('hidden');
+      apiSettingsModal.setAttribute('aria-hidden', 'true');
+    };
+
+    apiSettingsBtn.addEventListener('click', openApiModal);
+    if (closeApiSettingsBtn) closeApiSettingsBtn.addEventListener('click', closeApiModal);
+    apiSettingsModal.addEventListener('click', (e) => { if (e.target === apiSettingsModal) closeApiModal(); });
+
+    if (apiTestBtn && apiEndpointInput && apiTestResult) {
+      apiTestBtn.addEventListener('click', async () => {
+        const endpoint = apiEndpointInput.value.trim().replace(/\/$/, '');
+        if (!endpoint) {
+          apiTestResult.textContent = 'Enter an endpoint URL first.';
+          apiTestResult.className = 'text-sm text-yellow-600';
+          return;
+        }
+        apiTestBtn.disabled = true;
+        apiTestResult.textContent = 'Testing…';
+        apiTestResult.className = 'text-sm text-gray-500';
+        try {
+          const res = await fetch(`${endpoint}/api/health`);
+          if (res.ok) {
+            apiTestResult.textContent = 'Connected successfully.';
+            apiTestResult.className = 'text-sm text-green-600';
+          } else {
+            apiTestResult.textContent = `Server responded with HTTP ${res.status}.`;
+            apiTestResult.className = 'text-sm text-red-600';
+          }
+        } catch (e) {
+          apiTestResult.textContent = `Could not connect: ${e.message}`;
+          apiTestResult.className = 'text-sm text-red-600';
+        }
+        apiTestBtn.disabled = false;
+      });
+    }
+
+    if (apiSaveBtn && apiEndpointInput) {
+      apiSaveBtn.addEventListener('click', async () => {
+        const endpoint = apiEndpointInput.value.trim().replace(/\/$/, '');
+        state.apiEndpoint = endpoint;
+        if (endpoint) {
+          localStorage.setItem('editorApiEndpoint', endpoint);
+        } else {
+          localStorage.removeItem('editorApiEndpoint');
+        }
+        syncApiModeUI();
+        setFolderConnectionButtonState();
+        closeApiModal();
+        if (endpoint && !state.dataset) {
+          await renderDatasetOptionsFromConnectedFolder();
+          setDatasetLoadingEnabled(true);
+          syncWelcomePanel();
+        }
+      });
+    }
+
+    if (apiClearBtn) {
+      apiClearBtn.addEventListener('click', () => {
+        if (apiEndpointInput) apiEndpointInput.value = '';
+        state.apiEndpoint = '';
+        localStorage.removeItem('editorApiEndpoint');
+        syncApiModeUI();
+        setFolderConnectionButtonState();
+        closeApiModal();
+        if (!state.dataset) {
+          renderDatasetOptionsFromConnectedFolder().then(() => {
+            setDatasetLoadingEnabled(!!(state.projectDirHandle && state.folderConnectedInSession));
+            syncWelcomePanel();
+          });
+        }
+      });
+    }
   }
 
   if (els.previewDataset) {
@@ -4658,10 +4904,11 @@ async function init() {
   if (els.editorSearchEvents) {
     els.editorSearchEvents.addEventListener('click', openEventSearchModal);
   }
-  // Require explicit "Connect Folder" each session before loading datasets.
-  // We keep stored handles for save-linking, but do not auto-activate folder loading.
+  // In API mode, populate select from catalog and enable loading immediately.
+  // In FS mode, require explicit "Connect Folder" each session.
   await renderDatasetOptionsFromConnectedFolder();
-  setDatasetLoadingEnabled(false);
+  setDatasetLoadingEnabled(isApiMode());
+  syncApiModeUI();
   bindEvents();
   markDirty(false);
   resetSessionQuickEditState();
