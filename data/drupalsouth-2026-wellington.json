@@ -428,7 +428,7 @@
         "Daniel Veza"
       ],
       "full_description": "The session addresses limitations of traditional keyword search by introducing semantic search capabilities. \"Semantic search improves relevance by understanding intent, meaning and context, while Retrieval-Augmented Generation (RAG) goes a step further by transforming search results into clear, human friendly answers.\" The presentation covers practical implementation using OpenSearch and Skpr, including content indexing, embedding generation, result retrieval, and RAG-powered summarization that can \"summarise multiple documents, highlight key themes, and reduce information overload, while staying grounded in the indexed content.\"",
-      "video_url": "",
+      "video_url": "https://youtu.be/MBI1txvV85I",
       "sponsorIds": ""
     },
     {
@@ -560,7 +560,7 @@
         "Jason Kiss"
       ],
       "full_description": "The session explores CWAC (Centralised Web Accessibility Checker), an open-source tool developed by New Zealand's Chief Digital Officer. This software \"scans websites for accessibility issues to help ensure that government web content can be used by disabled people.\" The presentation covers CWAC's focus on Web Content Accessibility Guidelines (WCAG) 2.2 compliance, its community-driven development model, and how scan results are published as open data. A key discussion point involves the challenge of \"presenting and translating the results into action for agencies.\"",
-      "video_url": "",
+      "video_url": "https://youtu.be/V5US0ul_Qow",
       "sponsorIds": ""
     },
     {
@@ -626,7 +626,7 @@
         "Ian Laslett"
       ],
       "full_description": "The session explores how Australian and New Zealand governments leverage Drupal for citizen-centered digital services despite budget constraints. Topics include governance models, multisite management, security considerations, and organizational capabilities needed for enterprise-scale platform success.",
-      "video_url": "",
+      "video_url": "https://youtu.be/QQAiDNLAWxg",
       "sponsorIds": ""
     },
     {
@@ -692,7 +692,7 @@
         "Alex Matthews"
       ],
       "full_description": "The presentation advocates for close collaboration between government leaders and development teams to maximize agile delivery benefits. The speaker contends that \"separation: between business cases, clients, project managers, developers, and expectations\" undermines waterfall projects. Using New Zealand government case studies, the session demonstrates how cross-disciplinary teamwork, risk-taking, and rapid testing enable effective digital transformation. Examples include HQSC's Health Measures Library, Department of Conservation's Smart Weed Alert Tool, and proof-of-concept initiatives within traditional government programs.",
-      "video_url": "",
+      "video_url": "https://youtu.be/HIF3AgA7j_A",
       "sponsorIds": ""
     },
     {
@@ -745,7 +745,7 @@
         "Emily Mills"
       ],
       "full_description": "The session addresses how discovery workshops can be designed to \"directly inform development decisions, content and UI—not just high-level ideas.\" Emily demonstrates techniques for \"turning discovery outputs into actionable inputs\" for Drupal projects, covering workshop planning, facilitation strategies, and practical activities that produce \"build-ready outcomes\" rather than vague discussions.",
-      "video_url": "",
+      "video_url": "https://youtu.be/cNiHOQwUHGo",
       "sponsorIds": ""
     },
     {
@@ -782,7 +782,7 @@
         "Simon Hobbs"
       ],
       "full_description": "The session explores using Drupal as the operational backend powering Shopify storefronts. Rather than deploying multiple custom Shopify apps with separate React frontends and Node backends, this approach consolidates business logic in Drupal, which handles operations while Shopify manages storefront, checkout, and payments. The speaker demonstrates how The Diggers Club implements this strategy for specialized processes like custom picking/quarantine workflows and seed packet label generation. The talk covers integration strategies, user experience optimization, and leveraging existing Drupal capabilities to reduce system complexity.",
-      "video_url": "",
+      "video_url": "https://youtu.be/A3xox7WIfFM",
       "sponsorIds": ""
     },
     {
@@ -1328,7 +1328,7 @@
         "Janna Malikova"
       ],
       "full_description": "The presentation addresses how organizations must adapt their web infrastructure as AI agents comprise approximately half of incoming traffic. Rather than traditional SEO practices, the focus shifts toward presenting content in machine-readable formats suitable for autonomous systems and language models. Key topics include distinguishing agent traffic, restructuring content delivery, supporting dual experiences for human users versus data streams, and strategic decisions around embracing AI agent access. The four main discussion points: (1) identifying and separating agent traffic, (2) balancing website modifications with structured markdown and specialized endpoints, (3) creating parallel experiences for humans and machines, (4) deciding whether to block or welcome agent traffic.",
-      "video_url": "",
+      "video_url": "https://youtu.be/v0qa4A7UeLY",
       "sponsorIds": ""
     },
     {
@@ -1394,7 +1394,7 @@
         "Millie Clery"
       ],
       "full_description": "The session examines how AI is subtly transforming digital interfaces. \"AI is introducing a quiet shift in how digital interfaces behave\" with systems that anticipate user needs and adapt content proactively. The talk covers practical guidance for designers and developers creating AI-assisted experiences while maintaining clarity, trustworthiness, and accessibility in Drupal environments.",
-      "video_url": "",
+      "video_url": "https://youtu.be/WXsF5ub8Wvs",
       "sponsorIds": ""
     },
     {
