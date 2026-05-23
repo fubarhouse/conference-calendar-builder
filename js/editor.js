@@ -178,13 +178,6 @@ const SESSION_FIELDS = [
   { key: 'duration', label: 'Session duration', description: 'Calculated automatically from the start and end time.', type: 'text' },
   { key: 'track', label: 'Track or topic', description: 'Use commas to separate multiple tracks or topics.', type: 'text' },
   { key: 'speakers', label: 'Speaker names', description: 'Use commas or new lines to separate multiple speakers.', type: 'textarea', span: 2 },
-  {
-    key: 'speaker_usernames',
-    label: 'Speaker Drupal.org usernames',
-    description: 'Optional profile usernames. Use commas or new lines to match multiple speakers.',
-    type: 'textarea',
-    span: 2
-  },
   { key: 'full_description', label: 'Session description', description: 'The full public description. Markdown formatting is supported.', type: 'textarea', span: 2 },
   { key: 'sponsorIds', label: 'Sponsors', description: 'Sponsors associated with this session.', type: 'sponsors', span: 2 },
   { key: 'link', label: 'Session page URL', description: 'The original or canonical web page for this session.', type: 'text', span: 2 },
@@ -272,7 +265,7 @@ const els = {
   showTimelineTab: document.getElementById('showTimelineTab'),
   timelineWorkspacePanel: document.getElementById('timelineWorkspacePanel'),
   timelineCanvas: document.getElementById('timelineCanvas'),
-  timelineSaveBtn: document.getElementById('timelineSaveBtn'),
+
   sponsorSessionPickerModal: document.getElementById('sponsorSessionPickerModal'),
   sponsorSessionPickerList: document.getElementById('sponsorSessionPickerList'),
   sponsorSessionPickerCount: document.getElementById('sponsorSessionPickerCount'),
@@ -406,21 +399,7 @@ async function resolveFileHandleFromProjectDir(pathValue) {
 }
 
 async function connectProjectFolder() {
-  if (typeof window.showDirectoryPicker !== 'function') {
-    const modal = document.getElementById('apiSettingsModal');
-    const input = document.getElementById('apiEndpointInput');
-    const result = document.getElementById('apiTestResult');
-    if (modal) {
-      if (input) input.value = state.apiEndpoint;
-      if (result) {
-        result.textContent = 'Folder access is not supported in this browser. Connect to the API server instead — run npm start or docker compose up, then enter the URL below.';
-        result.className = 'text-sm text-yellow-600';
-      }
-      modal.classList.remove('hidden');
-      modal.setAttribute('aria-hidden', 'false');
-    }
-    return;
-  }
+  if (!isFolderPickerSupported()) return;
   const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
   state.projectDirHandle = handle;
   state.folderConnectedInSession = true;
@@ -531,7 +510,6 @@ function setEditorButtonsEnabled(enabled) {
   if (els.previewDataset) els.previewDataset.disabled = !enabled;
   if (els.previewDatasetToggle) els.previewDatasetToggle.disabled = !enabled;
   if (els.revertDataset) els.revertDataset.disabled = true;
-  if (els.timelineSaveBtn) els.timelineSaveBtn.disabled = !enabled;
   if (els.saveSession) els.saveSession.disabled = !enabled || state.selectedIndex < 0;
   els.addSession.disabled = !enabled;
   els.deleteSession.disabled = !enabled || state.selectedIndex < 0;
@@ -614,17 +592,42 @@ function setQuickSponsorEditEnabled(enabled) {
   renderSponsorForm();
 }
 
+function isFolderPickerSupported() {
+  return typeof window.showDirectoryPicker === 'function';
+}
+
 function setFolderConnectionButtonState() {
-  if (!els.folderConnectionToggle) return;
+  const welcomeBtn = document.getElementById('welcomeConnectFolder');
+  const unsupportedTitle = 'Folder access is not supported in this browser — use the API server instead';
+
   if (isApiMode()) {
-    els.folderConnectionToggle.classList.add('hidden');
+    if (els.folderConnectionToggle) els.folderConnectionToggle.classList.add('hidden');
     return;
   }
-  els.folderConnectionToggle.classList.remove('hidden');
-  if (state.folderConnectedInSession && state.projectDirHandle) {
-    els.folderConnectionToggle.innerHTML = '<i class="fas fa-unlink mr-2"></i>Disconnect folder';
-  } else {
-    els.folderConnectionToggle.innerHTML = '<i class="fas fa-folder-open mr-2"></i>Open project folder';
+
+  if (els.folderConnectionToggle) {
+    els.folderConnectionToggle.classList.remove('hidden');
+    if (!isFolderPickerSupported()) {
+      els.folderConnectionToggle.disabled = true;
+      els.folderConnectionToggle.title = unsupportedTitle;
+      els.folderConnectionToggle.innerHTML = '<i class="fas fa-folder-open mr-2"></i>Connect Folder';
+    } else {
+      els.folderConnectionToggle.disabled = false;
+      els.folderConnectionToggle.title = '';
+      els.folderConnectionToggle.innerHTML = state.folderConnectedInSession && state.projectDirHandle
+        ? '<i class="fas fa-unlink mr-2"></i>Disconnect folder'
+        : '<i class="fas fa-folder-open mr-2"></i>Open project folder';
+    }
+  }
+
+  if (welcomeBtn) {
+    if (!isFolderPickerSupported()) {
+      welcomeBtn.disabled = true;
+      welcomeBtn.title = unsupportedTitle;
+    } else {
+      welcomeBtn.disabled = false;
+      welcomeBtn.title = '';
+    }
   }
 }
 
@@ -856,7 +859,6 @@ function markDirty(nextDirty = true) {
   els.dirtyState.dataset.dirty = String(nextDirty);
   els.saveDataset.classList.toggle('is-dirty', nextDirty);
   els.saveDataset.title = nextDirty ? 'Save changes (Ctrl+S)' : 'No unsaved changes';
-  if (els.timelineSaveBtn) els.timelineSaveBtn.classList.toggle('is-dirty', nextDirty);
   if (els.revertDataset) {
     els.revertDataset.disabled = !nextDirty || !state.persistedSnapshot;
   }
@@ -877,17 +879,25 @@ function syncWelcomePanel() {
     ? !state.dataset
     : (!state.folderConnectedInSession || !state.projectDirHandle) && !state.dataset;
   if (show) {
-    if (isApiMode()) {
-      document.getElementById('welcomeScreen1')?.classList.add('hidden');
-      showWelcomeScreen2();
-    } else {
-      document.getElementById('welcomeScreen1')?.classList.remove('hidden');
-      document.getElementById('welcomeScreen2')?.classList.add('hidden');
-    }
+    document.getElementById('welcomeScreen1')?.classList.remove('hidden');
+    document.getElementById('welcomeScreen2')?.classList.add('hidden');
+    syncWelcomeScreen1State();
   }
   els.welcome.classList.toggle('hidden', !show);
   els.welcome.setAttribute('aria-hidden', String(!show));
   document.body.classList.toggle('session-modal-open', show);
+}
+
+function syncWelcomeScreen1State() {
+  const row = document.getElementById('welcomeApiConnectedRow');
+  const label = document.getElementById('welcomeApiConnectedLabel');
+  if (!row) return;
+  if (isApiMode()) {
+    if (label) label.textContent = state.apiEndpoint;
+    row.classList.remove('hidden');
+  } else {
+    row.classList.add('hidden');
+  }
 }
 
 function closeWelcomeModal() {
@@ -1641,6 +1651,7 @@ async function loadDataset(file) {
     renderTimeline(els.timelineCanvas, state.dataset, {
       markDirty: () => markDirty(true),
       trackQuickSessionChange,
+      undoPush,
       utcIsoToLocalInput,
       localInputToUtcIso,
       getEventTimezone,
@@ -2421,6 +2432,7 @@ function renderEventMetaForm() {
         renderTimeline(els.timelineCanvas, state.dataset, {
           markDirty: () => markDirty(true),
           trackQuickSessionChange,
+          undoPush,
           utcIsoToLocalInput,
           localInputToUtcIso,
           getEventTimezone,
@@ -2580,6 +2592,7 @@ function setActiveEditorTab(tab) {
       renderTimeline(els.timelineCanvas, state.dataset, {
         markDirty: () => markDirty(true),
         trackQuickSessionChange,
+        undoPush,
         utcIsoToLocalInput,
         localInputToUtcIso,
         getEventTimezone,
@@ -4444,6 +4457,22 @@ function bindEvents() {
     });
   }
 
+  const welcomeApiContinueBtn = document.getElementById('welcomeApiContinue');
+  if (welcomeApiContinueBtn) {
+    welcomeApiContinueBtn.addEventListener('click', () => showWelcomeScreen2());
+  }
+
+  const welcomeApiDisconnectBtn = document.getElementById('welcomeApiDisconnectBtn');
+  if (welcomeApiDisconnectBtn) {
+    welcomeApiDisconnectBtn.addEventListener('click', () => {
+      state.apiEndpoint = '';
+      localStorage.removeItem('editorApiEndpoint');
+      syncApiModeUI();
+      setFolderConnectionButtonState();
+      syncWelcomeScreen1State();
+    });
+  }
+
   const apiSettingsBtn = document.getElementById('apiSettingsBtn');
   const apiSettingsModal = document.getElementById('apiSettingsModal');
   const closeApiSettingsBtn = document.getElementById('closeApiSettings');
@@ -4512,7 +4541,9 @@ function bindEvents() {
         if (endpoint && !state.dataset) {
           await renderDatasetOptionsFromConnectedFolder();
           setDatasetLoadingEnabled(true);
-          syncWelcomePanel();
+          showWelcomeScreen2();
+        } else {
+          syncWelcomeScreen1State();
         }
       });
     }
@@ -4744,12 +4775,6 @@ function bindEvents() {
     });
   }
 
-  if (els.timelineSaveBtn) {
-    els.timelineSaveBtn.addEventListener('click', async () => {
-      try { await saveDataset(); } catch (e) { window.alert(e?.message || String(e)); }
-    });
-  }
-
   if (els.closeSponsorSessionPicker) {
     els.closeSponsorSessionPicker.addEventListener('click', closeSponsorSessionPicker);
   }
@@ -4903,10 +4928,15 @@ async function refreshEditorSearch() {
   if (els.editorSearchEvents) els.editorSearchEvents.disabled = false;
 }
 
+function revealPage() {
+  document.documentElement.style.opacity = '1';
+}
+
 async function init() {
   if (!isLocalhost()) {
     els.blocked.classList.remove('hidden');
     els.app.classList.add('hidden');
+    revealPage();
     return;
   }
 
@@ -4950,6 +4980,7 @@ async function init() {
   }, 30_000);
 
   syncWelcomePanel();
+  revealPage();
 }
 
 void init();

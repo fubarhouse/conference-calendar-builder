@@ -3289,10 +3289,20 @@
     font-variant-numeric: tabular-nums;
 }
 
-.tl-session-delete {
+.tl-session-actions {
     position: absolute;
     top: 3px;
     right: 3px;
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    opacity: 0;
+    transition: opacity 0.12s;
+}
+.tl-session:hover .tl-session-actions { opacity: 1; }
+
+.tl-session-delete,
+.tl-session-span-toggle {
     width: 18px;
     height: 18px;
     border-radius: 3px;
@@ -3304,11 +3314,10 @@
     justify-content: center;
     font-size: 0.6rem;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.12s, color 0.12s, background 0.12s;
+    transition: color 0.12s, background 0.12s;
 }
-.tl-session:hover .tl-session-delete { opacity: 1; }
 .tl-session-delete:hover { color: #f87171; background: rgba(248,113,113,0.12); }
+.tl-session-span-toggle:hover { color: #60a5fa; background: rgba(96,165,250,0.12); }
 
 .tl-resize-handle {
     position: absolute;
@@ -3520,18 +3529,15 @@
     cursor: grabbing;
 }
 .tl-drag-handle {
-    position: absolute;
-    top: 4px;
-    right: 22px;
-    opacity: 0;
-    font-size: 0.65rem;
-    color: rgba(255,255,255,0.5);
+    width: 14px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    color: var(--text-3);
     pointer-events: none;
-    transition: opacity 0.15s;
     line-height: 1;
-}
-.tl-session:hover .tl-drag-handle {
-    opacity: 1;
 }
 .tl-session.is-compact .tl-drag-handle {
     display: none;
@@ -3625,6 +3631,12 @@
 }
 .editor-welcome-cta:hover {
     background: #2a4259;
+}
+.editor-welcome-cta:disabled,
+.editor-welcome-cta:disabled:hover {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: #34526f;
 }
 
 /* ── Preview mode banner ─────────────────────────────────────────────────── */
@@ -3832,6 +3844,35 @@ body.has-preview-banner { padding-top: 2.25rem; }
     background: #34526f;
     color: #fff;
 }
+.editor-welcome-api-status {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 0.65rem;
+    font-size: 0.82rem;
+    color: #4ade80;
+}
+.editor-welcome-api-status.hidden { display: none; }
+.editor-welcome-api-status-label {
+    color: #9eb2c8;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.editor-welcome-cta-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: #60a5fa;
+    transition: color 0.12s;
+}
+.editor-welcome-cta-link:hover { color: #93c5fd; text-decoration: underline; }
+.editor-welcome-cta-link--danger { color: #f87171; }
+.editor-welcome-cta-link--danger:hover { color: #fca5a5; }
 .editor-welcome-search-wrap {
     position: relative;
     margin-bottom: 0.75rem;
@@ -4157,6 +4198,31 @@ body.has-preview-banner { padding-top: 2.25rem; }
 .slot-heading {
     border-left-color: rgba(0, 207, 255, 0.72) !important;
     box-shadow: -2px 0 14px rgba(0, 207, 255, 0.22) !important;
+}
+
+/* ── Neon transitions & animations ──────────────────────────────────────── */
+
+/* Event cards: border + glow glide smoothly on hover */
+.design-drupalcon .event-card-dc {
+    transition: border-color 0.25s ease, box-shadow 0.3s ease;
+}
+
+/* Day headings: slow breathing glow (barely perceptible) */
+@keyframes day-heading-breathe {
+    0%, 100% { box-shadow: 0 0 24px rgba(0, 207, 255, 0.10) !important; }
+    50%       { box-shadow: 0 0 40px rgba(0, 207, 255, 0.22) !important; }
+}
+.design-drupalcon .schedule-day-heading {
+    animation: day-heading-breathe 5s ease-in-out infinite;
+}
+
+/* Session modal card: fade + subtle lift on open */
+@keyframes modal-card-enter {
+    from { opacity: 0; transform: translateY(12px) scale(0.983); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);     }
+}
+.session-modal-overlay:not(.hidden) .session-modal-card {
+    animation: modal-card-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ── Sponsor editor sidebar ────────────────────────────────── */

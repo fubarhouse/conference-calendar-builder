@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="opacity:0">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dataset Editor - Drupal Event Schedule Builder</title>
+  <style>html{transition:opacity .15s ease}</style>
+  <noscript><style>html{opacity:1}</style></noscript>
   <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,7 +59,7 @@
           <button id="newDataset" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
             <i class="fas fa-plus mr-2"></i>New
           </button>
-          <button id="folderConnectionToggle" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+          <button id="folderConnectionToggle" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white">
             <i class="fas fa-link mr-2"></i>Connect Folder
           </button>
           <button id="apiSettingsBtn" type="button" title="Configure API server for Firefox-compatible saving" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
@@ -293,14 +295,9 @@
 
       <div id="timelineWorkspacePanel" class="hidden">
       <section class="editor-meta-accordion rounded-lg shadow-md p-4">
-        <div class="flex items-center justify-between mb-3">
-          <div>
-            <h2 class="text-lg font-semibold text-gray-100">Timeline Editor</h2>
-            <p class="text-sm text-gray-400">Drag sessions to reschedule. Click an empty slot to add. Drag the bottom handle to resize.</p>
-          </div>
-          <button id="timelineSaveBtn" type="button" class="h-9 inline-flex items-center justify-center pl-4 pr-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" disabled>
-            <i class="fas fa-floppy-disk mr-2"></i>Save
-          </button>
+        <div class="mb-3">
+          <h2 class="text-lg font-semibold text-gray-100">Timeline Editor</h2>
+          <p class="text-sm text-gray-400">Drag sessions to reschedule. Click an empty slot to add. Drag the bottom handle to resize.</p>
         </div>
         <div id="timelineCanvas"></div>
       </section>
@@ -348,6 +345,13 @@
           <button type="button" class="editor-welcome-cta-secondary" id="welcomeApiSettings">
             <i class="fas fa-server"></i>Connect to API server
           </button>
+        </div>
+        <div id="welcomeApiConnectedRow" class="hidden editor-welcome-api-status">
+          <i class="fas fa-circle-check"></i>
+          <span id="welcomeApiConnectedLabel" class="editor-welcome-api-status-label"></span>
+          <button type="button" id="welcomeApiContinue" class="editor-welcome-cta-link">Continue <i class="fas fa-arrow-right"></i></button>
+          <span class="editor-welcome-or-label">·</span>
+          <button type="button" id="welcomeApiDisconnectBtn" class="editor-welcome-cta-link editor-welcome-cta-link--danger">Disconnect</button>
         </div>
       </div>
 
