@@ -407,7 +407,18 @@ async function resolveFileHandleFromProjectDir(pathValue) {
 
 async function connectProjectFolder() {
   if (typeof window.showDirectoryPicker !== 'function') {
-    window.alert('Directory linking is not supported in this browser. Use Save As once per dataset.');
+    const modal = document.getElementById('apiSettingsModal');
+    const input = document.getElementById('apiEndpointInput');
+    const result = document.getElementById('apiTestResult');
+    if (modal) {
+      if (input) input.value = state.apiEndpoint;
+      if (result) {
+        result.textContent = 'Folder access is not supported in this browser. Connect to the API server instead — run npm start or docker compose up, then enter the URL below.';
+        result.className = 'text-sm text-yellow-600';
+      }
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+    }
     return;
   }
   const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
