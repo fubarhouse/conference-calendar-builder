@@ -1,4 +1,4 @@
-.codex
+node_modules
 cache/*
 .idea/*
 scripts/*
