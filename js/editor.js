@@ -279,6 +279,21 @@ const els = {
   closeSessionSponsorPickerBack: document.getElementById('closeSessionSponsorPickerBack')
 };
 
+// Ensure the search button is always enabled for quick event switching
+if (els.editorSearchEvents) {
+  els.editorSearchEvents.disabled = false;
+  els.editorSearchEvents.removeAttribute('disabled');
+
+  // Watch for any attempts to disable the button and immediately revert them
+  const observer = new MutationObserver(() => {
+    if (els.editorSearchEvents.disabled) {
+      els.editorSearchEvents.disabled = false;
+      els.editorSearchEvents.removeAttribute('disabled');
+    }
+  });
+  observer.observe(els.editorSearchEvents, { attributes: true, attributeFilter: ['disabled'] });
+}
+
 
 function outputBasename(pathValue) {
   const normalized = String(pathValue || '').replace(/\\/g, '/').trim();
@@ -409,7 +424,7 @@ async function connectProjectFolder() {
   setDatasetLoadingEnabled(true);
   setFolderConnectionButtonState();
   showWelcomeScreen2();
-  void refreshEditorSearch();
+  await refreshEditorSearch();
 
   const returnFile = localStorage.getItem('__editor_return_file__');
   if (returnFile) {
@@ -929,13 +944,16 @@ function showWelcomeScreen2() {
       .filter((o) => o.value.trim())
       .sort((a, b) => extractYear(b.text) - extractYear(a.text));
     eventList.innerHTML = options.length
-      ? options.map((o) => `
+      ? options.map((o) => {
+          const isHidden = o.dataset.enabled === 'false';
+          return `
           <button type="button" class="editor-welcome-event-btn" data-welcome-load="${escapeAttr(o.value)}">
             <i class="fas fa-file-code welcome-btn-icon"></i>
             <span class="welcome-btn-label">${escapeHtml(o.text)}</span>
+            ${isHidden ? '<span class="welcome-btn-hidden-badge"><i class="fas fa-eye-slash"></i> Hidden</span>' : ''}
             <i class="fas fa-chevron-right welcome-btn-arrow"></i>
-          </button>
-        `).join('')
+          </button>`;
+        }).join('')
       : '<p class="editor-welcome-empty">No event files found in this folder yet.</p>';
 
     eventList.querySelectorAll('[data-welcome-load]').forEach((btn) => {
@@ -1459,13 +1477,15 @@ async function loadDatasetMetaForGrouping(files) {
         return {
           file,
           group: getDatasetGroupName(eventMeta),
-          label: buildDatasetOptionLabel(file, eventMeta)
+          label: buildDatasetOptionLabel(file, eventMeta),
+          enabled: eventMeta.enabled !== false,
         };
       } catch {
         return {
           file,
           group: 'Other',
-          label: getManifestLabelByFile(file)
+          label: getManifestLabelByFile(file),
+          enabled: true,
         };
       }
     })
@@ -1483,14 +1503,25 @@ async function loadDatasetMetaForGroupingViaFetch(files) {
   const records = await Promise.all(
     files.map(async (file) => {
       try {
-        const res = await fetch(`./data/${file}`);
+        const url = isApiMode() ? `${state.apiEndpoint}/api/data/${encodeURIComponent(file)}` : `./data/${file}`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error();
         const parsed = await res.json();
         validateDatasetSchema(parsed, file);
-        const eventMeta = parsed && typeof parsed === 'object' ? parsed.event || {} : {};
-        return { file, group: getDatasetGroupName(eventMeta), label: buildDatasetOptionLabel(file, eventMeta) };
+        const m = parsed && typeof parsed === 'object' ? parsed.event || {} : {};
+        return {
+          file,
+          group: getDatasetGroupName(m),
+          label: buildDatasetOptionLabel(file, m),
+          enabled: m.enabled !== false,
+          designation: String(m.designation || '').trim(),
+          location: String(m.location || '').trim(),
+          year: String(m.year || '').trim(),
+          region: String(m.region || '').trim(),
+          venue: String(m.venue || '').trim(),
+        };
       } catch {
-        return { file, group: 'Other', label: getManifestLabelByFile(file) };
+        return { file, group: 'Other', label: getManifestLabelByFile(file), enabled: true, designation: '', location: '', year: '', region: '', venue: '' };
       }
     })
   );
@@ -1529,7 +1560,7 @@ async function renderDatasetOptionsFromConnectedFolder(preferred = '') {
   els.datasetSelect.innerHTML = [...groups.entries()]
     .map(([groupName, records]) => {
       const options = records
-        .map((record) => `<option value="${escapeAttr(record.file)}">${escapeHtml(record.label)}</option>`)
+        .map((record) => `<option value="${escapeAttr(record.file)}" data-enabled="${record.enabled !== false}">${escapeHtml(record.label)}</option>`)
         .join('');
       return `<optgroup label="${escapeAttr(groupName)}">${options}</optgroup>`;
     })
@@ -1601,7 +1632,7 @@ async function loadDataset(file) {
   let handle = null;
   let parsed;
   if (isApiMode()) {
-    const res = await fetch(`./data/${file}`);
+    const res = await fetch(`${state.apiEndpoint}/api/data/${encodeURIComponent(file)}`);
     if (!res.ok) throw new Error(`Failed to load ${file}: HTTP ${res.status}`);
     parsed = await res.json();
   } else {
@@ -4176,7 +4207,10 @@ async function buildSponsorEventCounts() {
     .map((e) => e.file)
     .filter((f) => f && f.endsWith('.json') && f !== 'sponsors.json');
   const results = await Promise.allSettled(
-    files.map((f) => fetch(`./data/${f}`).then((r) => r.json()))
+    files.map((f) => {
+      const url = isApiMode() ? `${state.apiEndpoint}/api/data/${encodeURIComponent(f)}` : `./data/${f}`;
+      return fetch(url).then((r) => r.json());
+    })
   );
   const counts = new Map();
   for (const result of results) {
@@ -4554,6 +4588,7 @@ function bindEvents() {
         } else {
           syncWelcomeScreen1State();
         }
+        await refreshEditorSearch();
       });
     }
 
@@ -4863,6 +4898,48 @@ function bindEvents() {
   });
 }
 
+function _mapApiSearchRecords(records) {
+  return records
+    .filter((r) => isEditorDatasetFile(r.file))
+    .map((r) => ({
+      file: r.file,
+      category: r.designation || 'Other',
+      designation: r.designation,
+      location: r.location,
+      year: r.year,
+      region: r.region,
+      venue: r.venue,
+      label: r.label,
+      enabled: r.enabled,
+    }))
+    .sort((a, b) => {
+      const ya = Number.parseInt(a.year, 10);
+      const yb = Number.parseInt(b.year, 10);
+      if (Number.isFinite(ya) && Number.isFinite(yb) && ya !== yb) return yb - ya;
+      return a.label.localeCompare(b.label);
+    });
+}
+
+async function buildApiSearchCatalog() {
+  // Fetch the file list. In API mode use the configured server endpoint
+  // (handles the case where loadEventCatalog() failed or was memoized before
+  // the API server was reachable); otherwise use a relative URL.
+  try {
+    const indexUrl = isApiMode() ? `${state.apiEndpoint}/api/data/index.json` : './data/index.json';
+    const res = await fetch(indexUrl);
+    if (!res.ok) return [];
+    const payload = await res.json();
+    const files = (Array.isArray(payload?.files) ? payload.files : [])
+      .map((e) => (typeof e === 'string' ? e : e?.file))
+      .filter((f) => f && isEditorDatasetFile(f));
+    if (files.length === 0) return [];
+    const records = await loadDatasetMetaForGroupingViaFetch(files);
+    return _mapApiSearchRecords(records);
+  } catch {
+    return [];
+  }
+}
+
 async function buildConnectedFolderSearchCatalog() {
   const files = await listDatasetFilesFromConnectedFolder();
   const dataDir = await getDataDirectoryHandle(false);
@@ -4893,6 +4970,7 @@ async function buildConnectedFolderSearchCatalog() {
           region: String(meta.region || '').trim(),
           venue: String(meta.venue || '').trim(),
           label,
+          enabled: meta.enabled !== false,
         };
       } catch {
         return null;
@@ -4911,29 +4989,33 @@ async function buildConnectedFolderSearchCatalog() {
 }
 
 async function refreshEditorSearch() {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
+  const hasFolder = state.projectDirHandle && state.folderConnectedInSession;
+
+  try {
+    const searchableEvents = hasFolder
+      ? await buildConnectedFolderSearchCatalog()
+      : await buildApiSearchCatalog();
+
+    configureEventSearch({
+      getEvents: () => searchableEvents,
+      onSelect: async (_category, file) => {
+        if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${file}`))) {
+          try {
+            els.datasetSelect.value = file;
+            await loadDataset(file);
+          } catch (error) {
+            els.datasetSelect.value = state.lastDatasetSelectValue || '';
+            window.alert(`Could not load dataset: ${error.message}`);
+          }
+        }
+      },
+    });
+  } catch (e) {
+    console.error('[refreshEditorSearch]', e);
     configureEventSearch({ getEvents: () => [], onSelect: async () => {} });
-    if (els.editorSearchEvents) els.editorSearchEvents.disabled = true;
-    return;
   }
 
-  const searchableEvents = await buildConnectedFolderSearchCatalog();
-
-  configureEventSearch({
-    getEvents: () => searchableEvents,
-    onSelect: async (_category, file) => {
-      if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${file}`))) {
-        try {
-          els.datasetSelect.value = file;
-          await loadDataset(file);
-        } catch (error) {
-          els.datasetSelect.value = state.lastDatasetSelectValue || '';
-          window.alert(`Could not load dataset: ${error.message}`);
-        }
-      }
-    },
-  });
-
+  // Always enable the search button so users can quickly access the search modal
   if (els.editorSearchEvents) els.editorSearchEvents.disabled = false;
 }
 
@@ -4959,6 +5041,7 @@ async function init() {
   await renderDatasetOptionsFromConnectedFolder();
   setDatasetLoadingEnabled(isApiMode());
   syncApiModeUI();
+  await refreshEditorSearch();
   bindEvents();
   markDirty(false);
   resetSessionQuickEditState();
