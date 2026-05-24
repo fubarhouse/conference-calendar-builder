@@ -7,7 +7,6 @@
     "region": "Europe",
     "startDate": "2019-10-28T09:00:00Z",
     "endDate": "2019-10-31T17:00:00Z",
-    "scheduleURL": "https://web.archive.org/web/20111217040036/http://paris2009.drupalcon.org/content/program-multifaceted-event-diversified-community.html",
     "venue": "Beurs van Berlage",
     "timezone": "Europe/Amsterdam",
     "columns": 3,
@@ -15,7 +14,10 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://web.archive.org/web/20111217040036/http://paris2009.drupalcon.org/content/program-multifaceted-event-diversified-community.html"
+    ]
   },
   "items": [
     {
@@ -103,7 +105,7 @@
       "track": [
         "Contribution Lounge"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-28T13:30:00Z",
@@ -211,7 +213,7 @@
       "track": [
         "Contribution Lounge"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-28T15:00:00Z",
@@ -469,7 +471,7 @@
       "track": [
         "Contribution Lounge"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-28T17:40:00Z",
@@ -524,7 +526,7 @@
       "track": [
         "Social Events"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-28T19:00:00Z",
@@ -536,7 +538,7 @@
       "track": [
         "Awards"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-29T08:45:00Z",
@@ -563,7 +565,7 @@
       "track": [
         "Contribution Lounge"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-29T10:00:00Z",
@@ -575,7 +577,7 @@
       "track": [
         "Social Events"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-29T10:45:00Z",
@@ -700,7 +702,7 @@
       "track": [
         "Contribution Lounge"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-29T10:45:00Z",
@@ -872,7 +874,7 @@
       "track": [
         "Contribution Lounge"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-29T11:45:00Z",
@@ -884,7 +886,7 @@
       "track": [
         "BoFs"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-29T12:10:00Z",
@@ -953,7 +955,7 @@
       "track": [
         "Open Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-29T13:30:00Z",
@@ -1148,7 +1150,7 @@
       "track": [
         "Open Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-29T16:15:00Z",
@@ -1194,9 +1196,6 @@
         "Alanna Burke",
         "Tara King",
         "Elli Ludwigson"
-      ],
-      "speaker_usernames": [
-        "aburke626"
       ]
     },
     {
@@ -1282,7 +1281,7 @@
       "track": [
         "BoFs"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-29T16:40:00Z",
@@ -1543,9 +1542,6 @@
       ],
       "speakers": [
         "Alanna Burke"
-      ],
-      "speaker_usernames": [
-        "aburke626"
       ]
     },
     {
@@ -1691,7 +1687,7 @@
       "track": [
         "Contribution Lounge"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-30T11:30:00Z",
@@ -1852,7 +1848,7 @@
       "track": [
         "Social Events"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-30T13:15:00Z",
@@ -1864,7 +1860,7 @@
       "track": [
         "Open Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-30T13:30:00Z",
@@ -2317,7 +2313,7 @@
       "track": [
         "BoFs"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-30T17:15:00Z",
@@ -2385,7 +2381,7 @@
       "track": [
         "Social Events"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-31T09:00:00Z",
@@ -2397,7 +2393,7 @@
       "track": [
         "Contribution Lounge"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-31T09:00:00Z",
@@ -2409,7 +2405,7 @@
       "track": [
         "Contribution Lounge"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2019-10-31T09:00:00Z",
@@ -2421,7 +2417,7 @@
       "track": [
         "Contribution Lounge"
       ],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "success",

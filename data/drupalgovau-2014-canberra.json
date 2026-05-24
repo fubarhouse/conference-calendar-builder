@@ -5,7 +5,6 @@
     "year": "2014",
     "website": "http://lanyrd.com/2014/drupalgovcbr/",
     "region": "Australia",
-    "scheduleURL": "http://lanyrd.com/2014/drupalgovcbr/schedule/",
     "venue": "National Museum of Australia, Lawson Crescent, Acton, ACT 2601, Australia",
     "timezone": "Australia/Sydney",
     "enabled": true,
@@ -207,6 +206,9 @@
         "aspect": "auto",
         "enabled": true
       }
+    ],
+    "scheduleURLs": [
+      "http://lanyrd.com/2014/drupalgovcbr/schedule/"
     ]
   },
   "items": [
@@ -218,7 +220,7 @@
       "location": "National Museum of Australia",
       "link": "http://lanyrd.com/2014/drupalgovcbr/sdcrzq/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -305,7 +307,7 @@
       "location": "National Museum of Australia",
       "link": "http://lanyrd.com/2014/drupalgovcbr/sdcrzw/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -406,7 +408,7 @@
       "location": "National Museum of Australia",
       "link": "http://lanyrd.com/2014/drupalgovcbr/sdcrzt/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -418,7 +420,7 @@
       "location": "National Museum of Australia",
       "link": "http://lanyrd.com/2014/drupalgovcbr/sdcrzr/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -447,9 +449,6 @@
       "track": [],
       "speakers": [
         "Christopher Skene"
-      ],
-      "speaker_usernames": [
-        "xtfer"
       ],
       "full_description": "aGov is a Drupal distribution created for public sector websites in Australia by PreviousNext. Since its initial releases nearly 2 years ago, aGov has been downloaded over 11k times, and reports around 300 installations and growing.\n\n This session will look at:\n\n- the history of aGov, why it was created and what needs it was trying to meet\n\n- it's current state and development priorities\n\n- the future of aGov, and where it might go in the next 2 to 3 years\n\n As part of this session, you will be able to ask questions about aGov and provide feedback or suggestions for future direction.",
       "video_url": "https://www.youtube.com/watch?v=flI_zXTUP-Q",
@@ -493,7 +492,7 @@
       "location": "DATACOM Room, National Museum of Australia",
       "link": "http://lanyrd.com/2014/drupalgovcbr/sdcrzc/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "Most web teams face one inescapable truth - content will be late.\n\n This session is about how the Australian Pesticides and Veterinary Medicines Authority got on the front foot and reworked 2.9 million words in just two months.\n\n Review, rewrite, edit, approve and publish; without cutting any corners; and with only one person to coordinate.\n\n Learn how Drupal was used to efficiently solve this problem, and why email is the wrong tool for content development.",
       "sponsorIds": ""
     },
@@ -534,7 +533,7 @@
       "location": "National Museum of Australia",
       "link": "http://lanyrd.com/2014/drupalgovcbr/sdcrzx/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -546,7 +545,7 @@
       "location": "Oxide Interactive Room, National Museum of Australia",
       "link": "http://lanyrd.com/2014/drupalgovcbr/sdcryx/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "Testing is for monkeys! So automate it.\n\n Drupal sites can be complex. With that complexity comes the increased risk of changes inadvertently breaking things. Simple changes to CSS, a template, or a minor module update can have big implications for your website.\n\n So how do you ensure that your Drupal site remains functional long term, and incorporate changes with confidence?\n\n In this talk, Iris and Mikkolo will discuss automated testing techniques:\n\n* Cross browser testing\n\n* Functional testing\n\n* Visual comparison testing\n\n We will demonstrate how to apply readily available tools such as Browserstack, Saucelabs, Selenium, PHPUnit, PhantomJS and a few others to automate this process, reduce risk and more effectively use developer time.",
       "sponsorIds": ""
     },
@@ -589,9 +588,6 @@
       "track": [],
       "speakers": [
         "Sean Hamlin"
-      ],
-      "speaker_usernames": [
-        "wiifm"
       ],
       "full_description": "Background\n\n Catalyst IT built a consultation forum as a service offering for NZ Government departments to use. It had requirements to be:\n\n * create a re-usable consultation forum\n\n* reduce flexibility and offer more of a 'canned' site\n\n*be the 'easy' option for NZ Government looking for consultations\n\n* be hosted on aegir with minimum setup effort needed.\n\n Who this session is for:\n\nBusiness managers, and Drupal developers looking to see how the initial build was done, how this functionality was abstracted into a re-usable product, and the features currently in plase and on the roadmap.\n\n This case study will show how the more tricky parts of the build were developed, and highlight modules that worked, as well as others that did not.\n\n Covered in the session:\n\n* Features currently on offer in the platform\n\n*How a forum with no login and SPAM is possible even without a captcha, this showcases a new comment scoring system soon to be opensourced\n\n*Analytics and dashboarding of real time data\n\n*How a team of forum moderators can work together\n\n*The different type of consultation types on offer, and the types of feedback that can be gathered\n\n*The impact this has around price compared to a traditional Drupal site build",
       "sponsorIds": ""

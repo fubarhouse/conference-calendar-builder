@@ -7,7 +7,6 @@
     "region": "America",
     "startDate": "2023-06-05T12:00:00Z",
     "endDate": "2023-06-08T20:00:00Z",
-    "scheduleURL": "https://events.drupal.org/pittsburgh2023/schedule",
     "venue": "David L. Lawrence Convention Center",
     "timezone": "America/New_York",
     "columns": 3,
@@ -15,7 +14,10 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://events.drupal.org/pittsburgh2023/schedule"
+    ]
   },
   "items": [
     {
@@ -177,7 +179,7 @@
       "location": "Location Expo Hall",
       "link": "https://events.drupal.org//pittsburgh2023/session/expo-hall-break-6",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-05T14:00:00Z",
@@ -201,7 +203,7 @@
       "location": "Location Spirit of Pittsburgh Ballroom",
       "link": "https://events.drupal.org//pittsburgh2023/session/opening-remarks-aaron-winborn-award-ceremony",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-05T14:45:00Z",
@@ -223,7 +225,7 @@
       "location": "Location Spirit of Pittsburgh Ballroom",
       "link": "https://events.drupal.org//pittsburgh2023/session/group-photo",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-05T16:00:00Z",
@@ -233,7 +235,7 @@
       "location": "Location Expo Hall",
       "link": "https://events.drupal.org//pittsburgh2023/session/lunch-expo-hall-break",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-05T16:30:00Z",
@@ -390,7 +392,7 @@
       "track": [
         "user experience, accessibility & design"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-05T17:30:00Z",
@@ -415,7 +417,7 @@
       "location": "Location Expo Hall",
       "link": "https://events.drupal.org//pittsburgh2023/session/expo-hall-break-7",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-05T18:30:00Z",
@@ -543,7 +545,7 @@
       "track": [
         "user experience, accessibility & design"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-05T19:00:00Z",
@@ -586,7 +588,7 @@
       "location": "Location Expo Hall",
       "link": "https://events.drupal.org//pittsburgh2023/session/expo-hall-break-8",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-05T19:50:00Z",
@@ -716,7 +718,7 @@
       "location": "Location Expo Hall",
       "link": "https://events.drupal.org//pittsburgh2023/session/welcome-reception-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-06T12:00:00Z",
@@ -726,7 +728,7 @@
       "location": "Location Main Concourse",
       "link": "https://events.drupal.org//pittsburgh2023/session/recruitment-fair-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-06T12:00:00Z",
@@ -736,7 +738,7 @@
       "location": "Location Room 326-330",
       "link": "https://events.drupal.org//pittsburgh2023/session/birds-feather-sessions-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-06T12:00:00Z",
@@ -746,7 +748,7 @@
       "location": "Location Room 408-410",
       "link": "https://events.drupal.org//pittsburgh2023/session/general-contribution-4",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-06T12:30:00Z",
@@ -756,7 +758,7 @@
       "location": "Location Main Concourse",
       "link": "https://events.drupal.org//pittsburgh2023/session/registration-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-06T13:00:00Z",
@@ -793,7 +795,7 @@
       "location": "Location Expo Hall",
       "link": "https://events.drupal.org//pittsburgh2023/session/expo-hall-break-9",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-06T15:15:00Z",
@@ -919,7 +921,7 @@
       "track": [
         "content & marketing"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-06T15:30:00Z",
@@ -959,7 +961,7 @@
       "location": "Location Expo Hall",
       "link": "https://events.drupal.org//pittsburgh2023/session/lunch-expo-hall-break-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-06T16:20:00Z",
@@ -969,7 +971,7 @@
       "location": "Location Room 403-405",
       "link": "https://events.drupal.org//pittsburgh2023/session/women-drupal-luncheon-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-06T16:30:00Z",
@@ -1149,7 +1151,7 @@
       "location": "Location Expo Hall",
       "link": "https://events.drupal.org//pittsburgh2023/session/expo-hall-break-10",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-06T18:40:00Z",
@@ -1208,9 +1210,6 @@
       ],
       "speakers": [
         "Alanna Burke (aburke626)"
-      ],
-      "speaker_usernames": [
-        "aburke626"
       ]
     },
     {
@@ -1321,7 +1320,7 @@
       "location": "Location Expo Hall",
       "link": "https://events.drupal.org//pittsburgh2023/session/expo-hall-break-11",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-06T20:10:00Z",
@@ -1483,7 +1482,7 @@
       "location": "Location Main Concourse",
       "link": "https://events.drupal.org//pittsburgh2023/session/registration-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-07T12:00:00Z",
@@ -1493,7 +1492,7 @@
       "location": "Location Room 326-330",
       "link": "https://events.drupal.org//pittsburgh2023/session/birds-feather-sessions-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-07T12:00:00Z",
@@ -1503,7 +1502,7 @@
       "location": "Location Room 403-405",
       "link": "https://events.drupal.org//pittsburgh2023/session/membership-breakfast-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-07T12:00:00Z",
@@ -1513,7 +1512,7 @@
       "location": "Location Room 408-410",
       "link": "https://events.drupal.org//pittsburgh2023/session/organized-contribution",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-07T13:00:00Z",
@@ -1543,7 +1542,7 @@
       "location": "Location Expo Hall",
       "link": "https://events.drupal.org//pittsburgh2023/session/expo-hall-break-12",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-07T14:30:00Z",
@@ -1553,7 +1552,7 @@
       "location": "Location Room 403-405",
       "link": "https://events.drupal.org//pittsburgh2023/session/first-time-contributors-workshop-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-07T14:30:00Z",
@@ -1563,7 +1562,7 @@
       "location": "Location Room 411-412",
       "link": "https://events.drupal.org//pittsburgh2023/session/mentored-contribution-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-07T16:00:00Z",
@@ -1573,7 +1572,7 @@
       "location": "Location Expo Hall",
       "link": "https://events.drupal.org//pittsburgh2023/session/lunch-expo-hall-break-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-07T16:30:00Z",
@@ -1597,7 +1596,7 @@
       "location": "Location Room 403-405",
       "link": "https://events.drupal.org//pittsburgh2023/session/first-time-contributors-workshop-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-07T17:00:00Z",
@@ -1607,7 +1606,7 @@
       "location": "Location Room 411-412",
       "link": "https://events.drupal.org//pittsburgh2023/session/mentored-contribution-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-07T18:30:00Z",
@@ -1617,7 +1616,7 @@
       "location": "Location Main Concourse",
       "link": "https://events.drupal.org//pittsburgh2023/session/coffee-break-lobby",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-07T18:30:00Z",
@@ -1641,7 +1640,7 @@
       "location": "Location Room 411-412",
       "link": "https://events.drupal.org//pittsburgh2023/session/mentored-contribution-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-08T12:00:00Z",
@@ -1651,7 +1650,7 @@
       "location": "Location Main Concourse",
       "link": "https://events.drupal.org//pittsburgh2023/session/registration-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-08T12:00:00Z",
@@ -1661,7 +1660,7 @@
       "location": "Location Room 326-330",
       "link": "https://events.drupal.org//pittsburgh2023/session/birds-feather-sessions-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-08T12:00:00Z",
@@ -1671,7 +1670,7 @@
       "location": "Location Room 408-410",
       "link": "https://events.drupal.org//pittsburgh2023/session/general-contribution-5",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-06-08T13:00:00Z",
@@ -1785,7 +1784,7 @@
       "location": "Location Main Concourse",
       "link": "https://events.drupal.org//pittsburgh2023/session/lunch-3",
       "track": [],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "success",

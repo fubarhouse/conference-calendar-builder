@@ -7,7 +7,6 @@
     "region": "Europe",
     "startDate": "2023-10-17T07:00:00Z",
     "endDate": "2023-10-20T16:00:00Z",
-    "scheduleURL": "https://events.drupal.org/lille2023/schedule",
     "venue": "Lille Grand Palais",
     "timezone": "Europe/Paris",
     "columns": 3,
@@ -15,7 +14,10 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://events.drupal.org/lille2023/schedule"
+    ]
   },
   "items": [
     {
@@ -28,7 +30,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-17T10:00:00Z",
@@ -40,7 +42,7 @@
       "track": [
         "other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-17T11:30:00Z",
@@ -66,7 +68,7 @@
       "track": [
         "other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-17T13:00:00Z",
@@ -411,7 +413,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-17T15:15:00Z",
@@ -597,7 +599,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-18T08:00:00Z",
@@ -681,7 +683,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-18T08:30:00Z",
@@ -1042,7 +1044,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-18T13:00:00Z",
@@ -1128,9 +1130,6 @@
       ],
       "speakers": [
         "Akhil Bhandari"
-      ],
-      "speaker_usernames": [
-        "akhil-bhandari"
       ]
     },
     {
@@ -1345,7 +1344,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-18T15:15:00Z",
@@ -1512,7 +1511,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-19T07:15:00Z",
@@ -1739,7 +1738,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-19T08:30:00Z",
@@ -2532,7 +2531,7 @@
       "track": [
         "other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-20T07:00:00Z",
@@ -2544,7 +2543,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-20T07:00:00Z",
@@ -2556,7 +2555,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2023-10-20T07:00:00Z",
@@ -2568,7 +2567,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "success",

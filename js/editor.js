@@ -3,6 +3,7 @@ import { formatTextBlock } from './modules/markdown.js';
 import { isLocalhost, slugify } from './modules/utils.js';
 import { configureEventSearch, openEventSearchModal } from './modules/eventSearch.js';
 import { renderTimeline } from './modules/timeline.js';
+import { validateDataset, formatValidationErrors } from './modules/validator.js';
 
 const state = {
   dataset: null,
@@ -57,7 +58,7 @@ const EVENT_META_FIELDS = [
   'region',
   'venue',
   'website',
-  'scheduleURL',
+  'scheduleURLs',
   'startDate',
   'endDate',
   'logo',
@@ -91,9 +92,9 @@ const EVENT_META_FIELD_CONFIG = {
     label: 'Event website',
     description: 'The official event website URL.'
   },
-  scheduleURL: {
-    label: 'Original schedule URL',
-    description: 'The source schedule URL used when this dataset was created or checked.'
+  scheduleURLs: {
+    label: 'Schedule URLs',
+    description: 'The source schedule URLs used when this dataset was created or checked.'
   },
   logo: {
     label: 'Event logo',
@@ -1678,7 +1679,7 @@ function createDatasetScaffold(pathValue) {
       region: '',
       venue: '',
       website: '',
-      scheduleURL: '',
+      scheduleURLs: [],
       logo: normalizeLogoObject(),
       flickr: normalizeFlickrObject(),
       sponsors: [],
@@ -2324,7 +2325,7 @@ function renderEventMetaForm() {
 
   const html = visibleFields.map((field) => {
     const config = EVENT_META_FIELD_CONFIG[field] || { label: field, description: '' };
-    const isWide = field === 'website' || field === 'scheduleURL';
+    const isWide = field === 'website' || field === 'scheduleURLs';
     const spanClass = isWide ? 'md:col-span-2 xl:col-span-3' : '';
 
     if (field === 'timezone') {
@@ -3125,7 +3126,7 @@ function renderSessionForm() {
       const key = input.dataset.sessionField;
       const raw = input.value;
 
-      if (key === 'track' || key === 'speaker_usernames' || key === 'speakers') {
+      if (key === 'track' || key === 'speakers') {
         const values = parseMultiValue(raw);
         item[key] = values.length <= 1 ? (values[0] || '') : values;
       } else if (key === 'startTime' || key === 'endTime') {
@@ -3171,9 +3172,8 @@ async function addSession() {
     endTime: seed.endTime || '',
     location: seed.location || '',
     duration: '',
-    track: seed.track || '',
-    speakers: '',
-    speaker_usernames: '',
+    track: seed.track || [],
+    speakers: [],
     full_description: '',
     sponsorIds: '',
     link: '',
@@ -4095,6 +4095,13 @@ async function saveAsDataset() {
 
 async function saveDataset() {
   if (!state.dataset) return;
+  const { valid, errors } = await validateDataset(state.dataset);
+  if (!valid) {
+    window.alert(
+      `Cannot save: dataset has ${errors.length} schema error${errors.length === 1 ? '' : 's'}.\n\n${formatValidationErrors(errors)}`
+    );
+    return;
+  }
   if (isApiMode()) {
     await saveViaApi();
     clearPhotosBackup();
@@ -4275,7 +4282,7 @@ function renderSitemap() {
   const meta = state.dataset?.event || {};
   const items = state.dataset?.items || [];
 
-  const rawUrl = String(meta.website || meta.scheduleURL || '').trim();
+  const rawUrl = String(meta.website || meta.scheduleURLs?.[0] || '').trim();
   if (!rawUrl) {
     container.innerHTML = '<p class="text-sm text-gray-400 py-4">No event website URL is configured. Set the <strong>Website</strong> field in the Event tab.</p>';
     return;
@@ -4290,7 +4297,9 @@ function renderSitemap() {
 
   const eventUrls = [];
   if (meta.website) eventUrls.push(meta.website);
-  if (meta.scheduleURL && meta.scheduleURL !== meta.website) eventUrls.push(meta.scheduleURL);
+  for (const u of meta.scheduleURLs ?? []) {
+    if (u && u !== meta.website) eventUrls.push(u);
+  }
 
   const sessionEntries = [];
   const seen = new Set(eventUrls);

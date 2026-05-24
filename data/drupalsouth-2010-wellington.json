@@ -5,7 +5,6 @@
     "year": "2010",
     "website": "http://wellington2010.drupalsouth.net.nz/",
     "region": "New Zealand – Wellington",
-    "scheduleURL": "http://wellington2010.drupalsouth.net.nz/schedule",
     "venue": "The Brewery Bar & Restaurant",
     "timezone": "Pacific/Auckland",
     "enabled": true,
@@ -207,7 +206,10 @@
         "enabled": true
       }
     ],
-    "columns": 3
+    "columns": 3,
+    "scheduleURLs": [
+      "http://wellington2010.drupalsouth.net.nz/schedule"
+    ]
   },
   "items": [
     {
@@ -220,7 +222,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -314,7 +316,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -456,7 +458,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -502,7 +504,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -532,7 +534,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -546,7 +548,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -592,7 +594,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -702,7 +704,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -796,7 +798,7 @@
       "track": [
         "Session"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "Let's help the Drupal community as it launches the latest and greatest core feature set we call version 7, by taking it for a collaborative spin.\n\nAt the same time serving our kiwi Drupal community by re-building our Drupal showcase site, currently in D5.\n\nBe part of the process of brain-storming, finding the right man (or woman) for the job, squashing bugs, contributing patches, and simply getting heads down and bums up so it gets done.\n\nNo idle chitter chatter here mates.\n\nAre you up to the challenge?\n\nWe are looking for an over-arching development team who are conversant in the inner workings of D.o to mentor others in the deployment, bug-squishing, patching process, as well as getting down and dirty themselves.\n\nThere is also a call for a team leader in the theming, wow and pizzaz department.\n\nPlease leave your ideas on what you'd like to see on New Zealand's Drupal Showcase site in the comments below.",
       "sponsorIds": ""
     },
@@ -810,7 +812,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -840,7 +842,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -870,7 +872,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -884,7 +886,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     }

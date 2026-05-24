@@ -5,7 +5,6 @@
     "year": "2012",
     "website": "https://denver2012.drupal.org/",
     "region": "America",
-    "scheduleURL": "https://denver2012.drupal.org/program/schedule",
     "venue": "Colorado Convention Center",
     "timezone": "America/Denver",
     "startDate": "2012-03-19T21:00:00Z",
@@ -15,7 +14,10 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://denver2012.drupal.org/program/schedule"
+    ]
   },
   "items": [
     {
@@ -26,7 +28,7 @@
       "location": "Room 502",
       "link": "https://denver2012.drupal.org/schedule/drupalcon-hackathon-2012",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-20T00:00:00Z",
@@ -36,7 +38,7 @@
       "location": "Mile High Ballroom",
       "link": "https://denver2012.drupal.org/schedule/opening-reception-sponsored-cadre-web-hosting",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-20T14:00:00Z",
@@ -61,7 +63,7 @@
       "location": "Wells Fargo Theater",
       "link": "https://denver2012.drupal.org/keynote/dries-buytaert",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-20T16:45:00Z",
@@ -178,7 +180,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-20T16:45:00Z",
@@ -216,7 +218,7 @@
       "location": "Hall A",
       "link": "https://denver2012.drupal.org/schedule/lunch-tues",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-20T19:00:00Z",
@@ -342,7 +344,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-20T20:15:00Z",
@@ -473,7 +475,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-20T21:45:00Z",
@@ -588,7 +590,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-20T21:45:00Z",
@@ -702,7 +704,7 @@
       "track": [
         "Drupal community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-20T23:00:00Z",
@@ -728,7 +730,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-20T23:00:00Z",
@@ -768,7 +770,7 @@
       "location": "Wells Fargo Theater",
       "link": "https://denver2012.drupal.org/keynote/mitchell-baker",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-21T16:45:00Z",
@@ -898,7 +900,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-21T16:45:00Z",
@@ -922,7 +924,7 @@
       "location": "Hall A",
       "link": "https://denver2012.drupal.org/schedule/lunch-wed",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-21T19:00:00Z",
@@ -936,9 +938,6 @@
       ],
       "speakers": [
         "Allie Micka"
-      ],
-      "speaker_usernames": [
-        "allie"
       ]
     },
     {
@@ -1052,7 +1051,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-21T20:15:00Z",
@@ -1166,7 +1165,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-21T20:15:00Z",
@@ -1296,7 +1295,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-21T21:45:00Z",
@@ -1424,7 +1423,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-21T23:00:00Z",
@@ -1448,7 +1447,7 @@
       "location": "Wells Fargo Theater",
       "link": "https://denver2012.drupal.org/keynote/luke-wroblewski",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-22T15:30:00Z",
@@ -1460,7 +1459,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-22T16:45:00Z",
@@ -1587,7 +1586,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-22T17:45:00Z",
@@ -1597,7 +1596,7 @@
       "location": "Hall A",
       "link": "https://denver2012.drupal.org/schedule/lunch-thurs",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-22T17:45:00Z",
@@ -1609,7 +1608,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-22T19:00:00Z",
@@ -1741,7 +1740,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-22T19:30:00Z",
@@ -1753,7 +1752,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-22T20:15:00Z",
@@ -1865,7 +1864,7 @@
       "track": [
         "Day Stage"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-22T20:15:00Z",
@@ -1889,7 +1888,7 @@
       "location": "Wells Fargo Theater",
       "link": "https://denver2012.drupal.org/schedule/closing-plenary",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-22T23:00:00Z",
@@ -1899,7 +1898,7 @@
       "location": "Drupal Association Room 602",
       "link": "https://denver2012.drupal.org/schedule/drupal-association-board-meeting",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2012-03-23T03:00:00Z",
@@ -1909,7 +1908,7 @@
       "location": "Trellon Room 401",
       "link": "https://denver2012.drupal.org/schedule/trivia-night",
       "track": [],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "success",

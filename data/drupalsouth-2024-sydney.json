@@ -7,7 +7,6 @@
     "region": "Australia – Sydney",
     "endDate": "2024-03-22T04:00:00Z",
     "startDate": "2024-03-19T21:00:00Z",
-    "scheduleURL": "https://drupalsouth.org/events/drupalsouth-sydney-2024/schedule",
     "venue": "Sydney Masonic Centre",
     "timezone": "Australia/Sydney",
     "enabled": true,
@@ -233,7 +232,10 @@
         "enabled": true
       }
     ],
-    "columns": 3
+    "columns": 3,
+    "scheduleURLs": [
+      "https://drupalsouth.org/events/drupalsouth-sydney-2024/schedule"
+    ]
   },
   "items": [
     {
@@ -246,7 +248,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-14"
@@ -261,7 +263,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -276,7 +278,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -308,7 +310,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -375,7 +377,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -442,7 +444,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -477,9 +479,6 @@
       "speakers": [
         "Sean Hamlin"
       ],
-      "speaker_usernames": [
-        "wiifm"
-      ],
       "full_description": "Following on from the session back in Drupalsouth Brisbane 2022 (blog post at https://www.pixelite.co.nz/article/drupal-and-the-open-web-in-the-australian-government-2022/ ) , this session will review the CMS landscape in the Australian government in 2024.\n\nThe presentation will focus on the movers and shakers in the CMS landscape, find out which high profile government departments are moving to Drupal, or away from it.\n\nAs in 2022, a state by state breakdown will be done, and we can even compare the total amount of Drupal running in each state, through a lens of PageRank. We will be able to see which states (and at the federal level) are making a broader adoption of Drupal.",
       "video_url": "https://youtu.be/Gfb5Zc-F4e0",
       "sponsorIds": ""
@@ -512,7 +511,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -578,7 +577,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -630,9 +629,6 @@
       "speakers": [
         "Chris Burgess"
       ],
-      "speaker_usernames": [
-        "xurizaemon"
-      ],
       "full_description": "Composability is a long-term trend that Drupal has had at its core for a long time. The Recipes initiative, one of Drupal's core strategic initiatives, is a vision for creating bundles of functionality to build with.\n\nWe'll look at some practical examples for Recipes, compare with how you might be tackling these challenges today, consider common challenges of re-use between projects and where Recipes fits best in the developer's toolkit, and see what Recipes has in store for building Drupal sites in the future.",
       "video_url": "https://youtu.be/oQTKCvqaBZk",
       "sponsorIds": ""
@@ -665,7 +661,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -731,7 +727,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -746,7 +742,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-13"
@@ -761,7 +757,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-10"
@@ -776,7 +772,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -791,7 +787,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -806,7 +802,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -838,7 +834,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -905,7 +901,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -971,7 +967,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1037,7 +1033,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1048,9 +1044,8 @@
       "endTime": "2024-03-21T02:15:00Z",
       "location": "",
       "duration": "P60M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "sponsor-1",
       "link": "https://drupalsouth.org/drupalsouths-got-talent-gameshow-1000-grabs",
@@ -1118,7 +1113,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1136,9 +1131,6 @@
       "speakers": [
         "Ivan Zugec"
       ],
-      "speakers_usernames": [
-        "zugec"
-      ],
       "full_description": "Webform is a native form builder for Drupal. It offers a powerful user interface for building forms and managing their fields.\n\nWebform can create a contact us form, all the way to a complex multi-page form with conditional field logic.\n\nIn this session, you'll learn the following:\n\n- Introduction to Webform\n\n- Contact a form\n\n- Manage fields on the form\n\n- Add conditional logic to fields\n\n- Add confirmation step\n\n- Manage submissions\n\n- Embed forms into pages\n\nBy the end, you'll have the necessary skills to build custom forms directly within Drupal.",
       "video_url": "https://youtu.be/dJ6WswsaAWI",
       "sponsorIds": ""
@@ -1155,9 +1147,6 @@
       ],
       "speakers": [
         "Karl Hepworth"
-      ],
-      "speaker_usernames": [
-        "fubarhouse"
       ],
       "full_description": "Docker is a large and evolving open-source project.\n\nIn recent times, agencies have been hit hard with licensing changes preventing them from being able to use, develop, and manage all of their projects on existing contracts - this change is systemic!\n\nIn this talk, we explore the state of Docker for local development, its alternatives in detail, and how each would work with your workflow. We will also explore the architecture of each of these solutions.\n\nIt's aimed at technical users who have or will lose control over their working environment due to these licensing changes, such as enterprise users, government, and small businesses. We will work to help you regain control and access to your projects in your local environment.",
       "video_url": "https://youtu.be/SxBA4I57WPA",
@@ -1210,9 +1199,6 @@
       "speakers": [
         "Murray Woodman"
       ],
-      "speaker_usernames": [
-        "murrayw"
-      ],
       "full_description": "Each project brings its own challenges and learnings. Success comes from repeating the good, fixing the bad and avoiding the ugly. That's the theory anyway.\n\nThis presentation takes a lighthearted look back over hundreds of Drupal projects and will analyse them through the lense of the burn up chart. The jagged line tells a story of wins and losses, successes and failures, profit and loss. Along the way a lot of lessons have been learnt and no doubt missed as well. The presenter will provide some insights into some of the lowlights and highlights of delivering Drupal projects.\n\nThe session is suitable for business owners, project managers, developers and clients alike. There should be something relatable in it for everyone.",
       "video_url": "https://youtu.be/Anr1Ebh_xRE",
       "sponsorIds": ""
@@ -1227,7 +1213,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1294,7 +1280,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1309,7 +1295,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1324,7 +1310,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1339,7 +1325,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""

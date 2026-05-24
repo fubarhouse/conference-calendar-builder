@@ -5,7 +5,6 @@
     "year": "2013",
     "website": "https://portland2013.drupal.org/",
     "region": "America",
-    "scheduleURL": "https://portland2013.drupal.org/program/schedule",
     "venue": "Oregon Convention Center",
     "timezone": "America/Los_Angeles",
     "startDate": "2013-05-20T16:00:00Z",
@@ -15,7 +14,10 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://portland2013.drupal.org/program/schedule"
+    ]
   },
   "items": [
     {
@@ -26,7 +28,7 @@
       "location": "",
       "link": "https://portland2013.drupal.org/cxo.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T16:00:00Z",
@@ -270,7 +272,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -280,7 +282,7 @@
       "location": "",
       "link": "https://portland2013.drupal.org/cxo.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -290,7 +292,7 @@
       "location": "OR204 - Blackmesh",
       "link": "https://portland2013.drupal.org/node/3673.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -300,7 +302,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3663.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -310,7 +312,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3728.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -320,7 +322,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3723.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -330,7 +332,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3693.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -340,7 +342,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3668.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -350,7 +352,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3708.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -360,7 +362,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3703.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -370,7 +372,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3713.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -380,7 +382,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3718.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -390,7 +392,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3648.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -400,7 +402,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3688.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -410,7 +412,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3678.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -420,7 +422,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3698.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T17:45:00Z",
@@ -430,7 +432,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3683.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T18:45:00Z",
@@ -440,7 +442,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -450,7 +452,7 @@
       "location": "",
       "link": "https://portland2013.drupal.org/cxo.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -460,7 +462,7 @@
       "location": "OR204 - Blackmesh",
       "link": "https://portland2013.drupal.org/node/3673.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -470,7 +472,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3663.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -480,7 +482,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3728.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -490,7 +492,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3723.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -500,7 +502,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3693.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -510,7 +512,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3668.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -520,7 +522,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3708.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -530,7 +532,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3703.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -540,7 +542,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3713.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -550,7 +552,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3718.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -560,7 +562,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3648.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -570,7 +572,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3688.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -580,7 +582,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3678.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -590,7 +592,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3698.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T20:00:00Z",
@@ -600,7 +602,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3683.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -610,7 +612,7 @@
       "location": "",
       "link": "https://portland2013.drupal.org/cxo.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -620,7 +622,7 @@
       "location": "OR204 - Blackmesh",
       "link": "https://portland2013.drupal.org/node/3673.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -630,7 +632,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3663.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -640,7 +642,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3728.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -650,7 +652,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3723.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -660,7 +662,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3693.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -670,7 +672,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3668.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -680,7 +682,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3708.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -690,7 +692,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3703.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -700,7 +702,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3713.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -710,7 +712,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3718.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -720,7 +722,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3648.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -730,7 +732,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3688.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -740,7 +742,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3678.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -750,7 +752,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3698.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T21:15:00Z",
@@ -760,7 +762,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3683.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:15:00Z",
@@ -770,7 +772,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -780,7 +782,7 @@
       "location": "OR204 - Blackmesh",
       "link": "https://portland2013.drupal.org/node/3673.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -790,7 +792,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3663.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -800,7 +802,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3728.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -810,7 +812,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3723.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -820,7 +822,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3693.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -830,7 +832,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3668.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -840,7 +842,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3708.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -850,7 +852,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3703.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -860,7 +862,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3713.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -870,7 +872,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3718.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -880,7 +882,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3648.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -890,7 +892,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3688.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -900,7 +902,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3678.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -910,7 +912,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3698.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-20T22:45:00Z",
@@ -920,7 +922,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3683.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -930,7 +932,7 @@
       "location": "OR204 - Blackmesh",
       "link": "https://portland2013.drupal.org/node/3673.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -940,7 +942,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3663.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -950,7 +952,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3728.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -960,7 +962,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3723.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -970,7 +972,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3693.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -980,7 +982,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3668.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -990,7 +992,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3708.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -1000,7 +1002,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3703.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -1010,7 +1012,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3713.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -1020,7 +1022,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3718.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -1030,7 +1032,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3648.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -1040,7 +1042,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3688.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -1050,7 +1052,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3678.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -1060,7 +1062,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3698.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T00:00:00Z",
@@ -1070,7 +1072,7 @@
       "location": "Room TBA",
       "link": "https://portland2013.drupal.org/node/3683.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T16:00:00Z",
@@ -1195,7 +1197,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T17:15:00Z",
@@ -1364,7 +1366,7 @@
       "location": "Hall A",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T19:45:00Z",
@@ -1374,7 +1376,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T20:00:00Z",
@@ -1384,7 +1386,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-21T21:00:00Z",
@@ -1684,7 +1686,7 @@
       "location": "Hall A",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-22T17:15:00Z",
@@ -1694,7 +1696,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-22T17:45:00Z",
@@ -1853,7 +1855,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-22T20:00:00Z",
@@ -1884,9 +1886,6 @@
       ],
       "speakers": [
         "Chris Skene"
-      ],
-      "speaker_usernames": [
-        "xtfer"
       ]
     },
     {
@@ -2143,7 +2142,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-22T22:45:00Z",
@@ -2440,7 +2439,7 @@
       "location": "Hall A",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-23T17:15:00Z",
@@ -2450,7 +2449,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-23T17:45:00Z",
@@ -2592,7 +2591,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-23T20:00:00Z",
@@ -2867,7 +2866,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-23T22:45:00Z",
@@ -2877,7 +2876,7 @@
       "location": "Time",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-23T22:45:00Z",
@@ -2887,7 +2886,7 @@
       "location": "Hall A",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T00:00:00Z",
@@ -2897,7 +2896,7 @@
       "location": "Time",
       "link": "https://portland2013.drupal.org/pinball-pub-crawl.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T04:00:00Z",
@@ -2907,7 +2906,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T16:00:00Z",
@@ -2917,7 +2916,7 @@
       "location": "",
       "link": "https://portland2013.drupal.org/node/3558.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T16:00:00Z",
@@ -2927,7 +2926,7 @@
       "location": "B113-116",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T16:00:00Z",
@@ -2937,7 +2936,7 @@
       "location": "A105-A106",
       "link": "https://portland2013.drupal.org/node/3583.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T16:00:00Z",
@@ -2947,7 +2946,7 @@
       "location": "B117-119",
       "link": "https://portland2013.drupal.org/node/3563.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T17:15:00Z",
@@ -2957,7 +2956,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T17:45:00Z",
@@ -2967,7 +2966,7 @@
       "location": "",
       "link": "https://portland2013.drupal.org/node/3558.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T17:45:00Z",
@@ -2977,7 +2976,7 @@
       "location": "B113-116",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T17:45:00Z",
@@ -2987,7 +2986,7 @@
       "location": "A105-A106",
       "link": "https://portland2013.drupal.org/node/3583.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T17:45:00Z",
@@ -2997,7 +2996,7 @@
       "location": "B117-119",
       "link": "https://portland2013.drupal.org/node/3563.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T20:00:00Z",
@@ -3007,7 +3006,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T20:00:00Z",
@@ -3017,7 +3016,7 @@
       "location": "",
       "link": "https://portland2013.drupal.org/node/3558.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T20:00:00Z",
@@ -3027,7 +3026,7 @@
       "location": "B113-116",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T20:00:00Z",
@@ -3037,7 +3036,7 @@
       "location": "A105-A106",
       "link": "https://portland2013.drupal.org/node/3583.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T22:45:00Z",
@@ -3047,7 +3046,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T23:15:00Z",
@@ -3057,7 +3056,7 @@
       "location": "",
       "link": "https://portland2013.drupal.org/node/3558.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T23:15:00Z",
@@ -3067,7 +3066,7 @@
       "location": "B113-116",
       "link": "",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2013-05-24T23:15:00Z",
@@ -3077,7 +3076,7 @@
       "location": "A105-A106",
       "link": "https://portland2013.drupal.org/node/3583.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "success",

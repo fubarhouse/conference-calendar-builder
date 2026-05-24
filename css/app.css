@@ -842,6 +842,10 @@
             margin: 0;
         }
         @media (max-width: 639px) {
+            .timeline-time-hour,
+            .timeline-time-date {
+                padding-left: 0.75rem;
+            }
             .mobile-instructions-panel,
             #sessionFiltersPanel {
                 border: 1px solid rgba(160, 206, 247, 0.34) !important;
@@ -896,8 +900,14 @@
                 box-shadow: none !important;
                 color: #ffffff !important;
             }
+            #eventsContainer h2 {
+                padding-left: 0.75rem;
+            }
         }
         @media (min-width: 640px) {
+            .mobile-accordion-toggle {
+                display: none;
+            }
             .mobile-accordion-content {
                 display: block !important;
                 margin-top: 0;

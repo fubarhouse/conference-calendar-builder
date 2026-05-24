@@ -5,7 +5,6 @@
     "year": "2012",
     "website": "http://2012.drupaldownunder.org/",
     "region": "Australia – Melbourne",
-    "scheduleURL": "http://drupaldownunder.org/program/session-schedule/all",
     "venue": "Melbourne",
     "timezone": "Australia/Melbourne",
     "enabled": true,
@@ -350,6 +349,9 @@
         "aspect": "auto",
         "enabled": true
       }
+    ],
+    "scheduleURLs": [
+      "http://drupaldownunder.org/program/session-schedule/all"
     ]
   },
   "items": [
@@ -363,7 +365,7 @@
       "track": [
         "General"
       ],
-      "speakers": "",
+      "speakers": [],
       "full_description": "Get a solid introduction to Drupal 7 and learn about the most essential features and concepts of Drupal through hands-on activities. By the end of the day you will be familiar with Drupal terminology and be able to identify how many Drupal sites are constructed.\n\nDrupal 7 in a Day is not included in your conference registration and costs $395.00. You can [register for this course](http://drupaldownunder.org/ticket/drupal-7-day) on our [training page](http://drupaldownunder.org/training-drupal-downunder).\n\nStick around afterwards to socialise with speakers and other delegates and enjoy our complimentary drinks and snacks.",
       "sponsorIds": ""
     },
@@ -377,7 +379,7 @@
       "track": [
         "General"
       ],
-      "speakers": "",
+      "speakers": [],
       "full_description": "Understanding how (and why) components work the way they do (MySQL in particular) can help you make the most of the environment you work in, rather than battling with it.\n\nOptimal schema and query design with indexing basics tossed in, useful for module developers as well as people creating Views\n\nThis course is not included in your conference registration and costs $220.00. You can [register for this course](http://drupaldownunder.org/ticket/mysql-query-design) on our [training page](http://drupaldownunder.org/training-drupal-downunder).\n\nThis course is also available in combination with [MySQL - Server Tuning](http://drupaldownunder.org/ticket/mysql-server-tuning) as part of a [discounted full-day package](http://drupaldownunder.org/mysql-training-pack).\n\nStick around afterwards to socialise with speakers and other delegates and enjoy our complimentary drinks and snacks.",
       "sponsorIds": ""
     },
@@ -391,7 +393,7 @@
       "track": [
         "General"
       ],
-      "speakers": "",
+      "speakers": [],
       "full_description": "This workshop is for PHP programmers who wish to learn object-oriented programming using PHP 5. It assumes knowledge of PHP, but not of OOP.\n\nThis is a work session during which you'll create about 7 inter-related classes and write various scripts to test them. You don't need to be a PHP wiz for this course.\n\nObject-Oriented Programming in PHP is not included in your conference registration and costs $395.00. You can [register for this course](http://drupaldownunder.org/ticket/ticket/object-oriented-programming-php) on our [training page](http://drupaldownunder.org/training-drupal-downunder).\n\nStick around afterwards to socialise with speakers and other delegates and enjoy our complimentary drinks and snacks.",
       "sponsorIds": ""
     },
@@ -420,7 +422,7 @@
       "track": [
         "General"
       ],
-      "speakers": "",
+      "speakers": [],
       "full_description": "Get a solid introduction to Drupal 7 and learn about the most essential features and concepts of Drupal through hands-on activities. By the end of the day you will be familiar with Drupal terminology and be able to identify how many Drupal sites are constructed.\n\nDrupal 7 in a Day is not included in your conference registration and costs $395.00. You can [register for this course](http://drupaldownunder.org/ticket/drupal-7-day) on our [training page](http://drupaldownunder.org/training-drupal-downunder).\n\nStick around afterwards to socialise with speakers and other delegates and enjoy our complimentary drinks and snacks.",
       "sponsorIds": ""
     },
@@ -434,7 +436,7 @@
       "track": [
         "General"
       ],
-      "speakers": "",
+      "speakers": [],
       "full_description": "Server tuning, making things run as well as possible considering a pre-existing reality of set of modules and views.\n\nThis course is useful for DBAs who have practical basic familiarity with MySQL, but the day also has high value for DBAs who already have experience with other databases, as this topic is highly MySQL specific.\n\nThis course is not included in your conference registration and costs $220.00. You can [register for this course](http://drupaldownunder.org/ticket/mysql-server-tuning) on our [training page](http://drupaldownunder.org/training-drupal-downunder).\n\nThis course is also available in combination with [MySQL - Query Design](http://drupaldownunder.org/ticket/mysql-query-design) as part of a [discounted full-day package](http://drupaldownunder.org/mysql-training-pack).\n\nStick around afterwards to socialise with speakers and other delegates and enjoy our complimentary drinks and snacks.",
       "sponsorIds": ""
     },
@@ -448,7 +450,7 @@
       "track": [
         "General"
       ],
-      "speakers": "",
+      "speakers": [],
       "full_description": "This workshop is for PHP programmers who wish to learn object-oriented programming using PHP 5. It assumes knowledge of PHP, but not of OOP.\n\nThis is a work session during which you'll create about 7 inter-related classes and write various scripts to test them. You don't need to be a PHP wiz for this course.\n\nObject-Oriented Programming in PHP is not included in your conference registration and costs $395.00. You can [register for this course](http://drupaldownunder.org/ticket/ticket/object-oriented-programming-php) on our [training page](http://drupaldownunder.org/training-drupal-downunder).\n\nStick around afterwards to socialise with speakers and other delegates and enjoy our complimentary drinks and snacks.",
       "sponsorIds": ""
     },
@@ -462,7 +464,7 @@
       "track": [
         "General"
       ],
-      "speakers": "",
+      "speakers": [],
       "full_description": "This free session will provide a high level introduction to Drupal as a platform and community. Perfect for anyone looking to switch to Drupal, but doesn't want to get their feet too wet. Held in the late afternoon, just before we head off to opening night drinks.\n\nThis course is included in your conference registration is free to attend. However, places are limited, so you must register. You can [register for this course](http://drupaldownunder.org/ticket/hello-drupal) on our [training page](http://drupaldownunder.org/training-drupal-downunder).\n\nStick around afterwards to socialise with speakers and other delegates and enjoy our complimentary drinks and snacks.",
       "sponsorIds": ""
     },
@@ -963,9 +965,6 @@
       "speakers": [
         "Simon Hobbs"
       ],
-      "speaker_usernames": [
-        "sime"
-      ],
       "full_description": "Let's get jiggy with Ajax and Forms API. If you came to my talk in Brisbane, we're talking Chaos tool suite (ctools) again, plus some of the similar features that got into Drupal 7. Find out about all the bits that you can use to turn an ordinary form into and extraordinary form. You know you want to!",
       "video_url": "https://www.youtube.com/watch?v=ds9P2fI7E_g",
       "sponsorIds": ""
@@ -1217,9 +1216,6 @@
       ],
       "speakers": [
         "Murray Woodman"
-      ],
-      "speaker_usernames": [
-        "murrayw"
       ],
       "full_description": "Do you want the snappiest page load times for all users, wherever they are in the world? Do you have a lot of multi media content which needs to be served? Is your web server suffering from too many connections or not enough RAM? Can you afford $5 per month and a little of your time up front? You should think about setting up a CDN for your sites.\n\nOut of the box it is possible to configure Drupal to perform quite well when it comes to client side performance. There are a variety approaches including page caching, CSS and JS aggregation, file compression, expires headers, etags and image sprites. Once these have been configured, conducting a test using a tool such as YSlow gives Drupal a reasonable score. One area where things can be improved is with the addition of a Content Delivery Network (CDN).\n\nA CDN brings your static content closer to users by storing copies of files in servers around the globe. When a user makes a request content con be served from a location near them, resulting in much faster download times. Adding a CDN is the last step in the process of getting content to your users.\n\nThis talk will walk you through:\n- the basic mechanisms of CDNs\n- how to set up Drupal to use a CDN\n- the best performing networks for use in Australia\n- the cheapest networks in Australia\n- configuration of your DNS.",
       "video_url": "https://www.youtube.com/watch?v=NuWDMsrMmvE",

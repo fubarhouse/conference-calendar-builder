@@ -7,7 +7,6 @@
     "region": "Europe - Greece",
     "startDate": "2026-04-22T05:30:00Z",
     "endDate": "2026-04-25T12:00:00Z",
-    "scheduleURL": "https://devdays2026.drupal.org.gr/sessions/schedule",
     "venue": "OTE Academy",
     "timezone": "Europe/Athens",
     "sourceCache": "manual/2026-05-01/drupal-dev-days-2026-athens",
@@ -22,7 +21,10 @@
     "logo": {
       "image": "./img/logos/drupal-dev-days/2026-athens.png",
       "imageAlt": "Drupal Dev Days 2026 Athens"
-    }
+    },
+    "scheduleURLs": [
+      "https://devdays2026.drupal.org.gr/sessions/schedule"
+    ]
   },
   "items": [
     {
@@ -35,7 +37,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2026-04-22T06:30:00Z",
@@ -47,7 +49,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2026-04-22T07:15:00Z",
@@ -135,7 +137,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2026-04-22T10:55:00Z",
@@ -389,7 +391,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2026-04-23T07:15:00Z",
@@ -432,7 +434,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2026-04-23T09:15:00Z",
@@ -489,7 +491,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2026-04-23T10:55:00Z",
@@ -564,15 +566,6 @@
       ],
       "speakers": [
         "Raffaele Chiocca"
-      ],
-      "speaker_usernames": [
-        "Stop mapping fields by hand: this session shows how the module AI Content Migrate can detect repeatable patterns in legacy pages",
-        "propose content models and mappings",
-        "generate selectors",
-        "recover media",
-        "and produce ready-to-run migration files that generates faster iterations",
-        "fewer surprises",
-        "and safer rollbacks."
       ]
     },
     {
@@ -858,7 +851,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2026-04-24T10:55:00Z",
@@ -1104,7 +1097,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2026-04-24T17:00:00Z",
@@ -1116,7 +1109,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2026-04-25T07:00:00Z",
@@ -1128,7 +1121,7 @@
       "track": [
         "Contribution"
       ],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "manual",
