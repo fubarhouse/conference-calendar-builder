@@ -7,7 +7,6 @@
     "region": "Japan",
     "startDate": "2025-11-15T08:00:00Z",
     "endDate": "2025-11-19T08:20:00Z",
-    "scheduleURL": "https://events.drupal.org/nara2025/schedule",
     "venue": "Hotel Nikko Nara",
     "timezone": "Asia/Tokyo",
     "sourceCache": "cache/remote/2026-04-27T06-22-37Z/drupalcon-asia-nara-2025-json",
@@ -335,6 +334,9 @@
         "enabled": true,
         "subtitle": "Media"
       }
+    ],
+    "scheduleURLs": [
+      "https://events.drupal.org/nara2025/schedule"
     ]
   },
   "items": [
@@ -346,7 +348,7 @@
       "location": "Location Cafe Etranger NARAD",
       "link": "https://events.drupal.org/nara2025/session/early-arrival-drinks-pay-your-own-way-zaoqidaozhezhexiangkenojiaoliuhui",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "Planning to arrive early to Nara, how about getting a drink with fellow Drupalers.\nVenue: CAFE ETRANGER NARAD\nwebsite: https://cafe-etranger.jp/\nmap: https://maps.app.goo.gl/xkDHtRgW7Uxdz34PA",
       "sponsorIds": ""
@@ -359,7 +361,7 @@
       "location": "Location Nara City Visitor's Centre",
       "link": "https://events.drupal.org/nara2025/session/drupalcon-nara-treasure-hunt",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "Explore the beauty, fun, and nature of Nara City with your friends and family while completing challenges and collecting points, so that you might receive the title of the Ultimate Treasure Hunter.\nMore details at: https://events.drupal.org/nara2025/treasure-hunt",
       "sponsorIds": ""
@@ -372,7 +374,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/registration",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -417,7 +419,7 @@
       "location": "Location Contribution",
       "link": "https://events.drupal.org/nara2025/session/general-contribution-day-1",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -430,7 +432,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/group-photo",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -443,7 +445,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/morning-break",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -456,7 +458,7 @@
       "location": "Location Contribution",
       "link": "https://events.drupal.org/nara2025/session/first-time-contributors-workshop-english",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "Did you know that Drupal (the software) is built by people just like you and me? If you haven't contributed yet (or need a refresher), this is your opportunity to learn how to contribute, through code, documentation, project managing, marketing and more!\nThose who are new to the process and tools of contributing to Drupal, you are invited to attend this “First-Time Contributor Workshops”. Get up to speed with community tools: Drupal.org, issue queues, communication channels, and using cloud development tool options. Note you don't need to be a developer or use development tools to contribute to the project.",
       "sponsorIds": ""
@@ -538,7 +540,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/lunch",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -669,7 +671,7 @@
       "location": "Location Hiten B",
       "link": "https://events.drupal.org/nara2025/session/afternoon-break",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -788,7 +790,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/networking-drinks",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -801,7 +803,7 @@
       "location": "Location Contribution",
       "link": "https://events.drupal.org/nara2025/session/general-contribution-day-2",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -814,7 +816,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/welcome-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -844,7 +846,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/morning-break-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -857,7 +859,7 @@
       "location": "Location Contribution",
       "link": "https://events.drupal.org/nara2025/session/first-time-contributors-workshop-ribenyu",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "Did you know that Drupal (the software) is built by people just like you and me? If you haven't contributed yet (or need a refresher), this is your opportunity to learn how to contribute, through code, documentation, project managing, marketing and more!\nThose who are new to the process and tools of contributing to Drupal, you are invited to attend this “First-Time Contributor Workshops”. Get up to speed with community tools: Drupal.org, issue queues, communication channels, and using cloud development tool options. Note you don't need to be a developer or use development tools to contribute to the project.",
       "sponsorIds": ""
@@ -974,7 +976,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/lunch-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -1126,7 +1128,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/afternoon-break-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -1257,7 +1259,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/closing-ceremony",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -1270,7 +1272,7 @@
       "location": "Location Cafe Etranger NARAD",
       "link": "https://events.drupal.org/nara2025/session/thank-you-after-party-sankiyuhatei",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "The event is done, it's time to party! Join us for the official DrupalCon Nara party.\nwebsite: https://cafe-etranger.jp/\nmap: https://maps.app.goo.gl/xkDHtRgW7Uxdz34PA",
       "sponsorIds": ""
@@ -1283,7 +1285,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/general-contribution-day-3",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -1296,7 +1298,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/morning-break-1",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -1309,7 +1311,7 @@
       "location": "Location Hiten C/D",
       "link": "https://events.drupal.org/nara2025/session/lunch-1",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""

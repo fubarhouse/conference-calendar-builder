@@ -7,7 +7,6 @@
     "region": "Europe",
     "startDate": "2022-09-20T07:00:00Z",
     "endDate": "2022-10-19T16:00:00Z",
-    "scheduleURL": "https://events.drupal.org/prague2022/schedule/all",
     "venue": "Prague Congress Centre",
     "timezone": "Europe/Prague",
     "columns": 3,
@@ -15,7 +14,10 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://events.drupal.org/prague2022/schedule/all"
+    ]
   },
   "items": [
     {
@@ -28,7 +30,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-20T11:00:00Z",
@@ -40,7 +42,7 @@
       "track": [
         "other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-20T11:30:00Z",
@@ -52,7 +54,7 @@
       "track": [
         "keynote"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-20T13:00:00Z",
@@ -64,7 +66,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-20T13:00:00Z",
@@ -76,7 +78,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-20T13:00:00Z",
@@ -88,7 +90,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-20T13:45:00Z",
@@ -100,7 +102,7 @@
       "track": [
         "sponsored talk"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-20T14:15:00Z",
@@ -112,7 +114,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-20T14:15:00Z",
@@ -124,7 +126,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-20T15:15:00Z",
@@ -136,7 +138,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-20T15:15:00Z",
@@ -148,7 +150,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-20T16:15:00Z",
@@ -160,7 +162,7 @@
       "track": [
         "other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T06:45:00Z",
@@ -172,7 +174,7 @@
       "track": [
         "keynote"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T07:00:00Z",
@@ -184,7 +186,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T08:15:00Z",
@@ -196,7 +198,7 @@
       "track": [
         "sponsored talk"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T08:30:00Z",
@@ -208,7 +210,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T08:30:00Z",
@@ -220,7 +222,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T09:30:00Z",
@@ -232,7 +234,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T09:30:00Z",
@@ -244,7 +246,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T10:15:00Z",
@@ -256,7 +258,7 @@
       "track": [
         "sponsored talk"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T10:45:00Z",
@@ -268,7 +270,7 @@
       "track": [
         "sponsored talk"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T11:00:00Z",
@@ -280,7 +282,7 @@
       "track": [
         "sponsored talk"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T11:30:00Z",
@@ -292,7 +294,7 @@
       "track": [
         "keynote"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T13:00:00Z",
@@ -304,7 +306,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T13:00:00Z",
@@ -316,7 +318,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T13:00:00Z",
@@ -328,7 +330,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T13:00:00Z",
@@ -340,7 +342,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T13:45:00Z",
@@ -352,7 +354,7 @@
       "track": [
         "sponsored talk"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T14:15:00Z",
@@ -364,7 +366,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T14:15:00Z",
@@ -376,7 +378,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T14:15:00Z",
@@ -388,7 +390,7 @@
       "track": [
         "sponsored talk"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T15:15:00Z",
@@ -400,7 +402,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-21T15:15:00Z",
@@ -412,7 +414,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T07:00:00Z",
@@ -424,7 +426,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T07:15:00Z",
@@ -436,7 +438,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T08:00:00Z",
@@ -448,7 +450,7 @@
       "track": [
         "sponsored talk"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T08:30:00Z",
@@ -460,7 +462,7 @@
       "track": [
         "other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T08:30:00Z",
@@ -472,7 +474,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T09:30:00Z",
@@ -484,7 +486,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T10:15:00Z",
@@ -496,7 +498,7 @@
       "track": [
         "sponsored talk"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T10:15:00Z",
@@ -508,7 +510,7 @@
       "track": [
         "other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T10:45:00Z",
@@ -520,7 +522,7 @@
       "track": [
         "sponsored talk"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T11:30:00Z",
@@ -532,7 +534,7 @@
       "track": [
         "keynote"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T13:00:00Z",
@@ -544,7 +546,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T14:00:00Z",
@@ -556,7 +558,7 @@
       "track": [
         "sponsored talk"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T14:15:00Z",
@@ -568,7 +570,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T14:15:00Z",
@@ -580,7 +582,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T15:15:00Z",
@@ -592,7 +594,7 @@
       "track": [
         "bof"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T16:00:00Z",
@@ -604,7 +606,7 @@
       "track": [
         "other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-22T18:30:00Z",
@@ -616,7 +618,7 @@
       "track": [
         "other"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-23T07:00:00Z",
@@ -628,7 +630,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-23T07:00:00Z",
@@ -640,7 +642,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-23T07:00:00Z",
@@ -652,7 +654,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-09-23T10:30:00Z",
@@ -664,7 +666,7 @@
       "track": [
         "contribution topic"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T13:00:00Z",
@@ -676,7 +678,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T13:00:00Z",
@@ -688,7 +690,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T13:00:00Z",
@@ -700,7 +702,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T13:00:00Z",
@@ -712,7 +714,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T13:00:00Z",
@@ -724,7 +726,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T13:00:00Z",
@@ -736,7 +738,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T14:15:00Z",
@@ -748,7 +750,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T14:15:00Z",
@@ -760,7 +762,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T14:15:00Z",
@@ -772,7 +774,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T14:15:00Z",
@@ -784,7 +786,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T14:15:00Z",
@@ -796,7 +798,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T14:15:00Z",
@@ -808,7 +810,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T15:15:00Z",
@@ -820,7 +822,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T15:15:00Z",
@@ -832,7 +834,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T15:15:00Z",
@@ -844,7 +846,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T15:15:00Z",
@@ -856,7 +858,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T15:15:00Z",
@@ -868,7 +870,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T15:15:00Z",
@@ -880,7 +882,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T15:40:00Z",
@@ -892,7 +894,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T15:40:00Z",
@@ -904,7 +906,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T15:40:00Z",
@@ -916,7 +918,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-17T15:40:00Z",
@@ -928,7 +930,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T08:30:00Z",
@@ -940,7 +942,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T08:30:00Z",
@@ -952,7 +954,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T08:30:00Z",
@@ -964,7 +966,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T08:30:00Z",
@@ -976,7 +978,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T08:30:00Z",
@@ -988,7 +990,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T08:30:00Z",
@@ -1000,7 +1002,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T09:30:00Z",
@@ -1012,7 +1014,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T09:30:00Z",
@@ -1024,7 +1026,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T09:30:00Z",
@@ -1036,7 +1038,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T09:30:00Z",
@@ -1048,7 +1050,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T09:30:00Z",
@@ -1060,7 +1062,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T09:30:00Z",
@@ -1072,7 +1074,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T13:00:00Z",
@@ -1084,7 +1086,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T13:00:00Z",
@@ -1096,7 +1098,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T13:00:00Z",
@@ -1108,7 +1110,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T13:00:00Z",
@@ -1120,7 +1122,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T13:00:00Z",
@@ -1132,7 +1134,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T13:25:00Z",
@@ -1144,7 +1146,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T14:15:00Z",
@@ -1156,7 +1158,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T14:15:00Z",
@@ -1168,7 +1170,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T14:15:00Z",
@@ -1180,7 +1182,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T14:15:00Z",
@@ -1192,7 +1194,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T14:15:00Z",
@@ -1204,7 +1206,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T14:15:00Z",
@@ -1216,7 +1218,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T14:15:00Z",
@@ -1228,7 +1230,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T15:15:00Z",
@@ -1240,7 +1242,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T15:15:00Z",
@@ -1252,7 +1254,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T15:15:00Z",
@@ -1264,7 +1266,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T15:15:00Z",
@@ -1276,7 +1278,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T15:15:00Z",
@@ -1288,7 +1290,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T15:15:00Z",
@@ -1300,7 +1302,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T15:40:00Z",
@@ -1312,7 +1314,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T15:40:00Z",
@@ -1324,7 +1326,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T15:40:00Z",
@@ -1336,7 +1338,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-18T15:40:00Z",
@@ -1348,7 +1350,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T07:15:00Z",
@@ -1360,7 +1362,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T07:15:00Z",
@@ -1372,7 +1374,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T07:15:00Z",
@@ -1384,7 +1386,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T07:15:00Z",
@@ -1396,7 +1398,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T07:15:00Z",
@@ -1408,7 +1410,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T07:15:00Z",
@@ -1420,7 +1422,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T08:30:00Z",
@@ -1432,7 +1434,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T08:30:00Z",
@@ -1444,7 +1446,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T08:30:00Z",
@@ -1456,7 +1458,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T08:30:00Z",
@@ -1468,7 +1470,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T08:30:00Z",
@@ -1480,7 +1482,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T08:30:00Z",
@@ -1492,7 +1494,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T09:30:00Z",
@@ -1504,7 +1506,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T09:30:00Z",
@@ -1516,7 +1518,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T09:30:00Z",
@@ -1528,7 +1530,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T09:30:00Z",
@@ -1540,7 +1542,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T09:30:00Z",
@@ -1552,7 +1554,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T09:30:00Z",
@@ -1564,7 +1566,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T09:30:00Z",
@@ -1576,7 +1578,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T09:55:00Z",
@@ -1588,7 +1590,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T13:00:00Z",
@@ -1600,7 +1602,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T13:00:00Z",
@@ -1612,7 +1614,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T13:00:00Z",
@@ -1624,7 +1626,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T13:00:00Z",
@@ -1636,7 +1638,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T13:00:00Z",
@@ -1648,7 +1650,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T13:00:00Z",
@@ -1660,7 +1662,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T14:15:00Z",
@@ -1672,7 +1674,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T14:15:00Z",
@@ -1684,7 +1686,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T14:15:00Z",
@@ -1696,7 +1698,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T14:15:00Z",
@@ -1708,7 +1710,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T14:15:00Z",
@@ -1720,7 +1722,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T14:15:00Z",
@@ -1732,7 +1734,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T15:15:00Z",
@@ -1744,7 +1746,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T15:15:00Z",
@@ -1756,7 +1758,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T15:15:00Z",
@@ -1768,7 +1770,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T15:15:00Z",
@@ -1780,7 +1782,7 @@
       "track": [
         "open web & community"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T15:15:00Z",
@@ -1792,7 +1794,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T15:15:00Z",
@@ -1804,7 +1806,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T15:40:00Z",
@@ -1816,7 +1818,7 @@
       "track": [
         "makers & builders"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T15:40:00Z",
@@ -1828,7 +1830,7 @@
       "track": [
         "users & editors"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T15:40:00Z",
@@ -1840,7 +1842,7 @@
       "track": [
         "clients & industry experiences"
       ],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2022-10-19T15:40:00Z",
@@ -1852,7 +1854,7 @@
       "track": [
         "agency & business"
       ],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "success",

@@ -842,6 +842,10 @@
             margin: 0;
         }
         @media (max-width: 639px) {
+            .timeline-time-hour,
+            .timeline-time-date {
+                padding-left: 0.75rem;
+            }
             .mobile-instructions-panel,
             #sessionFiltersPanel {
                 border: 1px solid rgba(160, 206, 247, 0.34) !important;
@@ -896,8 +900,14 @@
                 box-shadow: none !important;
                 color: #ffffff !important;
             }
+            #eventsContainer h2 {
+                padding-left: 0.75rem;
+            }
         }
         @media (min-width: 640px) {
+            .mobile-accordion-toggle {
+                display: none;
+            }
             .mobile-accordion-content {
                 display: block !important;
                 margin-top: 0;
@@ -2981,6 +2991,23 @@
         .theme-dark .event-search-result-meta {
             color: #a0bdd6;
         }
+        .event-search-result-hidden {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.1rem 0.4rem;
+            border-radius: 0.25rem;
+            background: rgba(234, 179, 8, 0.15);
+            color: #a07c00;
+            vertical-align: middle;
+            margin-left: 0.4rem;
+        }
+        .theme-dark .event-search-result-hidden {
+            background: rgba(234, 179, 8, 0.12);
+            color: #d4a800;
+        }
         .theme-dark .event-search-result:hover,
         .theme-dark .event-search-result:focus-visible {
             background: rgba(74, 110, 146, 0.3);
@@ -3811,6 +3838,23 @@ body.has-preview-banner { padding-top: 2.25rem; }
 .editor-welcome-event-btn .welcome-btn-icon { color: #34526f; flex-shrink: 0; }
 .editor-welcome-event-btn .welcome-btn-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .editor-welcome-event-btn .welcome-btn-arrow { color: #9eb2c8; flex-shrink: 0; }
+.editor-welcome-event-btn .welcome-btn-hidden-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.25rem;
+    background: rgba(234, 179, 8, 0.15);
+    color: #a07c00;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.theme-dark .editor-welcome-event-btn .welcome-btn-hidden-badge {
+    background: rgba(234, 179, 8, 0.12);
+    color: #d4a800;
+}
 .editor-welcome-empty {
     color: #9eb2c8;
     font-size: 0.86rem;

@@ -5,7 +5,6 @@
     "year": "2017",
     "website": "https://drupalgov.org/events/drupalgov-canberra-2017",
     "region": "Australia",
-    "scheduleURL": "https://drupalgov.org/events/drupalgov-canberra-2017/schedule",
     "venue": "QT Hotel Canberra",
     "timezone": "Australia/Sydney",
     "enabled": true,
@@ -142,6 +141,9 @@
         "aspect": "auto",
         "enabled": true
       }
+    ],
+    "scheduleURLs": [
+      "https://drupalgov.org/events/drupalgov-canberra-2017/schedule"
     ]
   },
   "items": [
@@ -153,7 +155,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -165,7 +167,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -177,7 +179,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -254,7 +256,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -348,7 +350,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -442,7 +444,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -535,7 +537,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -612,7 +614,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -629,9 +631,6 @@
       "speakers": [
         "Christopher Skene",
         "Colin Sweett"
-      ],
-      "speaker_usernames": [
-        "xtfer"
       ],
       "full_description": "Publishers are now able to deposit publications with the National Library of Australia electronically, a process known as eDeposit. Publications are accepted in multiple electronic formats (such as PDF) and automatically registered with the Library's data management systems. The front end and management of submissions is powered by Drupal. This session will discuss the overall business requirements for the project, a deep dive into the technical architecture, and a summary of some of the learnings for using Drupal as an application front-end with complex business logic.",
       "sponsorIds": ""
@@ -667,9 +666,6 @@
       "speakers": [
         "Ivan Zugec"
       ],
-      "speakers_usernames": [
-        "zugec"
-      ],
       "full_description": "In Drupal 7 and below, managing media isn't one of its strengths. You do have a few modules which attempt the solve the problem. Some can be difficult to configure and others are not that feature rich or just support one type of media, i.e., images. Most Drupal sites do end up with some sort of media management but it's often buggy and difficult to use, b ut things in Drupal 8 are very different. Managing media in Drupal 8 has got a lot better thanks to the work from the Drupal Media team. In this session I'll cover the following: What's changed in the media ecosystem Where media management is heading Show how to store media assets using the \"Media entity\" module Demonstrate how to embed assets using the \"Entity embed\" module And finally, show how to use \"Entity browser\" module By the end you'll have a good understanding of which modules are required to handle media in Drupal 8.",
       "sponsorIds": ""
     },
@@ -697,7 +693,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -709,7 +705,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -721,7 +717,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     }

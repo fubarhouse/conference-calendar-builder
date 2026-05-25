@@ -5,7 +5,6 @@
     "year": "2015",
     "website": "http://melbourne2015.drupal.org.au/",
     "region": "Australia – Melbourne",
-    "scheduleURL": "http://melbourne2015.drupal.org.au/program/schedule",
     "venue": "Melbourne Convention and Exhibition Centre",
     "timezone": "Australia/Melbourne",
     "enabled": true,
@@ -248,7 +247,10 @@
         "enabled": true
       }
     ],
-    "columns": 3
+    "columns": 3,
+    "scheduleURLs": [
+      "http://melbourne2015.drupal.org.au/program/schedule"
+    ]
   },
   "items": [
     {
@@ -387,9 +389,6 @@
       "speakers": [
         "Anoop John"
       ],
-      "speaker_usernames": [
-        "anoopjohn"
-      ],
       "video_url": "https://www.youtube.com/watch?v=BclWR33vcrk",
       "full_description": "Drupal is a powerful platform but most Drupal firms are less than 50 people strong and there are very few in the 50 - 500 range. One of the biggest limitations (and also the biggest strengths) of Drupal is its powerful API which creates a steep learning curve for anybody new in Drupal and consequently an entry barrier for new players to enter also also a limitation for existing players to scale.\n\nWe are competing in a space where gigantic players in the industry like Accenture, IBM, Infosys, CTS etc manage projects worth hundreds of millions of dollars with teams that are hundreds or even thousands strong. If Drupal companies have to compete with such players then we will also have to re-invent ourselves to be able to offer an alternative to proprietary platforms not just in terms of technology but also in terms of a scale of solutions and engagements.\n\nThis session is about exploring how Drupal companies can compete to collaborate with each other to effectively take on such large players and also allow the whole Drupal ecosystem to grow. This session is about how Drupal companies could explore a much wider range of collaboration among Drupal companies who look at Drupal not just as a commercial tool but as a powerful community that can transform application development on the web and who look at Free Software as a philosophy of life and not something to take a free ride on. Such collaborations would not only address the commercial needs of companies but also the contribution needs of the community.",
       "sponsorIds": ""
@@ -518,9 +517,6 @@
       ],
       "speakers": [
         "Murray"
-      ],
-      "speaker_usernames": [
-        "murrayw"
       ],
       "video_url": "https://www.youtube.com/watch?v=_8p6Qj8dAm4",
       "full_description": "Project managers are a crucial element in the success of a project. They are the glue between the client and the developers, between the vision and the reality. This is not an easy job. What are the secrets to keeping a project on track when the odds seemed stacked against you? Do you have a few stories to tell from the trenches?\n\nThis \"panel\" presentation will be a series of rapid fire 5 minute presentations from a variety of project managers. We would love to hear about what worked and what didn’t, the successes and failures, tips and tricks, etc. If it works it will be funny and educational at the same time.\n\nWe are looking for seasoned PMs who have stories to tell and can tell them fast, the funnier the better. If you are up for imparting your pearls of wisdom, in 5 minutes, please get in touch with murray.woodman at gmail com and we'll get you on the bill.",
@@ -1096,10 +1092,6 @@
       "speakers": [
         "Ivan Zugec",
         "Murray"
-      ],
-      "speaker_usernames": [
-        "zugec",
-        "murrayw"
       ],
       "full_description": "Oftentimes there is a tension between what editors want and what site builders are willing or capable of delivering. Site builders love it when Drupal is a machine, acting on clean, well defined data structures. Editors often just want to put great looking content on a page wherever they want. Sometimes this works out well but other times things can get tricky. This presentation will demonstrate how the Paragraphs module can be used to overcome these difficulties and provide editors with a friendly editing interface into the bargain.\n\nSite builders have a familiar toolkit which includes nodes, fields, view modes and templates. Nodes have a defined structure and this is transposed into a template. Module such as Panelizer gives site builders the ability to customize layouts on a per node basis - very handy for handling one off tweaks. However, the Panelizer interface is complex and powerful. As such, it is not suitable for Editors who want a simple way to manage only content. How can this be brought into the node edit screen?\n\nIntroducing the Paragraphs module. It provides a way for editors to add the content they wish, in the order they wish to the regions they wish.... all on the node edit page. This is a big win for editors and for site builders too. Site builders retain control over the data model and editors get the flexibility they wish.\n\nThe presentation will cover the following areas:\n\n- A hilarious ;) role playing exercise between a besieged site builder and an optimistic editor. We've all been there, right.\n- An introduction to the Paragraphs module and how it can be used.\n- Some advanced tips on how to get some hot looking layouts for edge to edge and page based designs.\n- A demo of a \"filtering\" paragraph type which exposes the power of views to the editor.\n\nA similar presentation was given by the presenters at DrupalCamp Sydney. It generated a fair amount of discussion around layout techniques in general.",
       "sponsorIds": ""

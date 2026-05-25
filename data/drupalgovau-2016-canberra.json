@@ -5,7 +5,6 @@
     "year": "2016",
     "website": "https://drupalgov.org/events/drupalgov-canberra-2016",
     "region": "Australia",
-    "scheduleURL": "https://drupalgov.org/events/drupalgov-canberra-2016/program",
     "venue": "National Museum of Australia",
     "timezone": "Australia/Sydney",
     "enabled": true,
@@ -155,6 +154,9 @@
         "aspect": "auto",
         "enabled": true
       }
+    ],
+    "scheduleURLs": [
+      "https://drupalgov.org/events/drupalgov-canberra-2016/program"
     ]
   },
   "items": [
@@ -166,7 +168,7 @@
       "location": "Visions Theatre",
       "link": "http://lanyrd.com/2016/drupalgov/sdxxhx/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -237,7 +239,7 @@
       "location": "",
       "link": "http://lanyrd.com/2016/drupalgov/sdxxkd/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -298,9 +300,6 @@
         "Si Hobbs",
         "Samantha Presser"
       ],
-      "speaker_usernames": [
-        "sime"
-      ],
       "full_description": "The Department of Justice and Regulation in Victoria began working with Drupal 8, prior to its first release, with the initial goal of leveraging improvements in configuration management. We're incorporating the latest (and evolving) best practice around config-as-code, composer, designing for continuous integration and asking the ultimate question: do we need a canonical database?",
       "video_url": "https://www.youtube.com/watch?v=_wo5CLAlrIo",
       "sponsorIds": ""
@@ -341,7 +340,7 @@
       "location": "",
       "link": "http://lanyrd.com/2016/drupalgov/sdxxkr/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -353,7 +352,7 @@
       "location": "",
       "link": "http://lanyrd.com/2016/drupalgov/sdyfky/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "Elected in November 2007, Scott Ludlam is one of ten Australian Greens in the current Parliament and is the spokesperson for Foreign Affairs, Broadband, Communications & Digital Economy, Housing & Sustainable Cities and Nuclear issues. Scott has been a leading voice against the Federal Government's attempt to censor the internet and establish a mandatory data retention scheme. He strengthened protections for public ownership of the National Broadband Network and has campaigned for the fair treatment for Julian Assange and the WikiLeaks publishing organisation. In 2011, Scott successfully advocated to restore $264 million to the National Rental Affordability Scheme which provided for the construction of thousands of affordable rental homes. He secured an additional $158m for the SBS multicultural broadcaster in the 2012 federal budget and his five-year campaign for light rail in Perth was successful with $4 million federal funding allocated to plan the project. As part of the economic stimulus package, he helped secure $60 million for heritage conservation and $40 million for cycling infrastructure. As Greens spokesperson on nuclear issues, Scott has led opposition in Canberra against attempts to impose a radioactive waste dump on an unwilling community near Tennant Creek in the NT. He has spent a decade working to phase out uranium mining, work given greater urgency following a visit to areas impacted by the Fukushima nuclear disaster in Japan. Scott improved legislation to establish a more transparent Independent Reviewer of terrorism Laws and also introduced legislation to require parliamentary approval for sending Australian troops to war. As a convenor of the Australian Parliamentarians for Democracy in Burma, he has campaigned for the release of Burmese political prisoners including Aung San Suu Kyi. In 2012, he visited Burma and returned with renewed energy to support the Burmese democracy movement.. A prolific and effective participant in the Parliamentary Committee process, Scott initiated Australia’s first national inquiry into public transport, and inquiries into structural asymmetries in the justice system, and protections for privacy protections online. A former film maker, artist and graphic designer by trade, Scott has employed innovative communications tools to help with campaigns. He created the Bike Blackspot App, a smart phone application that enabled bicyclists to lobby for better bike funding. In 2007, he created a compelling 30-minute documentary on why nuclear energy is not the solution to climate change, titled 'Climate of Hope'. Some examples of short-form video work are here. He blogs at www.fieldnotes.org.au and can be found on twitter as @senatorludlam.",
       "video_url": "https://www.youtube.com/watch?v=r1hjdHTRJ6Y",
       "sponsorIds": ""
@@ -527,7 +526,7 @@
       "location": "",
       "link": "http://lanyrd.com/2016/drupalgov/sdxxmm/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -617,9 +616,6 @@
       "track": [],
       "speakers": [
         "Christopher Skene"
-      ],
-      "speaker_usernames": [
-        "xtfer"
       ],
       "full_description": "",
       "sponsorIds": ""

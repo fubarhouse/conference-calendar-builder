@@ -41,7 +41,10 @@ function renderResults(query, container) {
     .map(
       (evt) => `
     <button type="button" class="event-search-result" data-file="${escapeHtml(evt.file)}" data-category="${escapeHtml(evt.category)}">
-      <span class="event-search-result-title">${escapeHtml(evt.label)}</span>
+      <span class="event-search-result-title">
+        ${escapeHtml(evt.label)}
+        ${evt.enabled === false ? '<span class="event-search-result-hidden"><i class="fas fa-eye-slash" aria-hidden="true"></i> Hidden</span>' : ''}
+      </span>
       ${evt.region ? `<span class="event-search-result-meta"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> ${escapeHtml(evt.region)}</span>` : ''}
       ${evt.venue ? `<span class="event-search-result-meta"><i class="fas fa-building" aria-hidden="true"></i> ${escapeHtml(evt.venue)}</span>` : ''}
     </button>`

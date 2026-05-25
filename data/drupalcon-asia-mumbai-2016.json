@@ -7,7 +7,6 @@
     "region": "India",
     "startDate": "2016-02-18T02:30:00Z",
     "endDate": "2016-02-21T12:30:00Z",
-    "scheduleURL": "https://events.drupal.org/asia2016/schedule",
     "venue": "IIT Bombay",
     "timezone": "Asia/Kolkata",
     "columns": 5,
@@ -534,6 +533,9 @@
         "enabled": true,
         "subtitle": "DrupalGov Partner"
       }
+    ],
+    "scheduleURLs": [
+      "https://events.drupal.org/asia2016/schedule"
     ]
   },
   "items": [
@@ -545,7 +547,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -558,7 +560,7 @@
       "track": [
         "Workshop"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -571,7 +573,7 @@
       "track": [
         "Workshop"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -584,7 +586,7 @@
       "track": [
         "Workshop"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -597,7 +599,7 @@
       "track": [
         "Workshop"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -610,7 +612,7 @@
       "track": [
         "Workshop"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -621,7 +623,7 @@
       "location": "Room 12",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -632,7 +634,7 @@
       "location": "Room 13",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -643,7 +645,7 @@
       "location": "Hall 21",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -654,7 +656,7 @@
       "location": "Convocation Hall",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -665,7 +667,7 @@
       "location": "Convocation Hall",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -887,7 +889,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1411,7 +1413,7 @@
       "location": "",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1706,7 +1708,7 @@
       "location": "Lecture Hall Complex LA 101",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1719,7 +1721,7 @@
       "track": [
         "Workshop"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1732,7 +1734,7 @@
       "track": [
         "Workshop"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1745,7 +1747,7 @@
       "track": [
         "Workshop"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1756,7 +1758,7 @@
       "location": "Lecture Hall Complex LA 101",
       "link": "",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     }
   ],

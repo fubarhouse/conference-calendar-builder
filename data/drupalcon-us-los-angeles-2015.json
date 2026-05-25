@@ -5,7 +5,6 @@
     "year": "2015",
     "website": "https://events.drupal.org/losangeles2015",
     "region": "America",
-    "scheduleURL": "https://events.drupal.org/losangeles2015/schedule/2015-05-15.html",
     "venue": "Los Angeles Convention Center",
     "timezone": "America/Los_Angeles",
     "startDate": "2015-05-12T17:45:00Z",
@@ -26,7 +25,10 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://events.drupal.org/losangeles2015/schedule/2015-05-15.html"
+    ]
   },
   "items": [
     {
@@ -558,9 +560,6 @@
         "Site Building / Intermediate"
       ],
       "speakers": [
-        "murrayw"
-      ],
-      "speaker_usernames": [
         "murrayw"
       ],
       "full_description": "You may have heard of the Paragraphs module. It allows content creators to place \"widgets\" of varying kinds on a page in the order they decide. It opens up a lot of possbilities as editors are in the driving seat when it comes to deciding how the page is to constructed. Editors are no longer held hostage to the content layout decisions of site builders which have been solidified in Panelizer or Display Suite layouts. The Paragraphs module on its own is pretty cool - breaching the divide between the \"chunks\" (provided by fields) and \"blobs\" (provided by WYSIWYG editors). This presentation will take things to the next level and demonstrate how other companion contrib modules are augmenting the basic functionality and providing content creators with a very rich toolset. Demo The following contrib modules will be explained and demonstrated: Edgy Panelizer layouts can adapt to handle Paragraphs which are edge to edge, or normal (have their own container). Paragraphs can then be dropped into layouts and adapt to their environment - edgy or not. Classy Paragraphs Add a class to paragraphs to give them some style. A quick way for editors to change the look. Paragraphs Pack A bunch of handy paragraph bundles to get you up and running fast: lists, galleries, sliders, etc. Views Filter Object Expose the power of Views through Paragraphs! Users can specify filters, displays, counts, etc so place rendered views. This is an incredibly powerful concept which will have editors busting out lists on landing pages with ease. Entity Background A pluggable architecture for adding backgrounds to Entities including Paragraph Items. Current implentations include images, parallax and color. Allows for parallax scrolling effects to be added in 30s to any paragraph. Entity Behaviors A pluggable architecture for adding behaviours (JS ad CSS) to Entities including Paragraph Items. Current implentations include Skrollr. An advanced interface for designers with the chops to bring the page to life. Paragraphs Navigation Exposes a block for listing links to paragraphs on a page. A Scrollit submodule adds so more JS goodness. What does this add up to? More expressive freedom for content creators: marketers, designers, authors, storytellers and site owners will love it. Sitebuilders will love it too as many layout problems can be elegatly solved in a pluggable way. See it all in action at this demo site: http://paragraphs.site-showcase.com/ About the author The author was involved with the conceptualisation and development of all the contrib modules listed above. If the session gets up, a companion BOF will be run. NB. This presentation could be adapted to be in the Showcase stream."
@@ -1215,7 +1214,7 @@
       "track": [
         "Business Showcase / Beginner"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "Session 1 - Making Syfy.com Out of this World Time: 2:15pm-2:45pm Company: Lullabot While the Syfy network was busy creating compelling new worlds with scripted shows like 12 Monkeys, Ascension, Helix, and Haven, their website was world's behind. It was not responsive, not beautiful, and, in the words of Matthew Chiavelli, VP of digital media and strategy, \"put together with duct tape and bailing wire.\" To watch full episodes, viewers were required to navigate to a separate website at syfy.com/now. Syfy needed a scaleable, cinematic full-screen experience that would look great on any device and be commensurate to their original content. In this session the combined Lullabot and Syfy teams will discuss what was involved in creating what's been called \"the best television website on the planet,\" as well as what lies ahead for television sites in general. Session 2 - NEWMEDIA Time: 2:45pm-3:15pm Company: NEWMEDIA"
     },
     {

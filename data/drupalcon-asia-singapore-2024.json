@@ -7,7 +7,6 @@
     "region": "Singapore",
     "startDate": "2024-12-09T00:30:00Z",
     "endDate": "2024-12-11T09:00:00Z",
-    "scheduleURL": "https://events.drupal.org/singapore2024/schedule",
     "venue": "PARKROYAL Collection Marina Bay",
     "timezone": "Asia/Singapore",
     "sourceCache": "cache/remote/2026-04-27T06-22-37Z/drupalcon-asia-singapore-2024-json",
@@ -441,6 +440,9 @@
         "enabled": true,
         "subtitle": "Lunch"
       }
+    ],
+    "scheduleURLs": [
+      "https://events.drupal.org/singapore2024/schedule"
     ]
   },
   "items": [
@@ -452,7 +454,7 @@
       "location": "Location Atrium",
       "link": "https://events.drupal.org//singapore2024/session/registration",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -516,7 +518,7 @@
       "location": "Location Atrium",
       "link": "https://events.drupal.org//singapore2024/session/morning-tea",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -529,7 +531,7 @@
       "location": "Location Garden Ballroom",
       "link": "https://events.drupal.org//singapore2024/session/welcome",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "Let's begin DrupalCon Singapore with Welcome note by Tim Doyle, Mike Richardson and Surabhi Gokte...",
       "sponsorIds": ""
@@ -542,7 +544,7 @@
       "location": "Location Garden Ballroom",
       "link": "https://events.drupal.org//singapore2024/session/driesnote",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "https://www.youtube.com/watch?v=iPMXd5l_HkU",
       "full_description": "",
       "sponsorIds": ""
@@ -555,7 +557,7 @@
       "location": "Location Garden Ballroom",
       "link": "https://events.drupal.org//singapore2024/session/group-photo",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -654,7 +656,7 @@
       "location": "Location Atrium",
       "link": "https://events.drupal.org//singapore2024/session/lunch",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -820,7 +822,7 @@
       "location": "Location Atrium",
       "link": "https://events.drupal.org//singapore2024/session/afternoon-tea",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -935,7 +937,7 @@
       "location": "Location Garden Ballroom",
       "link": "https://events.drupal.org//singapore2024/session/splash-awards",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "https://www.youtube.com/watch?v=H-oxW0l23iM",
       "full_description": "",
       "sponsorIds": ""
@@ -948,7 +950,7 @@
       "location": "Location Atrium",
       "link": "https://events.drupal.org//singapore2024/session/drupal-cms-candidate-release-party",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "Join us as we celebrate the launch of the highly anticipated Drupal CMS Release Candidate at DrupalCon Singapore!\nWhether you're a long-time Drupal enthusiast or new to the community, this event is the perfect opportunity to connect with developers, designers, and thought leaders who are shaping the future of web development.\nEnjoy an evening of networking, insightful discussions, and a look at what this new release means for the Drupal ecosystem. Expect great conversations, fun surprises, and a toast to the evolution of open-source innovation.\nThe Drupal CMS Release Party is sponsored by Previous Next, Optasy, Axelerant and Acquia.",
       "sponsorIds": ""
@@ -961,7 +963,7 @@
       "location": "Location Garden Ballroom",
       "link": "https://events.drupal.org//singapore2024/session/welcome-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -996,7 +998,7 @@
       "location": "Location Atrium",
       "link": "https://events.drupal.org//singapore2024/session/morning-tea-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -1156,7 +1158,7 @@
       "location": "Location Atrium",
       "link": "https://events.drupal.org//singapore2024/session/lunch-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -1294,7 +1296,7 @@
       "location": "Location Atrium",
       "link": "https://events.drupal.org//singapore2024/session/afternoon-tea-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -1409,7 +1411,7 @@
       "location": "Location Garden Ballroom",
       "link": "https://events.drupal.org//singapore2024/session/closing-ceremony",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -1422,7 +1424,7 @@
       "location": "Location Palm Room 5",
       "link": "https://events.drupal.org//singapore2024/session/training-drupal-zero-hero-one-day-pixel-onion",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "For details check: https://events.drupal.org/singapore2024/training...",
       "sponsorIds": ""
@@ -1435,7 +1437,7 @@
       "location": "Location Palm Room 6",
       "link": "https://events.drupal.org//singapore2024/session/training-headless-drupal-axelerant",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "For details check: https://events.drupal.org/singapore2024/training...",
       "sponsorIds": ""
@@ -1448,7 +1450,7 @@
       "location": "Location Staytion Lounge Dhoby Ghaut (Different Venue)",
       "link": "https://events.drupal.org//singapore2024/session/contribution",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "Mentored, First Time, and General Contribution sessions.\nPlease note the venue for contribution sprint is different:\nStaytion Lounge Dhoby Ghaut, 11 Orchard Rd, B1-13 Dhoby Ghaut, Singapore 238826 (Dhoby Ghaut MRT)\nFor details check Community > Contributions page.",
       "sponsorIds": ""
@@ -1461,7 +1463,7 @@
       "location": "Location Staytion Lounge Dhoby Ghaut (Different Venue)",
       "link": "https://events.drupal.org//singapore2024/session/lunch-1",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "",
       "sponsorIds": ""
@@ -1474,7 +1476,7 @@
       "location": "Location Palm Room 5",
       "link": "https://events.drupal.org//singapore2024/session/training-drupal-zero-hero-one-day-pixel-onion-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "For details check: https://events.drupal.org/singapore2024/training...",
       "sponsorIds": ""
@@ -1487,7 +1489,7 @@
       "location": "Location Palm Room 6",
       "link": "https://events.drupal.org//singapore2024/session/training-headless-drupal-axelerant-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "For details check: https://events.drupal.org/singapore2024/training...",
       "sponsorIds": ""
@@ -1500,7 +1502,7 @@
       "location": "Location Staytion Lounge Dhoby Ghaut (Different Venue)",
       "link": "https://events.drupal.org//singapore2024/session/contribution-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "",
       "full_description": "Mentored, First Time, and General Contribution sessions.\nPlease note the venue for contribution sprint is different:\nStaytion Lounge Dhoby Ghaut, 11 Orchard Rd, B1-13 Dhoby Ghaut, Singapore 238826 (Dhoby Ghaut MRT)\nFor details check Community > Contributions page.",
       "sponsorIds": ""
