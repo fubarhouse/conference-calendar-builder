@@ -4921,12 +4921,37 @@ function _mapApiSearchRecords(records) {
 }
 
 async function buildApiSearchCatalog() {
-  // Fetch the file list. In API mode use the configured server endpoint
-  // (handles the case where loadEventCatalog() failed or was memoized before
-  // the API server was reachable); otherwise use a relative URL.
   try {
-    const indexUrl = isApiMode() ? `${state.apiEndpoint}/api/data/index.json` : './data/index.json';
-    const res = await fetch(indexUrl);
+    if (isApiMode()) {
+      // Single request returns metadata for all files — no items arrays transferred.
+      const res = await fetch(`${state.apiEndpoint}/api/meta`);
+      if (!res.ok) return [];
+      const metas = await res.json();
+      if (!Array.isArray(metas) || metas.length === 0) return [];
+      return metas
+        .filter((m) => m && isEditorDatasetFile(m.file))
+        .map((m) => ({
+          file: m.file,
+          category: m.designation || 'Other',
+          designation: m.designation,
+          location: m.location,
+          year: m.year,
+          region: m.region,
+          venue: m.venue,
+          label: buildDatasetOptionLabel(m.file, m),
+          enabled: m.enabled,
+        }))
+        .sort((a, b) => {
+          const ya = Number.parseInt(a.year, 10);
+          const yb = Number.parseInt(b.year, 10);
+          if (Number.isFinite(ya) && Number.isFinite(yb) && ya !== yb) return yb - ya;
+          return a.label.localeCompare(b.label);
+        });
+    }
+
+    // Non-API mode (no folder connected): fetch index and individual metadata via static URLs.
+    // (handles the case where loadEventCatalog() failed or was memoized before the server was reachable)
+    const res = await fetch('./data/index.json');
     if (!res.ok) return [];
     const payload = await res.json();
     const files = (Array.isArray(payload?.files) ? payload.files : [])
