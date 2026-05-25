@@ -148,6 +148,9 @@
     },
     {
       "file": "sponsors.json"
+    },
+    {
+      "file": "themes.json"
     }
   ]
 }

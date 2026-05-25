@@ -677,7 +677,7 @@ export function displayListView(events, container) {
   container.innerHTML = '';
 
   const keywordsFilter = document.getElementById('keywordsFilter').value;
-  const isDrupalConDesign = state.designMode === 'drupalcon';
+  const isDrupalConDesign = true;
   const timeSlotColors = ['slot-bg-a', 'slot-bg-b'];
   const gridCols = 'grid grid-cols-1 md:grid-cols-2 lg:[grid-template-columns:repeat(var(--slot-columns),minmax(0,1fr))] gap-2';
 

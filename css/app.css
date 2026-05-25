@@ -11,6 +11,9 @@
             --line-0: #162c4c;
             --accent: #00cfff;
             --accent-strong: #40dcff;
+            --color-secondary: #4a90d9;
+            --glow-1: rgba(0,150,230,0.20);
+            --glow-2: rgba(124,58,237,0.13);
         }
 
         @keyframes aurora-bg {
@@ -187,14 +190,6 @@
             font-weight: 600;
             border-radius: 4px;
             padding: 0 2px;
-        }
-        body.theme-dark {
-            color: var(--text-0);
-            background:
-                radial-gradient(ellipse at 15% 0%,   rgba(0, 150, 230, 0.2) 0%, transparent 52%),
-                radial-gradient(ellipse at 88% 96%,  rgba(124, 58, 237, 0.13) 0%, transparent 44%),
-                radial-gradient(ellipse at 50% 110%, rgba(0, 80, 200, 0.07) 0%, transparent 48%),
-                var(--bg-0);
         }
         .theme-dark .bg-white {
             background: rgba(3, 10, 22, 0.91) !important;
@@ -700,6 +695,21 @@
             background-color: rgba(46, 163, 255, 0.1) !important;
             border-color: rgba(46, 163, 255, 0.32) !important;
         }
+
+        /* Light theme structural overrides (variables injected by JS) */
+        .theme-light .header-shell {
+            background: linear-gradient(135deg,
+                #0e3460 0%, #162e58 20%, #0c2448 40%,
+                #14366a 60%, #1a3e74 80%, #0e3460 100%
+            );
+            background-size: 400% 400%;
+            animation: aurora-bg 20s ease infinite;
+        }
+        .theme-light .bg-black {
+            background: linear-gradient(180deg, #0c2448, #0a1e3c) !important;
+        }
+        .theme-light .bg-gray-100 { background-color: #f1f5f9 !important; }
+
         .header-shell {
             background: linear-gradient(135deg,
                 #010e22 0%,
@@ -719,8 +729,8 @@
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(ellipse at 8% 50%,  rgba(0, 207, 255, 0.2) 0%, transparent 46%),
-                radial-gradient(ellipse at 92% 50%, rgba(124, 58, 237, 0.14) 0%, transparent 42%);
+                radial-gradient(ellipse at 8% 50%,  var(--glow-1) 0%, transparent 46%),
+                radial-gradient(ellipse at 92% 50%, var(--glow-2) 0%, transparent 42%);
             pointer-events: none;
         }
         .header-shell > * { position: relative; }
@@ -731,11 +741,11 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: linear-gradient(90deg, #00cfff 0%, #7c3aed 52%, rgba(124, 58, 237, 0.08) 100%);
+            background: linear-gradient(90deg, var(--accent) 0%, var(--color-secondary) 52%, transparent 100%);
             box-shadow:
-                0 0 28px rgba(0, 207, 255, 0.65),
-                0 0 60px rgba(0, 207, 255, 0.2),
-                0 -2px 14px rgba(0, 207, 255, 0.28);
+                0 0 28px color-mix(in srgb, var(--accent) 65%, transparent),
+                0 0 60px color-mix(in srgb, var(--accent) 20%, transparent),
+                0 -2px 14px color-mix(in srgb, var(--accent) 28%, transparent);
         }
         .header-logo {
             width: 104px;
@@ -4429,4 +4439,350 @@ body.has-preview-banner { padding-top: 2.25rem; }
     text-transform: uppercase;
     color: rgba(130, 170, 200, 0.6);
     margin: 0;
+}
+
+/* ─── Editor Appearance Form ─────────────────────────────────────────────── */
+.appearance-section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.6rem;
+}
+.appearance-hint {
+    font-size: 0.68rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text-3);
+    opacity: 0.75;
+}
+.appearance-section--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+.appearance-theme-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.appearance-theme-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 2px solid var(--line-0);
+    cursor: pointer;
+    background: var(--surface-1);
+    transition: border-color 0.15s, background 0.15s;
+    min-width: 5.5rem;
+    user-select: none;
+}
+.appearance-theme-card:hover {
+    border-color: var(--text-2);
+    background: var(--surface-2);
+}
+.appearance-theme-card.is-selected {
+    border-color: var(--accent);
+    background: var(--surface-2);
+}
+.theme-card-swatch-row {
+    display: flex;
+    gap: 3px;
+}
+.theme-swatch-chip {
+    width: 18px;
+    height: 22px;
+    border-radius: 3px;
+    display: block;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.theme-card-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+.appearance-theme-card.is-selected .theme-card-label {
+    color: var(--accent);
+}
+.appearance-color-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.appearance-color-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.appearance-color-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-1);
+    min-width: 5rem;
+}
+.appearance-color-pair {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+.appearance-color-pair input[type="color"] {
+    width: 2.2rem;
+    height: 2.2rem;
+    padding: 2px;
+    border-radius: 0.4rem;
+    border: 2px solid var(--line-0);
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.appearance-color-pair input[type="text"] {
+    width: 6rem;
+    height: 2.2rem;
+    border-radius: 0.4rem;
+    border: 1px solid var(--line-0);
+    background: var(--surface-1);
+    color: var(--text-0);
+    font-size: 0.8rem;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 0 0.5rem;
+    text-transform: uppercase;
+}
+.appearance-color-pair input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0, 207, 255, 0.12);
+}
+.appearance-color-reset {
+    height: 2.2rem;
+    padding: 0 0.6rem;
+    border-radius: 0.4rem;
+    border: 1px solid var(--line-0);
+    background: transparent;
+    color: var(--text-3);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+.appearance-color-reset:hover {
+    color: var(--text-1);
+    border-color: var(--accent);
+}
+.appearance-preview {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--surface-0);
+    border: 1px solid var(--line-0);
+}
+.appearance-preview-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.55rem;
+}
+.appearance-preview-swatches {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+.appearance-preview-swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+.appearance-preview-chip {
+    width: 2.8rem;
+    height: 1.8rem;
+    border-radius: 0.3rem;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.appearance-preview-swatch span {
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+
+/* Appearance tab — panel sections */
+.appearance-panel-section {
+    background: var(--surface-0);
+    border: 1px solid var(--line-0);
+    border-radius: 0.6rem;
+    padding: 1rem 1.1rem;
+}
+.appearance-panel-header {
+    margin-bottom: 1rem;
+}
+.appearance-panel-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-0);
+    margin: 0 0 0.2rem;
+}
+.appearance-panel-desc {
+    font-size: 0.78rem;
+    color: var(--text-3);
+    margin: 0;
+}
+.appearance-panel-desc code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75em;
+    background: var(--surface-2);
+    padding: 0.1em 0.35em;
+    border-radius: 0.25rem;
+    color: var(--accent);
+}
+
+/* Appearance tab — theme library */
+.appearance-library-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.appearance-library-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.45rem 0.65rem;
+    background: var(--surface-1);
+    border: 1px solid var(--line-0);
+    border-radius: 0.4rem;
+}
+.appearance-library-label {
+    flex: 1;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-1);
+}
+.appearance-library-delete {
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.35rem;
+    border: 1px solid var(--line-0);
+    background: transparent;
+    color: var(--text-3);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    line-height: 1;
+}
+.appearance-library-delete:hover {
+    color: #f87171;
+    border-color: #f87171;
+}
+
+/* Appearance tab — add-theme inline form */
+.appearance-add-theme-form {
+    padding: 0.8rem;
+    background: var(--surface-1);
+    border: 1px solid var(--line-0);
+    border-radius: 0.5rem;
+}
+.appearance-add-theme-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: flex-end;
+}
+.appearance-add-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.appearance-add-field input[type="text"] {
+    height: 2.1rem;
+    border-radius: 0.35rem;
+    border: 1px solid var(--line-0);
+    background: var(--surface-0);
+    color: var(--text-0);
+    font-size: 0.82rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    padding: 0 0.6rem;
+    min-width: 9rem;
+}
+.appearance-add-field input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.appearance-add-field input[type="color"] {
+    width: 2.2rem;
+    height: 2.1rem;
+    padding: 2px;
+    border-radius: 0.35rem;
+    border: 2px solid var(--line-0);
+    background: transparent;
+    cursor: pointer;
+}
+.appearance-add-field--check {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.82rem;
+    padding-bottom: 0.1rem;
+}
+.appearance-add-field--check input[type="checkbox"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
+/* Appearance tab — action buttons */
+.appearance-btn-primary {
+    height: 2.2rem;
+    padding: 0 1rem;
+    border-radius: 0.4rem;
+    border: none;
+    background: var(--accent);
+    color: #000;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    display: inline-flex;
+    align-items: center;
+}
+.appearance-btn-primary:hover {
+    opacity: 0.88;
+}
+.appearance-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.appearance-btn-secondary {
+    height: 2.2rem;
+    padding: 0 1rem;
+    border-radius: 0.4rem;
+    border: 1px solid var(--line-0);
+    background: transparent;
+    color: var(--text-1);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    display: inline-flex;
+    align-items: center;
+}
+.appearance-btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
 }
