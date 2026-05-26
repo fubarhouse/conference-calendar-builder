@@ -946,6 +946,9 @@
             #eventsContainer h2 {
                 padding-left: 0.75rem;
             }
+            #eventsContainer h2 {
+                padding-left: 0.75rem;
+            }
         }
         @media (min-width: 640px) {
             .mobile-accordion-toggle {
@@ -2783,7 +2786,6 @@
             text-align: center;
             font-size: 0.9rem;
         }
-        /* Dark mode – event search modal (now using CSS vars in base rules) */
         .event-search-result-hidden {
             display: inline-flex;
             align-items: center;

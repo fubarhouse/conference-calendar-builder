@@ -28,7 +28,8 @@
         "columns",
         "scheduleURLs",
         "logo",
-        "flickr"
+        "flickr",
+        "sponsors"
       ],
       "properties": {
         "designation": {
