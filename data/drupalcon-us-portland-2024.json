@@ -7,7 +7,6 @@
     "region": "America",
     "startDate": "2024-05-06T15:00:00Z",
     "endDate": "2024-05-10T04:05:00Z",
-    "scheduleURL": "https://events.drupal.org/portland2024/schedule",
     "venue": "Oregon Convention Center",
     "timezone": "America/Los_Angeles",
     "columns": 3,
@@ -15,7 +14,11 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://events.drupal.org/portland2024/schedule"
+    ],
+    "flickr": null
   },
   "items": [
     {
@@ -26,7 +29,7 @@
       "location": "Location 204 Oregon Ballroom",
       "link": "https://events.drupal.org//portland2024/session/scholarship-breakfast",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T15:00:00Z",
@@ -36,7 +39,7 @@
       "location": "Location B115-116",
       "link": "https://events.drupal.org//portland2024/session/general-contribution",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T15:00:00Z",
@@ -46,7 +49,7 @@
       "location": "Location C127",
       "link": "https://events.drupal.org//portland2024/session/prayer-room",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T15:00:00Z",
@@ -56,7 +59,7 @@
       "location": "Location C128",
       "link": "https://events.drupal.org//portland2024/session/quiet-room",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T15:00:00Z",
@@ -66,7 +69,7 @@
       "location": "Location G129, G130, G131, G132",
       "link": "https://events.drupal.org//portland2024/session/birds-feather",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T15:00:00Z",
@@ -76,7 +79,7 @@
       "location": "Location Lobby C",
       "link": "https://events.drupal.org//portland2024/session/registration-opens",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T16:00:00Z",
@@ -173,7 +176,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/expo-hall-break",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T16:55:00Z",
@@ -197,7 +200,7 @@
       "location": "Location 201-203 Oregon Ballroom",
       "link": "https://events.drupal.org//portland2024/session/welcome-remarks-and-aaron-winborn-award-community-working-group-presenting",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T17:45:00Z",
@@ -219,7 +222,7 @@
       "location": "Location Lobby C",
       "link": "https://events.drupal.org//portland2024/session/group-photo",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T19:00:00Z",
@@ -229,7 +232,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/lunch-expo-hall",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T19:20:00Z",
@@ -239,7 +242,7 @@
       "location": "Location 204 Oregon Ballroom",
       "link": "https://events.drupal.org//portland2024/session/black-drupal-lunch",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T20:00:00Z",
@@ -249,7 +252,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/expo-hall-break-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T20:05:00Z",
@@ -404,7 +407,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/expo-hall-break-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T22:00:00Z",
@@ -530,7 +533,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/expo-hall-break-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-06T23:10:00Z",
@@ -642,7 +645,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/welcome-party-expo-opening",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T15:00:00Z",
@@ -652,7 +655,7 @@
       "location": "Location B115-116",
       "link": "https://events.drupal.org//portland2024/session/general-contribution-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T15:00:00Z",
@@ -662,7 +665,7 @@
       "location": "Location C127",
       "link": "https://events.drupal.org//portland2024/session/prayer-room-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T15:00:00Z",
@@ -672,7 +675,7 @@
       "location": "Location C128",
       "link": "https://events.drupal.org//portland2024/session/quiet-room-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T15:00:00Z",
@@ -682,7 +685,7 @@
       "location": "Location G129, G130, G131, G132",
       "link": "https://events.drupal.org//portland2024/session/birds-feather-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T15:00:00Z",
@@ -692,7 +695,7 @@
       "location": "Location Hall B",
       "link": "https://events.drupal.org//portland2024/session/recruitment-fair",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T15:00:00Z",
@@ -702,7 +705,7 @@
       "location": "Location Lobby C",
       "link": "https://events.drupal.org//portland2024/session/registration-opens-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T17:00:00Z",
@@ -724,7 +727,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/expo-hall-break-3",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T18:05:00Z",
@@ -867,7 +870,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/lunch-expo-hall-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T19:45:00Z",
@@ -906,7 +909,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/expo-hall-break-4",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T20:25:00Z",
@@ -1046,7 +1049,7 @@
       "location": "Location 204 Oregon Ballroom",
       "link": "https://events.drupal.org//portland2024/session/first-time-contributor-workshop-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T21:40:00Z",
@@ -1056,7 +1059,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/expo-hall-break-5",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T21:45:00Z",
@@ -1200,7 +1203,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/expo-hall-break-6",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-07T22:55:00Z",
@@ -1310,7 +1313,7 @@
       "location": "Location 204 Oregon Ballroom",
       "link": "https://events.drupal.org//portland2024/session/membership-breakfast",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-08T15:00:00Z",
@@ -1320,7 +1323,7 @@
       "location": "Location B115-116",
       "link": "https://events.drupal.org//portland2024/session/general-contribution-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-08T15:00:00Z",
@@ -1330,7 +1333,7 @@
       "location": "Location C127",
       "link": "https://events.drupal.org//portland2024/session/prayer-room-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-08T15:00:00Z",
@@ -1340,7 +1343,7 @@
       "location": "Location C128",
       "link": "https://events.drupal.org//portland2024/session/quiet-room-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-08T15:00:00Z",
@@ -1350,7 +1353,7 @@
       "location": "Location G129, G130, G131, G132",
       "link": "https://events.drupal.org//portland2024/session/birds-feather-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-08T15:00:00Z",
@@ -1360,7 +1363,7 @@
       "location": "Location Lobby C",
       "link": "https://events.drupal.org//portland2024/session/registration-opens-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-08T16:00:00Z",
@@ -1390,7 +1393,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/expo-hall-break-7",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-08T17:05:00Z",
@@ -1428,7 +1431,7 @@
       "location": "Location 204 Oregon Ballroom",
       "link": "https://events.drupal.org//portland2024/session/first-time-contributor-workshop",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-08T17:30:00Z",
@@ -1438,7 +1441,7 @@
       "location": "Location B113-114",
       "link": "https://events.drupal.org//portland2024/session/mentored-contribution",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-08T19:00:00Z",
@@ -1448,7 +1451,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/lunch-expo-hall-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-08T20:00:00Z",
@@ -1458,7 +1461,7 @@
       "location": "Location B117-119",
       "link": "https://events.drupal.org//portland2024/session/marketing-contribution",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-08T21:30:00Z",
@@ -1468,7 +1471,7 @@
       "location": "Location 204 Oregon Ballroom",
       "link": "https://events.drupal.org//portland2024/session/coffee-break",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-09T15:00:00Z",
@@ -1478,7 +1481,7 @@
       "location": "Location B115-116",
       "link": "https://events.drupal.org//portland2024/session/general-contribution-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-09T15:00:00Z",
@@ -1488,7 +1491,7 @@
       "location": "Location C127",
       "link": "https://events.drupal.org//portland2024/session/prayer-room-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-09T15:00:00Z",
@@ -1498,7 +1501,7 @@
       "location": "Location C128",
       "link": "https://events.drupal.org//portland2024/session/quiet-room-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-09T15:00:00Z",
@@ -1508,7 +1511,7 @@
       "location": "Location G129, G130, G131, G132",
       "link": "https://events.drupal.org//portland2024/session/birds-feather-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-09T15:00:00Z",
@@ -1518,7 +1521,7 @@
       "location": "Location Hall C",
       "link": "https://events.drupal.org//portland2024/session/expo-hall-opens",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-09T15:00:00Z",
@@ -1528,7 +1531,7 @@
       "location": "Location Lobby C",
       "link": "https://events.drupal.org//portland2024/session/registration-opens-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-09T16:00:00Z",
@@ -1747,7 +1750,7 @@
       "location": "Location Hall B",
       "link": "https://events.drupal.org//portland2024/session/lunch",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2024-05-09T20:00:00Z",
@@ -1786,7 +1789,7 @@
       "location": "Location Drupal Activity",
       "link": "https://events.drupal.org//portland2024/session/trivia-night",
       "track": [],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "success",

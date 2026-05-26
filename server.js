@@ -1,0 +1,120 @@
+import express from 'express';
+import multer from 'multer';
+import { readFile, writeFile, mkdir } from 'fs/promises';
+import { resolve, join, dirname, sep } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = __dirname;
+const DATA_DIR = join(ROOT, 'data');
+const IMG_DIR = join(ROOT, 'img');
+
+function guardPath(base, sub) {
+  const full = resolve(join(base, sub));
+  return full === base || full.startsWith(base + sep) ? full : null;
+}
+
+const app = express();
+
+// Allow cross-origin requests so the editor works when opened as a file:// URL
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
+// Serve static files (the editor app itself)
+app.use(express.static(ROOT));
+
+// Health check for connection testing
+app.get('/api/health', (_, res) => res.json({ ok: true }));
+
+// Metadata summary — returns event metadata for all dataset files (no items arrays)
+app.get('/api/meta', async (_, res) => {
+  try {
+    const indexRaw = await readFile(join(DATA_DIR, 'index.json'), 'utf8');
+    const index = JSON.parse(indexRaw);
+    const files = (Array.isArray(index?.files) ? index.files : [])
+      .map((e) => (typeof e === 'string' ? e : e?.file))
+      .filter((f) => f && f.endsWith('.json') && f !== 'index.json');
+    const metas = await Promise.all(
+      files.map(async (file) => {
+        try {
+          const target = guardPath(DATA_DIR, file);
+          if (!target) return null;
+          const raw = await readFile(target, 'utf8');
+          const parsed = JSON.parse(raw);
+          if (!parsed?.event || typeof parsed.event !== 'object' || Array.isArray(parsed.event)) return null;
+          const m = parsed.event;
+          return {
+            file,
+            designation: String(m.designation || '').trim(),
+            location: String(m.location || '').trim(),
+            year: String(m.year || '').trim(),
+            region: String(m.region || '').trim(),
+            venue: String(m.venue || '').trim(),
+            enabled: m.enabled !== false,
+          };
+        } catch {
+          return null;
+        }
+      })
+    );
+    res.json(metas.filter(Boolean));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Read a data file
+app.get('/api/data/:file', async (req, res) => {
+  const target = guardPath(DATA_DIR, req.params.file);
+  if (!target) return res.status(400).json({ error: 'Invalid path' });
+  try {
+    const raw = await readFile(target, 'utf8');
+    res.type('json').send(raw);
+  } catch {
+    res.status(404).json({ error: 'Not found' });
+  }
+});
+
+// Write a data file — receives raw JSON text to preserve formatting
+app.put('/api/data/:file', express.text({ type: 'application/json', limit: '10mb' }), async (req, res) => {
+  if (!req.params.file.endsWith('.json')) return res.status(400).json({ error: 'JSON files only' });
+  const target = guardPath(DATA_DIR, req.params.file);
+  if (!target) return res.status(400).json({ error: 'Invalid path' });
+  try {
+    JSON.parse(req.body); // validate before writing
+    await writeFile(target, req.body, 'utf8');
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// Upload an image into img/
+const upload = multer({ storage: multer.memoryStorage() });
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file received' });
+  const targetRelative = String(req.body.targetPath || '').trim().replace(/^\.\//, '');
+  if (!targetRelative || !targetRelative.startsWith('img/')) {
+    return res.status(400).json({ error: 'targetPath must start with img/' });
+  }
+  const target = guardPath(IMG_DIR, targetRelative.slice(4)); // strip "img/"
+  if (!target) return res.status(400).json({ error: 'Invalid path' });
+  try {
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, req.file.buffer);
+    res.json({ ok: true, path: `./${targetRelative}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+const PORT = parseInt(process.env.PORT || '8080', 10);
+app.listen(PORT, () => {
+  console.log(`Editor server → http://localhost:${PORT}`);
+  console.log(`  editor.html → http://localhost:${PORT}/editor.html`);
+});

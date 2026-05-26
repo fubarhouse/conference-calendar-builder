@@ -5,7 +5,6 @@
     "year": "2014",
     "website": "http://drupalsouth2014.drupal.org.nz/",
     "region": "New Zealand – Wellington",
-    "scheduleURL": "http://drupalsouth2014.drupal.org.nz/schedule",
     "venue": "Te Papa Museum",
     "timezone": "Pacific/Auckland",
     "startDate": "2014-02-13T20:00:00Z",
@@ -194,6 +193,9 @@
         "aspect": "auto",
         "enabled": true
       }
+    ],
+    "scheduleURLs": [
+      "http://drupalsouth2014.drupal.org.nz/schedule"
     ]
   },
   "items": [
@@ -514,7 +516,9 @@
       "track": [
         "Coding & Development"
       ],
-      "speakers": "Sean Hamlin",
+      "speakers": [
+        "Sean Hamlin"
+      ],
       "full_description": "Background\n\nA case study on the Drupal 7 development of http://www.maoritelevision.com/. This was a custom built website that replaced the legacy dot NET build. The new website is a responsive, multi-lingual video streaming site.\n\nWho this session is for\n\nDrupal developers and also business managers looking to see how a large complex and real time site works under the covers. This case study will show how the more tricky parts of the build were developed, and highlight modules that worked, as well as others that did not.\n\nCovered in the session\n\n- Responsive design - what worked, what did not, and lessons learned\n- Multi-lingual - how this was integrated and what modules were used\n- Integration with Brightcove - how we integrated the third party video provider, and how the API is being used\n- TV schedule - why this is now on the third re-write http://www.maoritelevision.com/tv/schedule\n- SEO - what practises were used to tame the markup, and what worked well here\n- Performance - what optimisations were made, what modules were used and thoughts on the difference approaches\n\nAbout the presenter\n\nSean Hamlin (@wiifm):\n\n- has been working with Drupal for over 6 years\n- contributed several modules, and dozens of patches upstream (including core)\n\nUpdate 15 February 2014\n\nSlides are now up online at http://bit.ly/drupalsouthmaoritv (google docs) or https://speakerdeck.com/wiifm/case-study-maori-television (speaker deck)",
       "sponsorIds": ""
     },
@@ -640,7 +644,9 @@
       "track": [
         "General"
       ],
-      "speakers": "Jeffrey \"Jam\" McGuire",
+      "speakers": [
+        "Jeffrey \"Jam\" McGuire"
+      ],
       "video_url": "https://www.youtube.com/watch?v=EIKc0AOZUzQ",
       "full_description": "Jeffrey A. \"jam\" McGuire, Open Source Evangelist at Acquia, has a longstanding passion for the Drupal project and its community. This has led to him being active at the intersection between open source software, business, and culture. Increasingly in demand as a speaker, he is regularly featured at events around the world, talking about open source, digital disruption, Drupal and more. This helps satisfy his inner diva, which he also feeds with performances as a storyteller and musician.",
       "sponsorIds": ""
@@ -671,7 +677,9 @@
       "track": [
         "Business & Strategy"
       ],
-      "speakers": "daniel.tome",
+      "speakers": [
+        "daniel.tome"
+      ],
       "full_description": "The session will cover:\n- Challenges we came across.\n- Responsive design implantation with Zurb.\n- Modules we utilised and created in order to simplify in-place content editing.\n- Tools we utilised for working in an Agile approach.\n- Optimizing techniques like lazy loading and responsive images.\n- And more…",
       "sponsorIds": ""
     },
@@ -685,7 +693,9 @@
       "track": [
         "Site Building"
       ],
-      "speakers": "pameeela",
+      "speakers": [
+        "pameeela"
+      ],
       "full_description": "The devil is in the details when creating a content management system, but it's the details that often get left out. Client cares about how the site looks; developer cares about how the code looks. But rounded corners and nicely commented code don't help the poor content editors. WHY SHOULD I CARE? Simply, it's in the best interest of the vendor to deliver a product that people don't hate to use. Especially if the client doesn't seem to care, it can be really easy to ignore the issue of usability. But even though they may not care during development, they will be made to care once it's delivered. As a former content editor I can attest to this! Ignored we were, until the day came when we had to use the thing. Day after day, we slogged through it, cursing the evildoers (i.e. 'the vendor' and 'the project lead') who inflicted this torture upon us! WHAT CAN I DO ABOUT THAT? You can help! And it's not even that hard, or expensive! Out of the box, Drupal is... OK for content editors. But oftentimes post-major-development, it's... bad. There are a lot of simple things you can do to make life easier for these users, and it doesn't require major customisation. It can also make training easier, and reduce support requests that come from not understanding the system. A few basic guidelines for your team can produce a hugely better result. So it's easy, it's valuable, and it makes people happy - how could you say no to that? Topics to be covered include:\n\n- Ask the right questions before you build\n- Help text is your greatest weapon\n- Contextual links - check the permissions dummy!\n- Advanced content search was not a requirement because it was assumed to exist\n- So you developed it - have you ever tried to use it?\n\nAnd much more!",
       "sponsorIds": ""
     },
@@ -699,9 +709,10 @@
       "track": [
         "Frontend"
       ],
-      "speakers": "Bevan",
+      "speakers": [
+        "Bevan"
+      ],
       "full_description": "Small non-intrusive animations and interactions can greatly enhance the user experience and impress website visitors and clients. jQuery and jQuery UI make it easy to add these enhancements with very little knowledge of javascript or programming. Learn how!\n\nNo understanding of jQuery, javascript, programming or even Drupal theming is required. It is expected that attendees have an understanding of CSS selectors and how HTML elements are nested within each other to build a \"tree\" (aka \"DOM\"). This should make some sense (perhaps not complete sense) to you:\n\n`#page #content > p a.read_more {}`\n\nSome understanding of very basic programming concepts will be useful for the more advanced parts of the session, but is not expected. I.e.\n\n```\n  // Declare a function called \"calculateCircleArea\",\n  // which accepts a parameter \"radius\".\n  function calculateCircleArea(radius) {\n  \n    // Declare a variable called \"area\".\n    var area;\n  \n    // The area variable is now NULL.\n    // Now assign a value to area.\n    // area becomes 2 times pi times radius.\n    area = 2 * 3.142 * radius;\n  \n    // The area variable is now 2πr (\"two-pi-R\").\n    // Functions usually return something.\n    return area;\n  }\n```\n\nExample code at Drupal.org/Project/jQ4DaT.\nSlides at TinyURL.com/jQuery-Designers (Google Docs).",
-      "speaker_usernames": "",
       "sponsorIds": ""
     },
     {
@@ -714,7 +725,9 @@
       "track": [
         "Coding & Development"
       ],
-      "speakers": "chx",
+      "speakers": [
+        "chx"
+      ],
       "full_description": "The Migrate contrib project is great, many have used it before and it has brought some huge sites over to the Drupal side :) There was a lot of talk about replacing the upgrade path with it during the years but the project only kicked off at DrupalCon Prague at 2013 September. Since then a team has formed, migrate has been rewritten with the new Drupal 8 APIs. It's more extensible than ever and yet it kept all the battle tested edge case handling. This talk will show you how to write a migration in Drupal 8.",
       "sponsorIds": ""
     },
@@ -728,7 +741,9 @@
       "track": [
         "Site Building"
       ],
-      "speakers": "drunken monkey",
+      "speakers": [
+        "drunken monkey"
+      ],
       "full_description": "Having an efficient and helpful search is one of the backbones of nearly all web sites, ensuring that visitors will quickly find what they are looking for without leaving the site. For over three years now, the Search API module has helped site builders to achieve that goal, and an increasing number of extension modules provides help for solving both common and more specific problems, from facetting to location filters. Furthermore, its feature-rich Views integration provides site builders with a powerful mechanism to completely customize their search pages, using a tool they already know.\n\nIn this session I will introduce you to that module and its potential. You will learn how to create amazing search solutions fitting for your site with only a few clicks, will be introduced to several extension modules which can help you further customize your site's search experience and will understand the basic model and concepts by which the Search API operates.\nIn addition, this session will highlight some of the user-facing changes in the upcoming Drupal 8 version of the module and explain where users can expect improvements, thus also providing important information for everyone trying to get a head-start in Drupal 8.\n\nI've already presented similar sessions in Europe ([DrupalCon Munich](http://munich2012.drupal.org/program/sessions/building-amazing-searches-search-api-and-facet-api.html), [DrupalCon Prague](https://prague2013.drupal.org/session/building-amazing-searches-search-api), [DrupalCamp Vienna](http://2013.drupalcamp.at/session/building-amazing-searches-search-api)) and am excited to demonstrate this now to an all-new audience!\n\n## Previous knowledge required\n\nThis session only requires basic Drupal site building skills, no knowledge of the Search API or related modules (except maybe Views) is necessary.",
       "sponsorIds": ""
     },
@@ -742,7 +757,9 @@
       "track": [
         "Frontend"
       ],
-      "speakers": "mortendk",
+      "speakers": [
+        "mortendk"
+      ],
       "full_description": "The Themers of Drupal have for years been whining & moaning over the bad markup, confusing theme functionality, Drupals lack of separation from the frontend to the backend and generally WTF when you work in the frontend.\n\nNow in Drupal8 The Dark ages of Drupal Theming is gone (foreva!) phptemplate is put on the bench and is replaced by \"a modern tempting system\": TWIG\n\nThis session will show in both practical examples & on a broader base why TWIG will rock the themers world in Drupal.",
       "sponsorIds": ""
     },
@@ -756,7 +773,9 @@
       "track": [
         "Business & Strategy"
       ],
-      "speakers": "typhonius",
+      "speakers": [
+        "typhonius"
+      ],
       "full_description": "Launch day can be a stressful time for the stakeholders of an organisation. From the developers and themers who created the site, editors who created the content, CIOs/CTOs in charge of the whole process and potentially financiers and investors in the business, the onus is on everyone to have a successful launch.\n\nWith the recent HealthCare.gov debacle highlighting the importance of the need to pro-actively plan throughout the course of development for launch. This session focuses on the ways a site can be prepared for the wild in a strategic and planned fashion rather than as an afterthought 8 hours before DNS cutover.\n\nHaving overseen and in some cases having had to jump in and actively work to keep an ailing site up whilst working for Acquia, I've become well accustomed to what makes a launch successful... or not.\n\nIn this talk I'll be discussing:\n\n- Some of the low hanging fruit that are easily achievable as site savers\n- How load testing is an essential part of a successful launch\n- How agile development methodologies can assist with ensuring rapid turn-around post launch\n- Common mistakes made that can have major impacts\n\nThis session is appropriate for:\n- Companies on the brink of launch\n- Key decision makers looking to ensure their team is aware of pitfalls that exist\n- Self hosted individuals investigating the benefits of hosting in a managed environment",
       "sponsorIds": ""
     },
@@ -770,7 +789,9 @@
       "track": [
         "Coding & Development"
       ],
-      "speakers": "RdeBoer",
+      "speakers": [
+        "RdeBoer"
+      ],
       "full_description": "You know that module you've been working on? The one that works, but which you feel embarrassed to admit you wrote? Procrastinating because you think it will take a lot of work to make your module something you can be proud of? This session will cover easy steps that you can take that will greatly enhance the quality of your project that don't require a lot of effort. You'll be surprised how some of these tips are only partly about the code itself and more about the people. This presentation is relevant not only to module developers but also to site-builders. Topics we'll look at: * Low hanging fruit that will make everyone happier to use your module * Tools that can pinpoint areas that need investigating * Best practices for good maintenance with minimal effort.",
       "sponsorIds": ""
     },
@@ -800,7 +821,9 @@
       "track": [
         "Coding & Development"
       ],
-      "speakers": "nick_schuch",
+      "speakers": [
+        "nick_schuch"
+      ],
       "full_description": "Topics for this talk will be:\n\n- How tour.module came to be.\n- The current state of tour.module in Drupal 8 core.\n- Demonstration of tour.module in action (single and multipage tours).\n- How to write tours.\n- How to extend tour tip types and create your own (eg. Youtube video tip type).\n- How to write tests for tips (if we get enough time).\n\n## About the author\n\nNick is a Drupal Developer / Systems administrator at Australia’s leading Drupal agency PreviousNext. He is actively working on Drupal 8 core and is the maintainer of Tour module (also in Drupal 8 core).",
       "sponsorIds": ""
     },
@@ -814,7 +837,9 @@
       "track": [
         "Business & Strategy"
       ],
-      "speakers": "RumpledElf",
+      "speakers": [
+        "RumpledElf"
+      ],
       "full_description": "The first thing you need to do is figure out what they actually want, before you even mention Drupal. This session talks about some of the ways you can do that.\n\nAnd sometimes the answer to their needs isn't Drupal.",
       "sponsorIds": ""
     },
@@ -828,7 +853,9 @@
       "track": [
         "Business & Strategy"
       ],
-      "speakers": "rcross",
+      "speakers": [
+        "rcross"
+      ],
       "full_description": "The highly sought after Drupal expert can be an elusive and mysterious creature. Unlike the mythical yeti or drop bear, they do exist.\n\nThis presentation will step through the process of sourcing the right resources to build a great drupal project. This will include tools and techniques for engaging:\n- Freelancers/Contractors\n- Employees\n- Drupal Shops\n\nAfterwards, attendees should better understand:\n- What are the common myths about getting good Dupalers\n- How to avoid common mistakes in hiring Drupalers\n- The 5 factors to identify what kind of resource is needed\n- Questions and techniques for evaluating\n- The roles and skills for a great team",
       "sponsorIds": ""
     },
@@ -842,7 +869,9 @@
       "track": [
         "Frontend"
       ],
-      "speakers": "JohnAlbin",
+      "speakers": [
+        "JohnAlbin"
+      ],
       "full_description": "Our CSS sucks. We've been building sites for over a decade using crappy, ornamentation techniques and shoddy selectors. Our styles unintentional bleed across the site. Our stylesheets are fragile and unmaintainable and full of specificity landmines. Pandas wander alone in the wilderness.\n\nBut there's no need to drown ourselves in beer. New technologies like Web Components and new techniques like OOCSS, SMACSS and BEM show us that planning before building can make our projects maintainable, easier to debug, and smaller with reduced CSS file sizes.\n\nThis session will introduce the basic techniques for CSS layering and using design components, the heart of any front-end CSS project. We will also discuss Sass organization and tips to more easily implement these ideas.",
       "sponsorIds": ""
     },
@@ -856,7 +885,9 @@
       "track": [
         "Business & Strategy"
       ],
-      "speakers": "dman",
+      "speakers": [
+        "dman"
+      ],
       "full_description": "We know that Drupal is already a major player in Government and related websites and services in New Zealand and Australia.\n\nWe know that many of the requirements that these public sector clients have (Security, Archiving, Privacy, Functionality) are very similar, and many of us are tired of the lengthy RFP process for IT acquisition that comes with these contracts.\n\nWe know that the Drupal development community can get together and provide a consistent, re-usable solution to this challenge. We have the tools, we have the skills, we have the market niche!\n\nThere are a few interesting install profiles already out there to experiment with -\nWe can look at aGov from PreviousNext, OpenPublic from Phase2, DKAN which is a rebuild of the data.gov.uk engine, and things like that.\nWe can then extend it with some localized extras (eg NZs RealMe single sign-on, or Maori language support).\n\nInterested parties can come together and present a united \"Drupal Solution\" that already meets the requirements that we have solved for individual government agencies.\n\nAlthough I'm a dev, and can talk to the tools and techniques I've experimented with to deliver this dream - this is mainly a strategy talk, and should be of interest to anyone looking at the current web development landscape in this region.\n\n> dman has been building Government websites in Drupal since Version 4.x, and has been helping people in the forums daily since then. With several thousand d.o issues touched (not counting the spam deleted as a d.o moderator and documentation manage), 1.5 thousand commits on maintained or contrib modules (plus a little core) dman was the highest-ranking Kiwi Drupalista according to CertifiedToRock ... until Bevan came back to the country anyway :-)\n>\n>He devotes a stupid amount of his spare time working on Web Standards and adoption of tools for Open Source and Open Data - sometimes surreptitiously - on the NZ government websites he consults on and leads development in.",
       "sponsorIds": ""
     },
@@ -870,7 +901,9 @@
       "track": [
         "Site Building"
       ],
-      "speakers": "acbramley",
+      "speakers": [
+        "acbramley"
+      ],
       "full_description": "This session uses my experience with the Openlayers & Leaflet modules in Drupal 7 to show you how easy it is to build content rich, dynamic, searchable, and filterable maps with little to no coding.\n\nThis session will take you from a Vanilla Drupal 7 instance, through the enabling of various modules and configuring them. It will show you how to build powerful maps without writing a single line of code, including how to use Apache Solr as a back-end to make your map content facetable and keyword searchable.\n\nAs an extra-for-experts, I'll explain how I used this in a large end-to-end business process. This includes abstracting the content into custom Entities using Entity API allowing me to bypass all of the overhead that nodes have in a large corporate website, while maintaining the power of Views, Apache Solr, and Openlayers/Leaflet.",
       "sponsorIds": ""
     },
@@ -901,7 +934,9 @@
       "track": [
         "Frontend"
       ],
-      "speakers": "xtfer",
+      "speakers": [
+        "xtfer"
+      ],
       "full_description": "Drupal gives us a range of powerful tools for structuring and presenting content, but relying on these can produce bland, list-driven websites. How do you structure a site to get the benefits of Drupal's content-first tools, while still producing a first-class user experience?\n\nThis session introduces an approach to planning Drupal site build's called User Experience (UX) Spaces. This methodology is based on techniques from user-centred design, marketing and consumer research, and content-first development principles. While not a Drupal-specific methodology, this approach has been evolved over eight years of Drupal projects, and can be followed by anyone with a basic knowledge of Drupal.\n\nThis session was standing-room only at DrupalCon's Sydney & Portland, and has been adapted and extended for a new audience.",
       "sponsorIds": ""
     },
@@ -931,7 +966,9 @@
       "track": [
         "Frontend"
       ],
-      "speakers": "keyhitman",
+      "speakers": [
+        "keyhitman"
+      ],
       "full_description": "Meet another Drupal person and one of the first things you will be asked is ‘backend or frontend?’ There is a well known distinction made between these two roles, and not just in Drupal but in the general web design and development field.\n\nEven the terms design and development are seen as separate areas of the web, and there is some truth to that. But we cannot assume and accept that there exists a line of demarcation. Aimed at site-builders, developers and project managers, this session aims to posit the following:\n\n> that rather than seeing design and development as separate and independent processes, we should view these as complementing each other. But more importantly, we need to understand that they enhance each other. They should not be viewed as a tension between art and science for there is a bit of both in each of them. In short, while form follows function, form also enhances function.\n\nWhat will be covered in this session? Things such as:\n\n- the principles of visual design\n- how to use typography to enhance functionality\n- what governs the look and feel of your website\n\nWhy is this important? Once we understand better this beautiful relationship between design & development:\n\n- our websites will look and function better\n- our processes will be smoother\n- our team will work well together ( for they will understand each other’s roles better)\n\nAnd you will get to exercise both your so-called left and right brains.",
       "sponsorIds": ""
     },
@@ -945,7 +982,9 @@
       "track": [
         "Business & Strategy"
       ],
-      "speakers": "emmadavidson",
+      "speakers": [
+        "emmadavidson"
+      ],
       "full_description": "Moving from a print-focused media environment to the online, interactive media landscape can be a big change for content creators and consumers. Doing it in Drupal can make the transition easier, provided it's managed well.\n\nI'll be talking about some lessons learned while going through the process at the Australian Medical Association, including:\n\nFocus on the user - what do they want, how do they want it?\nWorking with the strengths of your content creators\nBaby steps - small, incremental changes are easier to accept than a big bang, and also easier to step back from if they're not working\nPotential roadblocks and how to get around, over, or through them\nNo node left behind - designing to avoid the ugly data migration monster",
       "sponsorIds": ""
     },
@@ -959,7 +998,9 @@
       "track": [
         "Site Building"
       ],
-      "speakers": "queenvictoria",
+      "speakers": [
+        "queenvictoria"
+      ],
       "full_description": "Drupal is a great editor's tool and datastore. It is a powerful integration tool. With the addition of existing modules you can expose culturally significant archives to (and from) your Drupal site.\n\nThis session looks at the value universities, galleries, libraries, archives and museums (the GLAM sector) can get out of creating or interoperating with archives in Drupal. We've done a bunch of work with the University of New South Wales, the Australian Government and University Newcastle in building archives that have two main purposes:\n\n* To collate disparate research and make it available to the community for research, ingestion and mashing.\n* To capitalise on the value of audiovisual research – in particular to identify significance and provide academic citations in audiovisual based research outcomes.\n\nThis session is an overview and assessment of the overarching concepts in metadata harvesting and the available standards and tools. It looks at some practical examples and use cases.",
       "sponsorIds": ""
     },
@@ -973,7 +1014,9 @@
       "track": [
         "Coding & Development"
       ],
-      "speakers": "realityloop",
+      "speakers": [
+        "realityloop"
+      ],
       "full_description": "One of the main groups of tools we use every day is the web stack, it can have a significant yet often not calculated cost on our productivity.\n\nIn this presentation I will compare local development web stack options and provide you with with an unbiased comparison listing the pro’s and cons of each of the compared setups:\n\n- MAMP/WAMP/XAMPP\n- Acquia Dev Desktop\n- Aegir\n- Vagrant\n\nWhere possible comparisons will cover all of Windows, OS X, and Linux.",
       "sponsorIds": ""
     },

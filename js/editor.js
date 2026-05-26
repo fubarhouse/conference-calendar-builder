@@ -3,6 +3,18 @@ import { formatTextBlock } from './modules/markdown.js';
 import { isLocalhost, slugify } from './modules/utils.js';
 import { configureEventSearch, openEventSearchModal } from './modules/eventSearch.js';
 import { renderTimeline } from './modules/timeline.js';
+import { validateDataset, formatValidationErrors } from './modules/validator.js';
+import {
+  loadThemes,
+  getThemes,
+  setThemes,
+  getThemeById,
+  normalizeThemeId,
+  getCurrentThemeId,
+  setCurrentThemeId,
+  applyThemeClass,
+  applyEventColors,
+} from './modules/theme.js';
 
 const state = {
   dataset: null,
@@ -34,8 +46,10 @@ const state = {
   sponsorSessionPickerOpen: false,
   sessionSponsorPickerOpen: false,
   imageCacheBust: new Map(),
-  sponsorEventCounts: null
+  sponsorEventCounts: null,
+  apiEndpoint: localStorage.getItem('editorApiEndpoint') || ''
 };
+
 
 const UNDO_STACK = [];
 const UNDO_LIMIT = 50;
@@ -56,7 +70,7 @@ const EVENT_META_FIELDS = [
   'region',
   'venue',
   'website',
-  'scheduleURL',
+  'scheduleURLs',
   'startDate',
   'endDate',
   'logo',
@@ -90,9 +104,9 @@ const EVENT_META_FIELD_CONFIG = {
     label: 'Event website',
     description: 'The official event website URL.'
   },
-  scheduleURL: {
-    label: 'Original schedule URL',
-    description: 'The source schedule URL used when this dataset was created or checked.'
+  scheduleURLs: {
+    label: 'Schedule URLs',
+    description: 'The source schedule URLs used when this dataset was created or checked.'
   },
   logo: {
     label: 'Event logo',
@@ -177,13 +191,6 @@ const SESSION_FIELDS = [
   { key: 'duration', label: 'Session duration', description: 'Calculated automatically from the start and end time.', type: 'text' },
   { key: 'track', label: 'Track or topic', description: 'Use commas to separate multiple tracks or topics.', type: 'text' },
   { key: 'speakers', label: 'Speaker names', description: 'Use commas or new lines to separate multiple speakers.', type: 'textarea', span: 2 },
-  {
-    key: 'speaker_usernames',
-    label: 'Speaker Drupal.org usernames',
-    description: 'Optional profile usernames. Use commas or new lines to match multiple speakers.',
-    type: 'textarea',
-    span: 2
-  },
   { key: 'full_description', label: 'Session description', description: 'The full public description. Markdown formatting is supported.', type: 'textarea', span: 2 },
   { key: 'sponsorIds', label: 'Sponsors', description: 'Sponsors associated with this session.', type: 'sponsors', span: 2 },
   { key: 'link', label: 'Session page URL', description: 'The original or canonical web page for this session.', type: 'text', span: 2 },
@@ -219,6 +226,7 @@ const els = {
   toggleEventMetaIcon: document.getElementById('toggleEventMetaIcon'),
   eventMetaBody: document.getElementById('eventMetaBody'),
   eventMetaForm: document.getElementById('eventMetaForm'),
+  appearanceForm: document.getElementById('appearanceForm'),
   eventWorkspacePanel: document.getElementById('eventWorkspacePanel'),
   logoForm: document.getElementById('logoForm'),
   flickrForm: document.getElementById('flickrForm'),
@@ -271,7 +279,9 @@ const els = {
   showTimelineTab: document.getElementById('showTimelineTab'),
   timelineWorkspacePanel: document.getElementById('timelineWorkspacePanel'),
   timelineCanvas: document.getElementById('timelineCanvas'),
-  timelineSaveBtn: document.getElementById('timelineSaveBtn'),
+  showAppearanceTab: document.getElementById('showAppearanceTab'),
+  appearanceWorkspacePanel: document.getElementById('appearanceWorkspacePanel'),
+
   sponsorSessionPickerModal: document.getElementById('sponsorSessionPickerModal'),
   sponsorSessionPickerList: document.getElementById('sponsorSessionPickerList'),
   sponsorSessionPickerCount: document.getElementById('sponsorSessionPickerCount'),
@@ -283,6 +293,21 @@ const els = {
   closeSessionSponsorPicker: document.getElementById('closeSessionSponsorPicker'),
   closeSessionSponsorPickerBack: document.getElementById('closeSessionSponsorPickerBack')
 };
+
+// Ensure the search button is always enabled for quick event switching
+if (els.editorSearchEvents) {
+  els.editorSearchEvents.disabled = false;
+  els.editorSearchEvents.removeAttribute('disabled');
+
+  // Watch for any attempts to disable the button and immediately revert them
+  const observer = new MutationObserver(() => {
+    if (els.editorSearchEvents.disabled) {
+      els.editorSearchEvents.disabled = false;
+      els.editorSearchEvents.removeAttribute('disabled');
+    }
+  });
+  observer.observe(els.editorSearchEvents, { attributes: true, attributeFilter: ['disabled'] });
+}
 
 
 function outputBasename(pathValue) {
@@ -405,10 +430,7 @@ async function resolveFileHandleFromProjectDir(pathValue) {
 }
 
 async function connectProjectFolder() {
-  if (typeof window.showDirectoryPicker !== 'function') {
-    window.alert('Directory linking is not supported in this browser. Use Save As once per dataset.');
-    return;
-  }
+  if (!isFolderPickerSupported()) return;
   const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
   state.projectDirHandle = handle;
   state.folderConnectedInSession = true;
@@ -417,7 +439,7 @@ async function connectProjectFolder() {
   setDatasetLoadingEnabled(true);
   setFolderConnectionButtonState();
   showWelcomeScreen2();
-  void refreshEditorSearch();
+  await refreshEditorSearch();
 
   const returnFile = localStorage.getItem('__editor_return_file__');
   if (returnFile) {
@@ -519,7 +541,6 @@ function setEditorButtonsEnabled(enabled) {
   if (els.previewDataset) els.previewDataset.disabled = !enabled;
   if (els.previewDatasetToggle) els.previewDatasetToggle.disabled = !enabled;
   if (els.revertDataset) els.revertDataset.disabled = true;
-  if (els.timelineSaveBtn) els.timelineSaveBtn.disabled = !enabled;
   if (els.saveSession) els.saveSession.disabled = !enabled || state.selectedIndex < 0;
   els.addSession.disabled = !enabled;
   els.deleteSession.disabled = !enabled || state.selectedIndex < 0;
@@ -602,12 +623,42 @@ function setQuickSponsorEditEnabled(enabled) {
   renderSponsorForm();
 }
 
+function isFolderPickerSupported() {
+  return typeof window.showDirectoryPicker === 'function';
+}
+
 function setFolderConnectionButtonState() {
-  if (!els.folderConnectionToggle) return;
-  if (state.folderConnectedInSession && state.projectDirHandle) {
-    els.folderConnectionToggle.innerHTML = '<i class="fas fa-unlink mr-2"></i>Disconnect folder';
-  } else {
-    els.folderConnectionToggle.innerHTML = '<i class="fas fa-folder-open mr-2"></i>Open project folder';
+  const welcomeBtn = document.getElementById('welcomeConnectFolder');
+  const unsupportedTitle = 'Folder access is not supported in this browser — use the API server instead';
+
+  if (isApiMode()) {
+    if (els.folderConnectionToggle) els.folderConnectionToggle.classList.add('hidden');
+    return;
+  }
+
+  if (els.folderConnectionToggle) {
+    els.folderConnectionToggle.classList.remove('hidden');
+    if (!isFolderPickerSupported()) {
+      els.folderConnectionToggle.disabled = true;
+      els.folderConnectionToggle.title = unsupportedTitle;
+      els.folderConnectionToggle.innerHTML = '<i class="fas fa-folder-open mr-2"></i>Connect Folder';
+    } else {
+      els.folderConnectionToggle.disabled = false;
+      els.folderConnectionToggle.title = '';
+      els.folderConnectionToggle.innerHTML = state.folderConnectedInSession && state.projectDirHandle
+        ? '<i class="fas fa-unlink mr-2"></i>Disconnect folder'
+        : '<i class="fas fa-folder-open mr-2"></i>Open project folder';
+    }
+  }
+
+  if (welcomeBtn) {
+    if (!isFolderPickerSupported()) {
+      welcomeBtn.disabled = true;
+      welcomeBtn.title = unsupportedTitle;
+    } else {
+      welcomeBtn.disabled = false;
+      welcomeBtn.title = '';
+    }
   }
 }
 
@@ -643,6 +694,7 @@ async function restorePersistedSnapshot() {
   markSessionDirty(false);
   markSponsorDirty(false);
   renderEventMetaForm();
+  renderAppearanceForm();
   renderLogoForm();
   renderFlickrForm();
   renderSessionList();
@@ -703,6 +755,7 @@ function applyRecovery(recovery) {
   setEditorButtonsEnabled(true);
   setCurrentFilenameLabel();
   renderEventMetaForm();
+  renderAppearanceForm();
   renderSessionList();
   renderSessionForm();
   renderSponsorList();
@@ -771,6 +824,7 @@ async function performUndo() {
   markSponsorDirty(false);
   updateUndoButton();
   renderEventMetaForm();
+  renderAppearanceForm();
   renderSessionList();
   renderSessionForm();
   renderSponsorList();
@@ -839,7 +893,6 @@ function markDirty(nextDirty = true) {
   els.dirtyState.dataset.dirty = String(nextDirty);
   els.saveDataset.classList.toggle('is-dirty', nextDirty);
   els.saveDataset.title = nextDirty ? 'Save changes (Ctrl+S)' : 'No unsaved changes';
-  if (els.timelineSaveBtn) els.timelineSaveBtn.classList.toggle('is-dirty', nextDirty);
   if (els.revertDataset) {
     els.revertDataset.disabled = !nextDirty || !state.persistedSnapshot;
   }
@@ -856,14 +909,29 @@ function showSaveToast() {
 
 function syncWelcomePanel() {
   if (!els.welcome) return;
-  const show = (!state.folderConnectedInSession || !state.projectDirHandle) && !state.dataset;
+  const show = isApiMode()
+    ? !state.dataset
+    : (!state.folderConnectedInSession || !state.projectDirHandle) && !state.dataset;
   if (show) {
     document.getElementById('welcomeScreen1')?.classList.remove('hidden');
     document.getElementById('welcomeScreen2')?.classList.add('hidden');
+    syncWelcomeScreen1State();
   }
   els.welcome.classList.toggle('hidden', !show);
   els.welcome.setAttribute('aria-hidden', String(!show));
   document.body.classList.toggle('session-modal-open', show);
+}
+
+function syncWelcomeScreen1State() {
+  const row = document.getElementById('welcomeApiConnectedRow');
+  const label = document.getElementById('welcomeApiConnectedLabel');
+  if (!row) return;
+  if (isApiMode()) {
+    if (label) label.textContent = state.apiEndpoint;
+    row.classList.remove('hidden');
+  } else {
+    row.classList.add('hidden');
+  }
 }
 
 function closeWelcomeModal() {
@@ -877,7 +945,15 @@ function showWelcomeScreen2() {
   if (!els.welcome) return;
   document.getElementById('welcomeScreen1')?.classList.add('hidden');
   const screen2 = document.getElementById('welcomeScreen2');
-  if (screen2) screen2.classList.remove('hidden');
+  if (screen2) {
+    screen2.classList.remove('hidden');
+    const lead = screen2.querySelector('.editor-welcome-lead');
+    if (lead) {
+      lead.textContent = isApiMode()
+        ? 'API server connected. Select an event to start editing, or create a new one.'
+        : 'Your project folder is connected. Select an event to start editing, or create a new one.';
+    }
+  }
 
   const eventList = document.getElementById('welcomeEventList');
   if (eventList) {
@@ -886,13 +962,16 @@ function showWelcomeScreen2() {
       .filter((o) => o.value.trim())
       .sort((a, b) => extractYear(b.text) - extractYear(a.text));
     eventList.innerHTML = options.length
-      ? options.map((o) => `
+      ? options.map((o) => {
+          const isHidden = o.dataset.enabled === 'false';
+          return `
           <button type="button" class="editor-welcome-event-btn" data-welcome-load="${escapeAttr(o.value)}">
             <i class="fas fa-file-code welcome-btn-icon"></i>
             <span class="welcome-btn-label">${escapeHtml(o.text)}</span>
+            ${isHidden ? '<span class="welcome-btn-hidden-badge"><i class="fas fa-eye-slash"></i> Hidden</span>' : ''}
             <i class="fas fa-chevron-right welcome-btn-arrow"></i>
-          </button>
-        `).join('')
+          </button>`;
+        }).join('')
       : '<p class="editor-welcome-empty">No event files found in this folder yet.</p>';
 
     eventList.querySelectorAll('[data-welcome-load]').forEach((btn) => {
@@ -1193,11 +1272,15 @@ function deriveSessionDurationValue(startTime, endTime) {
   return durationToCanonical(minutes);
 }
 
+const _DURATION_RE = /^P\d+M$/;
 function syncSessionDuration(item) {
-  if (!item || typeof item !== 'object') return '';
-  const duration = deriveSessionDurationValue(item.startTime, item.endTime);
-  item.duration = duration;
-  return duration;
+  if (!item || typeof item !== 'object') return 'P0M';
+  const derived = deriveSessionDurationValue(item.startTime, item.endTime);
+  const existing = item.duration;
+  item.duration = _DURATION_RE.test(derived) ? derived
+    : _DURATION_RE.test(existing) ? existing
+    : 'P0M';
+  return item.duration;
 }
 
 function syncAllSessionDurations() {
@@ -1416,13 +1499,15 @@ async function loadDatasetMetaForGrouping(files) {
         return {
           file,
           group: getDatasetGroupName(eventMeta),
-          label: buildDatasetOptionLabel(file, eventMeta)
+          label: buildDatasetOptionLabel(file, eventMeta),
+          enabled: eventMeta.enabled !== false,
         };
       } catch {
         return {
           file,
           group: 'Other',
-          label: getManifestLabelByFile(file)
+          label: getManifestLabelByFile(file),
+          enabled: true,
         };
       }
     })
@@ -1436,21 +1521,58 @@ async function loadDatasetMetaForGrouping(files) {
   return records;
 }
 
+async function loadDatasetMetaForGroupingViaFetch(files) {
+  const records = await Promise.all(
+    files.map(async (file) => {
+      try {
+        const url = isApiMode() ? `${state.apiEndpoint}/api/data/${encodeURIComponent(file)}` : `./data/${file}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error();
+        const parsed = await res.json();
+        validateDatasetSchema(parsed, file);
+        const m = parsed && typeof parsed === 'object' ? parsed.event || {} : {};
+        return {
+          file,
+          group: getDatasetGroupName(m),
+          label: buildDatasetOptionLabel(file, m),
+          enabled: m.enabled !== false,
+          designation: String(m.designation || '').trim(),
+          location: String(m.location || '').trim(),
+          year: String(m.year || '').trim(),
+          region: String(m.region || '').trim(),
+          venue: String(m.venue || '').trim(),
+        };
+      } catch {
+        return { file, group: 'Other', label: getManifestLabelByFile(file), enabled: true, designation: '', location: '', year: '', region: '', venue: '' };
+      }
+    })
+  );
+  records.sort((a, b) => {
+    const groupCmp = a.group.localeCompare(b.group);
+    return groupCmp !== 0 ? groupCmp : a.label.localeCompare(b.label);
+  });
+  return records;
+}
+
 async function renderDatasetOptionsFromConnectedFolder(preferred = '') {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
     els.datasetSelect.innerHTML = '<option value="">Connect folder to load datasets</option>';
     els.datasetSelect.value = '';
     return;
   }
 
-  const files = await listDatasetFilesFromConnectedFolder();
+  const files = isApiMode()
+    ? eventCatalog.map((e) => e.file).filter((f) => f && isEditorDatasetFile(f)).sort((a, b) => a.localeCompare(b))
+    : await listDatasetFilesFromConnectedFolder();
   if (files.length === 0) {
     els.datasetSelect.innerHTML = '<option value="">No JSON files found in data/</option>';
     els.datasetSelect.value = '';
     return;
   }
 
-  const groupedRecords = await loadDatasetMetaForGrouping(files);
+  const groupedRecords = isApiMode()
+    ? await loadDatasetMetaForGroupingViaFetch(files)
+    : await loadDatasetMetaForGrouping(files);
   const groups = new Map();
   groupedRecords.forEach((record) => {
     if (!groups.has(record.group)) groups.set(record.group, []);
@@ -1460,7 +1582,7 @@ async function renderDatasetOptionsFromConnectedFolder(preferred = '') {
   els.datasetSelect.innerHTML = [...groups.entries()]
     .map(([groupName, records]) => {
       const options = records
-        .map((record) => `<option value="${escapeAttr(record.file)}">${escapeHtml(record.label)}</option>`)
+        .map((record) => `<option value="${escapeAttr(record.file)}" data-enabled="${record.enabled !== false}">${escapeHtml(record.label)}</option>`)
         .join('');
       return `<optgroup label="${escapeAttr(groupName)}">${options}</optgroup>`;
     })
@@ -1507,6 +1629,23 @@ function normalizeDatasetShape() {
   }
   if (!state.dataset.event.timezone) state.dataset.event.timezone = 'UTC';
   if (state.dataset.event.columns == null || state.dataset.event.columns === '') state.dataset.event.columns = 3;
+  const hexPattern = /^#[0-9a-fA-F]{6}$/;
+  // Migrate legacy string theme and top-level color fields into the theme object
+  if (typeof state.dataset.event.theme === 'string') {
+    state.dataset.event.theme = { id: state.dataset.event.theme };
+  } else if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') {
+    state.dataset.event.theme = {};
+  }
+  for (const colorField of ['primaryColor', 'secondaryColor', 'tertiaryColor']) {
+    const topLevel = state.dataset.event[colorField];
+    if (topLevel) {
+      if (!state.dataset.event.theme[colorField]) state.dataset.event.theme[colorField] = topLevel;
+      delete state.dataset.event[colorField];
+    }
+    const v = state.dataset.event.theme[colorField];
+    if (v != null && !hexPattern.test(v)) delete state.dataset.event.theme[colorField];
+  }
+  if (Object.keys(state.dataset.event.theme).length === 0) delete state.dataset.event.theme;
   syncAllSessionDurations();
   state.dataset.items.forEach((item) => {
     if (!item || typeof item !== 'object') return;
@@ -1516,7 +1655,7 @@ function normalizeDatasetShape() {
 }
 
 async function loadDataset(file) {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
     throw new Error('Connect folder first.');
   }
   if (localStorage.getItem(PHOTOS_BACKUP_KEY)) {
@@ -1529,10 +1668,17 @@ async function loadDataset(file) {
     throw new Error(`${file} is not an editable dataset.`);
   }
   const targetPath = normalizeOutputPath(`data/${file}`);
-  const handle = await resolveFileHandleFromProjectDir(targetPath);
-  const fileBlob = await handle.getFile();
-  const content = await fileBlob.text();
-  const parsed = JSON.parse(content);
+  let handle = null;
+  let parsed;
+  if (isApiMode()) {
+    const res = await fetch(`${state.apiEndpoint}/api/data/${encodeURIComponent(file)}`);
+    if (!res.ok) throw new Error(`Failed to load ${file}: HTTP ${res.status}`);
+    parsed = await res.json();
+  } else {
+    handle = await resolveFileHandleFromProjectDir(targetPath);
+    const fileBlob = await handle.getFile();
+    parsed = JSON.parse(await fileBlob.text());
+  }
   validateDatasetSchema(parsed, file);
   state.dataset = parsed;
   state.file = file;
@@ -1543,16 +1689,18 @@ async function loadDataset(file) {
   state.selectedSponsorIndex = -1;
   state.sessionSearchQuery = '';
   normalizeDatasetShape();
-  await restoreLinkedHandleForCurrentPath();
-  if (!state.fileHandle && state.projectDirHandle) {
-    try {
-      const fromDir = await resolveFileHandleFromProjectDir(state.outputPath);
-      if (fromDir) {
-        state.fileHandle = fromDir;
-        await setLinkedHandle(getFileLinkKey(), fromDir);
+  if (!isApiMode()) {
+    await restoreLinkedHandleForCurrentPath();
+    if (!state.fileHandle && state.projectDirHandle) {
+      try {
+        const fromDir = await resolveFileHandleFromProjectDir(state.outputPath);
+        if (fromDir) {
+          state.fileHandle = fromDir;
+          await setLinkedHandle(getFileLinkKey(), fromDir);
+        }
+      } catch {
+        // Keep fallback behavior.
       }
-    } catch {
-      // Keep fallback behavior.
     }
   }
   markDirty(false);
@@ -1562,7 +1710,11 @@ async function loadDataset(file) {
   undoClear();
   clearRecoverySnapshot();
   setCurrentFilenameLabel();
+  const themeObj = state.dataset?.event?.theme;
+  applyThemeClass(themeObj?.id ? normalizeThemeId(themeObj.id) : getCurrentThemeId());
+  applyEventColors(themeObj?.primaryColor, themeObj?.secondaryColor, themeObj?.tertiaryColor);
   renderEventMetaForm();
+  renderAppearanceForm();
   renderLogoForm();
   renderFlickrForm();
   renderSessionList();
@@ -1574,6 +1726,7 @@ async function loadDataset(file) {
     renderTimeline(els.timelineCanvas, state.dataset, {
       markDirty: () => markDirty(true),
       trackQuickSessionChange,
+      undoPush,
       utcIsoToLocalInput,
       localInputToUtcIso,
       getEventTimezone,
@@ -1600,7 +1753,7 @@ function createDatasetScaffold(pathValue) {
       region: '',
       venue: '',
       website: '',
-      scheduleURL: '',
+      scheduleURLs: [],
       logo: normalizeLogoObject(),
       flickr: normalizeFlickrObject(),
       sponsors: [],
@@ -1623,6 +1776,7 @@ function createDatasetScaffold(pathValue) {
   capturePersistedSnapshot();
   setCurrentFilenameLabel();
   renderEventMetaForm();
+  renderAppearanceForm();
   renderLogoForm();
   renderFlickrForm();
   renderSessionList();
@@ -1768,8 +1922,8 @@ function clearLogoBackup() {
 }
 
 async function uploadFlickrImageFromPicker() {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    window.alert('Connect folder first to upload Flickr images.');
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
+    window.alert('Connect folder or configure an API server to upload images.');
     return;
   }
   const picker = document.createElement('input');
@@ -1786,13 +1940,17 @@ async function uploadFlickrImageFromPicker() {
 
   await backupCurrentPhotoForRevert();
   const relativePath = getFlickrImageTargetPath();
-  const segments = relativePath.split('/').filter(Boolean);
-  const fileName = segments.pop();
-  const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
-  const handle = await dir.getFileHandle(fileName, { create: true });
-  const writable = await handle.createWritable();
-  await writable.write(file);
-  await writable.close();
+  if (isApiMode()) {
+    await uploadViaApi(file, relativePath);
+  } else {
+    const segments = relativePath.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const handle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(file);
+    await writable.close();
+  }
 
   if (!state.dataset.event.flickr || typeof state.dataset.event.flickr !== 'object') {
     state.dataset.event.flickr = normalizeFlickrObject();
@@ -1810,8 +1968,8 @@ async function uploadFlickrImageFromPicker() {
 }
 
 async function uploadLogoImageFromPicker() {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    window.alert('Connect folder first to upload event logos.');
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
+    window.alert('Connect folder or configure an API server to upload images.');
     return;
   }
   const picker = document.createElement('input');
@@ -1829,13 +1987,17 @@ async function uploadLogoImageFromPicker() {
   await backupCurrentLogoForRevert();
 
   const relativePath = getLogoImageTargetPath(file);
-  const segments = relativePath.split('/').filter(Boolean);
-  const fileName = segments.pop();
-  const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
-  const handle = await dir.getFileHandle(fileName, { create: true });
-  const writable = await handle.createWritable();
-  await writable.write(file);
-  await writable.close();
+  if (isApiMode()) {
+    await uploadViaApi(file, relativePath);
+  } else {
+    const segments = relativePath.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const handle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(file);
+    await writable.close();
+  }
 
   state.dataset.event.logo = normalizeLogoObject(state.dataset.event.logo);
   state.dataset.event.logo.image = `./${relativePath}`;
@@ -1850,8 +2012,8 @@ async function uploadLogoImageFromPicker() {
 }
 
 async function uploadSponsorImageFromPicker(index) {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    window.alert('Connect folder first to upload sponsor images.');
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
+    window.alert('Connect folder or configure an API server to upload images.');
     return;
   }
   const sponsor = state.dataset?.event?.sponsors?.[index];
@@ -1870,13 +2032,17 @@ async function uploadSponsorImageFromPicker(index) {
   if (!file) return;
 
   const relativePath = getSponsorImageTargetPath(file, sponsor);
-  const segments = relativePath.split('/').filter(Boolean);
-  const fileName = segments.pop();
-  const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
-  const handle = await dir.getFileHandle(fileName, { create: true });
-  const writable = await handle.createWritable();
-  await writable.write(file);
-  await writable.close();
+  if (isApiMode()) {
+    await uploadViaApi(file, relativePath);
+  } else {
+    const segments = relativePath.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const handle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(file);
+    await writable.close();
+  }
 
   sponsor.image = `./${relativePath}`;
   if (!sponsor.imageAlt) {
@@ -2228,13 +2394,544 @@ function renderFlickrForm() {
   bindFlickrFormEvents(els.flickrForm);
 }
 
+
+function setEventColor(field, value) {
+  if (!state.dataset?.event) return;
+  if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') state.dataset.event.theme = {};
+  state.dataset.event.theme[field] = value;
+  markDirty(true);
+  const resetIds = { primaryColor: 'clearPrimaryColor', secondaryColor: 'clearSecondaryColor', tertiaryColor: 'clearTertiaryColor' };
+  document.getElementById(resetIds[field])?.classList.remove('hidden');
+  applyEventColors(state.dataset.event.theme.primaryColor, state.dataset.event.theme.secondaryColor, state.dataset.event.theme.tertiaryColor);
+}
+
+function clearEventColor(field, picker, hex, clearBtn, defaultColor) {
+  if (!state.dataset?.event) return;
+  if (state.dataset.event.theme) delete state.dataset.event.theme[field];
+  markDirty(true);
+  picker.value = defaultColor;
+  hex.value = '';
+  hex.placeholder = defaultColor;
+  clearBtn.classList.add('hidden');
+  applyEventColors(state.dataset.event.theme?.primaryColor, state.dataset.event.theme?.secondaryColor, state.dataset.event.theme?.tertiaryColor);
+}
+
+let _editingThemeId = null;
+let _editingThemeSnapshot = null;
+let _preEditThemeId = null;
+
+const _THEME_EDIT_FIELDS = [
+  { key: 'bg',        label: 'Background', def: '#010810' },
+  { key: 'primary',   label: 'Primary',    def: '#00cfff' },
+  { key: 'secondary', label: 'Secondary',  def: '#4a90d9' },
+  { key: 'tertiary',  label: 'Tertiary',   def: '#7c3aed' },
+  { key: 'text',      label: 'Text',       def: '#eaf2fc' },
+  { key: 'border',    label: 'Border',     def: '#162c4c' },
+];
+
+function _blendHex(hex, toward, amount) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex) || !/^#[0-9a-fA-F]{6}$/.test(toward)) return hex;
+  const lerp = (a, b) => Math.round(a + (b - a) * amount).toString(16).padStart(2, '0');
+  const r = lerp(parseInt(hex.slice(1, 3), 16), parseInt(toward.slice(1, 3), 16));
+  const g = lerp(parseInt(hex.slice(3, 5), 16), parseInt(toward.slice(3, 5), 16));
+  const b = lerp(parseInt(hex.slice(5, 7), 16), parseInt(toward.slice(5, 7), 16));
+  return `#${r}${g}${b}`;
+}
+
+function _themeCardHtml(t, selectedId, nameAttr, liveThemeId, savedThemeId) {
+  const c = t.colors || {};
+  const selected = t.id === selectedId;
+  const isSaved = !!savedThemeId && t.id === savedThemeId;
+  const isLive = !!liveThemeId && t.id === liveThemeId;
+  const isDirty = selected && !isSaved && state.dirty;
+  let badgeClass = '';
+  let badgeText = '';
+  if (isLive) {
+    badgeClass = 'theme-card-live-badge';
+    badgeText = 'Live';
+  } else if (isSaved) {
+    badgeClass = 'theme-card-saved-badge';
+    badgeText = 'Saved';
+  } else if (isDirty) {
+    badgeClass = 'theme-card-dirty-badge';
+    badgeText = 'Unsaved';
+  }
+  return `<label class="appearance-theme-card${selected ? ' is-selected' : ''}${isLive ? ' is-live' : ''}${isSaved ? ' is-saved' : ''}${isDirty ? ' is-dirty' : ''}" title="${escapeAttr(t.label)}">
+    <input type="radio" name="${nameAttr}" value="${escapeAttr(t.id)}" ${selected ? 'checked' : ''} class="sr-only">
+    <div class="theme-card-swatch-row">
+      <span class="theme-swatch-chip" style="background:${c.bg || '#000'}"></span>
+      <span class="theme-swatch-chip" style="background:${c.primary || '#00cfff'}"></span>
+      <span class="theme-swatch-chip" style="background:${c.text || '#fff'}"></span>
+    </div>
+    <span class="theme-card-label">${escapeHtml(t.label)}</span>
+    ${badgeText ? `<span class="${badgeClass}">${badgeText}</span>` : ''}
+  </label>`;
+}
+
+async function saveThemesJson() {
+  const json = JSON.stringify(getThemes(), null, 2) + '\n';
+  if (isApiMode()) {
+    const res = await fetch(`${state.apiEndpoint}/api/data/themes.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: json,
+    });
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    return true;
+  }
+  window.alert('Theme editing requires the API server.\nStart it with: node server.js');
+  return false;
+}
+
+function renderAppearanceForm() {
+  if (!els.appearanceForm) return;
+  const event = state.dataset?.event || null;
+  const themes = getThemes();
+
+  // --- Per-event section ---
+  const eventThemeObj = event?.theme || {};
+  const eventThemeId = eventThemeObj.id || '';
+  const effectiveThemeId = eventThemeId || getCurrentThemeId();
+  const themeColors = getThemeById(effectiveThemeId)?.colors || {};
+  const primaryColor = eventThemeObj.primaryColor || '';
+  const secondaryColor = eventThemeObj.secondaryColor || '';
+  const tertiaryColor = eventThemeObj.tertiaryColor || '';
+  const disabled = !event;
+  const colorDisabledAttr = disabled ? ' disabled' : '';
+  const savedThemeId = state.persistedSnapshot?.dataset?.event?.theme?.id || '';
+
+  const eventThemeCards = themes.map((t) => _themeCardHtml(t, eventThemeId || '__none__', 'eventTheme', _editingThemeId, savedThemeId)).join('');
+  const pickerPrimary = primaryColor || themeColors.primary || '#00cfff';
+  const pickerSecondary = secondaryColor || themeColors.secondary || '#4a90d9';
+  const pickerTertiary = tertiaryColor || themeColors.tertiary || '#7c3aed';
+
+  // --- Theme library section ---
+  const libraryItems = themes.map((t) => {
+    const c = t.colors || {};
+    if (_editingThemeId === t.id) {
+      const colorPairs = _THEME_EDIT_FIELDS.map((f) => {
+        const v = c[f.key] || f.def;
+        return `<div class="appearance-add-field">
+          <span>${f.label}</span>
+          <div class="appearance-color-pair">
+            <input type="color" id="editColor-${f.key}" value="${escapeAttr(v)}">
+            <input type="text" id="editColorHex-${f.key}" value="${escapeAttr(v)}" maxlength="7" class="appearance-hex-input" placeholder="${escapeAttr(f.def)}">
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="appearance-library-item appearance-library-item--editing">
+        <div style="width:100%">
+          <p class="theme-edit-live-note"><span class="theme-edit-live-dot"></span>Previewing live on page — changes apply instantly</p>
+          <div class="appearance-add-theme-fields">
+            <label class="appearance-add-field">
+              <span>Name</span>
+              <input type="text" id="editThemeLabel" value="${escapeAttr(t.label)}" maxlength="32">
+            </label>
+            <label class="appearance-add-field appearance-add-field--check">
+              <input type="checkbox" id="editThemeDark"${t.dark ? ' checked' : ''}>
+              <span>Dark bg</span>
+            </label>
+            ${colorPairs}
+          </div>
+          <div class="flex gap-2 mt-2">
+            <button type="button" id="doneEditTheme" class="appearance-btn-primary">Done</button>
+            <button type="button" id="cancelEditTheme" class="appearance-btn-secondary">Cancel</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    return `<div class="appearance-library-item" data-theme-id="${escapeAttr(t.id)}">
+      <div class="theme-card-swatch-row">
+        <span class="theme-swatch-chip" style="background:${c.bg || '#000'}"></span>
+        <span class="theme-swatch-chip" style="background:${c.primary || '#00cfff'}"></span>
+        <span class="theme-swatch-chip" style="background:${c.secondary || c.primary || '#888'}"></span>
+        <span class="theme-swatch-chip" style="background:${c.text || '#fff'}"></span>
+      </div>
+      <span class="appearance-library-label">${escapeHtml(t.label)}</span>
+      <button type="button" class="appearance-library-edit" data-edit-theme="${escapeAttr(t.id)}" title="Edit theme">
+        <i class="fas fa-pen text-[0.72rem]"></i>
+      </button>
+      <button type="button" class="appearance-library-delete" data-delete-theme="${escapeAttr(t.id)}" title="Delete theme">
+        <i class="fas fa-trash text-[0.72rem]"></i>
+      </button>
+    </div>`;
+  }).join('');
+
+  els.appearanceForm.innerHTML = `
+    <section class="appearance-panel-section">
+      <div class="appearance-panel-header">
+        <div>
+          <h3 class="appearance-panel-title">Event Appearance</h3>
+          <p class="appearance-panel-desc">Theme and accent colours for this event.${disabled ? ' <span class="appearance-hint">Open an event to customise.</span>' : ''}</p>
+        </div>
+      </div>
+      <div class="${disabled ? 'appearance-section--disabled' : ''}">
+        <div class="appearance-section-label">Theme</div>
+        <div class="appearance-theme-selector" id="eventThemeSelector">
+          <label class="appearance-theme-card${!eventThemeId ? ' is-selected' : ''}${!savedThemeId ? ' is-saved' : ''}${!eventThemeId && state.dirty && savedThemeId ? ' is-dirty' : ''}" title="Use global default">
+            <input type="radio" name="eventTheme" value="" ${!eventThemeId ? 'checked' : ''} class="sr-only"${colorDisabledAttr}>
+            <div class="theme-card-swatch-row">
+              <span class="theme-swatch-chip" style="background:#f5f5f5"></span>
+              <span class="theme-swatch-chip" style="background:#006aa9"></span>
+              <span class="theme-swatch-chip" style="background:#1f2937"></span>
+            </div>
+            <span class="theme-card-label">Default</span>
+            ${!savedThemeId ? '<span class="theme-card-saved-badge">Saved</span>' : ''}${!eventThemeId && state.dirty && savedThemeId ? '<span class="theme-card-dirty-badge">Unsaved</span>' : ''}
+          </label>
+          ${eventThemeCards}
+        </div>
+        <div class="appearance-section mt-4">
+          <div class="appearance-section-label">Accent colours</div>
+          <div class="appearance-color-fields">
+            <div class="appearance-color-row">
+              <span class="appearance-color-label">Primary</span>
+              <div class="appearance-color-pair">
+                <input type="color" id="primaryColorPicker" value="${escapeAttr(pickerPrimary)}"${colorDisabledAttr}>
+                <input type="text" id="primaryColorHex" value="${escapeAttr(primaryColor)}" placeholder="${escapeAttr(pickerPrimary)}" maxlength="7"${colorDisabledAttr}>
+                <button type="button" id="clearPrimaryColor" class="appearance-color-reset${primaryColor ? '' : ' hidden'}"${colorDisabledAttr}>Reset</button>
+              </div>
+            </div>
+            <div class="appearance-color-row">
+              <span class="appearance-color-label">Secondary</span>
+              <div class="appearance-color-pair">
+                <input type="color" id="secondaryColorPicker" value="${escapeAttr(pickerSecondary)}"${colorDisabledAttr}>
+                <input type="text" id="secondaryColorHex" value="${escapeAttr(secondaryColor)}" placeholder="${escapeAttr(pickerSecondary)}" maxlength="7"${colorDisabledAttr}>
+                <button type="button" id="clearSecondaryColor" class="appearance-color-reset${secondaryColor ? '' : ' hidden'}"${colorDisabledAttr}>Reset</button>
+              </div>
+            </div>
+            <div class="appearance-color-row">
+              <span class="appearance-color-label">Tertiary</span>
+              <div class="appearance-color-pair">
+                <input type="color" id="tertiaryColorPicker" value="${escapeAttr(pickerTertiary)}"${colorDisabledAttr}>
+                <input type="text" id="tertiaryColorHex" value="${escapeAttr(tertiaryColor)}" placeholder="${escapeAttr(pickerTertiary)}" maxlength="7"${colorDisabledAttr}>
+                <button type="button" id="clearTertiaryColor" class="appearance-color-reset${tertiaryColor ? '' : ' hidden'}"${colorDisabledAttr}>Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="appearance-preview mt-4">
+          <div class="appearance-preview-label">Live preview</div>
+          <div class="appearance-preview-swatches">
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--bg-1)"></div><span>Background</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--surface-1)"></div><span>Surface</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--accent)"></div><span>Primary</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--color-secondary)"></div><span>Secondary</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--color-tertiary)"></div><span>Tertiary</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--text-0)"></div><span>Text</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--line-0)"></div><span>Border</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="appearance-panel-section mt-4">
+      <div class="appearance-panel-header">
+        <div>
+          <h3 class="appearance-panel-title">Theme Library</h3>
+          <p class="appearance-panel-desc">Add or remove themes. Changes are saved to <code>data/themes.json</code>.</p>
+        </div>
+      </div>
+      <div id="themeLibraryList" class="appearance-library-list">${libraryItems}</div>
+      <div id="addThemeFormWrap" class="hidden appearance-add-theme-form mt-3">
+        <div class="appearance-add-theme-fields">
+          <label class="appearance-add-field">
+            <span>Name</span>
+            <input type="text" id="newThemeLabel" placeholder="My Theme" maxlength="32">
+          </label>
+          <label class="appearance-add-field appearance-add-field--check">
+            <input type="checkbox" id="newThemeDark" checked>
+            <span>Dark background</span>
+          </label>
+          <div class="appearance-add-field">
+            <span>Background</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeBg" value="#010810">
+              <input type="text" id="newThemeBgHex" value="#010810" maxlength="7" class="appearance-hex-input" placeholder="#010810">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Primary</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemePrimary" value="#00cfff">
+              <input type="text" id="newThemePrimaryHex" value="#00cfff" maxlength="7" class="appearance-hex-input" placeholder="#00cfff">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Secondary</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeSecondary" value="#4a90d9">
+              <input type="text" id="newThemeSecondaryHex" value="#4a90d9" maxlength="7" class="appearance-hex-input" placeholder="#4a90d9">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Tertiary</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeTertiary" value="#7c3aed">
+              <input type="text" id="newThemeTertiaryHex" value="#7c3aed" maxlength="7" class="appearance-hex-input" placeholder="#7c3aed">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Text</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeText" value="#eaf2fc">
+              <input type="text" id="newThemeTextHex" value="#eaf2fc" maxlength="7" class="appearance-hex-input" placeholder="#eaf2fc">
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button type="button" id="confirmAddTheme" class="appearance-btn-primary">Add</button>
+          <button type="button" id="cancelAddTheme" class="appearance-btn-secondary">Cancel</button>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button type="button" id="showAddThemeForm" class="appearance-btn-secondary"><i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add theme</button>
+        <button type="button" id="saveThemesBtn" class="appearance-btn-primary"><i class="fas fa-floppy-disk mr-1.5 text-[0.72rem]"></i>Save themes</button>
+      </div>
+    </section>`;
+
+  applyThemeClass(_editingThemeId || effectiveThemeId);
+  applyEventColors(primaryColor, secondaryColor, tertiaryColor);
+
+  // --- Per-event theme radios ---
+  els.appearanceForm.querySelectorAll('input[name="eventTheme"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      if (!radio.checked || !state.dataset?.event) return;
+      const val = radio.value;
+      if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') state.dataset.event.theme = {};
+      if (val) {
+        state.dataset.event.theme.id = val;
+      } else {
+        delete state.dataset.event.theme.id;
+      }
+      markDirty(true);
+      const newEffective = val || getCurrentThemeId();
+      applyThemeClass(newEffective);
+      applyEventColors(state.dataset.event.theme.primaryColor, state.dataset.event.theme.secondaryColor, state.dataset.event.theme.tertiaryColor);
+      renderAppearanceForm();
+    });
+  });
+
+  // --- Accent color pickers ---
+  if (!disabled) {
+    const primaryPicker = document.getElementById('primaryColorPicker');
+    const primaryHex = document.getElementById('primaryColorHex');
+    const clearPrimary = document.getElementById('clearPrimaryColor');
+    const secondaryPicker = document.getElementById('secondaryColorPicker');
+    const secondaryHex = document.getElementById('secondaryColorHex');
+    const clearSecondary = document.getElementById('clearSecondaryColor');
+
+    primaryPicker?.addEventListener('input', () => {
+      primaryHex.value = primaryPicker.value.toUpperCase();
+      setEventColor('primaryColor', primaryPicker.value);
+    });
+    primaryHex?.addEventListener('input', () => {
+      const v = primaryHex.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { primaryPicker.value = v; setEventColor('primaryColor', v); }
+    });
+    clearPrimary?.addEventListener('click', () => {
+      const c = getThemeById(effectiveThemeId)?.colors || {};
+      clearEventColor('primaryColor', primaryPicker, primaryHex, clearPrimary, c.primary || '#00cfff');
+    });
+    secondaryPicker?.addEventListener('input', () => {
+      secondaryHex.value = secondaryPicker.value.toUpperCase();
+      setEventColor('secondaryColor', secondaryPicker.value);
+    });
+    secondaryHex?.addEventListener('input', () => {
+      const v = secondaryHex.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { secondaryPicker.value = v; setEventColor('secondaryColor', v); }
+    });
+    clearSecondary?.addEventListener('click', () => {
+      const c = getThemeById(effectiveThemeId)?.colors || {};
+      clearEventColor('secondaryColor', secondaryPicker, secondaryHex, clearSecondary, c.secondary || '#4a90d9');
+    });
+    const tertiaryPicker = document.getElementById('tertiaryColorPicker');
+    const tertiaryHex = document.getElementById('tertiaryColorHex');
+    const clearTertiary = document.getElementById('clearTertiaryColor');
+    tertiaryPicker?.addEventListener('input', () => {
+      tertiaryHex.value = tertiaryPicker.value.toUpperCase();
+      setEventColor('tertiaryColor', tertiaryPicker.value);
+    });
+    tertiaryHex?.addEventListener('input', () => {
+      const v = tertiaryHex.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { tertiaryPicker.value = v; setEventColor('tertiaryColor', v); }
+    });
+    clearTertiary?.addEventListener('click', () => {
+      const c = getThemeById(effectiveThemeId)?.colors || {};
+      clearEventColor('tertiaryColor', tertiaryPicker, tertiaryHex, clearTertiary, c.tertiary || '#7c3aed');
+    });
+  }
+
+  // --- Theme library controls ---
+  els.appearanceForm.querySelectorAll('[data-delete-theme]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.deleteTheme;
+      if (getThemes().length <= 1) {
+        window.alert('Cannot delete the last theme.');
+        return;
+      }
+      if (!window.confirm(`Delete theme "${id}"?`)) return;
+      const updated = getThemes().filter((t) => t.id !== id);
+      setThemes(updated);
+      if (_editingThemeId === id) { _editingThemeId = null; _editingThemeSnapshot = null; }
+      renderAppearanceForm();
+    });
+  });
+
+  els.appearanceForm.querySelectorAll('[data-edit-theme]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      _preEditThemeId = _editingThemeId || effectiveThemeId;
+      _editingThemeId = btn.dataset.editTheme;
+      _editingThemeSnapshot = JSON.parse(JSON.stringify(getThemeById(_editingThemeId)));
+      renderAppearanceForm();
+    });
+  });
+
+  document.getElementById('doneEditTheme')?.addEventListener('click', () => {
+    const restoreId = _preEditThemeId || effectiveThemeId;
+    _editingThemeId = null;
+    _editingThemeSnapshot = null;
+    _preEditThemeId = null;
+    applyThemeClass(restoreId);
+    renderAppearanceForm();
+  });
+
+  document.getElementById('cancelEditTheme')?.addEventListener('click', () => {
+    if (_editingThemeSnapshot) {
+      const reverted = getThemes().map((t) => t.id === _editingThemeId ? _editingThemeSnapshot : t);
+      setThemes(reverted);
+    }
+    const restoreId = _preEditThemeId || effectiveThemeId;
+    _editingThemeId = null;
+    _editingThemeSnapshot = null;
+    _preEditThemeId = null;
+    applyThemeClass(restoreId);
+    renderAppearanceForm();
+  });
+
+  // Live color + meta updates while editing a theme
+  _THEME_EDIT_FIELDS.forEach(({ key }) => {
+    const picker = document.getElementById(`editColor-${key}`);
+    const hexInp = document.getElementById(`editColorHex-${key}`);
+    if (!picker) return;
+    picker.addEventListener('input', () => {
+      if (hexInp) hexInp.value = picker.value.toUpperCase();
+      _applyLiveEditColor(key, picker.value);
+    });
+    hexInp?.addEventListener('input', () => {
+      const v = hexInp.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { picker.value = v; _applyLiveEditColor(key, v); }
+    });
+  });
+
+  document.getElementById('editThemeLabel')?.addEventListener('input', _applyLiveEditMeta);
+  document.getElementById('editThemeDark')?.addEventListener('change', _applyLiveEditMeta);
+
+  // Hex↔picker sync for add form
+  [
+    ['newThemeBg', 'newThemeBgHex'],
+    ['newThemePrimary', 'newThemePrimaryHex'],
+    ['newThemeSecondary', 'newThemeSecondaryHex'],
+    ['newThemeTertiary', 'newThemeTertiaryHex'],
+    ['newThemeText', 'newThemeTextHex'],
+  ].forEach(([pickerId, hexId]) => {
+    const picker = document.getElementById(pickerId);
+    const hexInp = document.getElementById(hexId);
+    if (!picker || !hexInp) return;
+    picker.addEventListener('input', () => { hexInp.value = picker.value.toUpperCase(); });
+    hexInp.addEventListener('input', () => {
+      const v = hexInp.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) picker.value = v;
+    });
+  });
+
+  document.getElementById('showAddThemeForm')?.addEventListener('click', () => {
+    document.getElementById('addThemeFormWrap')?.classList.remove('hidden');
+    document.getElementById('showAddThemeForm')?.classList.add('hidden');
+  });
+  document.getElementById('newThemeDark')?.addEventListener('change', () => {
+    const isDark = document.getElementById('newThemeDark')?.checked ?? true;
+    const textPicker = document.getElementById('newThemeText');
+    const textHex = document.getElementById('newThemeTextHex');
+    if (!textPicker || !textHex) return;
+    const defaultText = isDark ? '#eaf2fc' : '#0f172a';
+    textPicker.value = defaultText;
+    textHex.value = defaultText;
+    textHex.placeholder = defaultText;
+  });
+  document.getElementById('cancelAddTheme')?.addEventListener('click', () => {
+    document.getElementById('addThemeFormWrap')?.classList.add('hidden');
+    document.getElementById('showAddThemeForm')?.classList.remove('hidden');
+  });
+  document.getElementById('confirmAddTheme')?.addEventListener('click', () => {
+    const label = document.getElementById('newThemeLabel')?.value.trim();
+    if (!label) { window.alert('Please enter a theme name.'); return; }
+    const id = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (getThemes().some((t) => t.id === id)) {
+      window.alert(`A theme with id "${id}" already exists. Choose a different name.`);
+      return;
+    }
+    const dark = document.getElementById('newThemeDark')?.checked ?? true;
+    const bg = document.getElementById('newThemeBg')?.value || '#010810';
+    const primary = document.getElementById('newThemePrimary')?.value || '#00cfff';
+    const secondary = document.getElementById('newThemeSecondary')?.value || '#4a90d9';
+    const tertiary = document.getElementById('newThemeTertiary')?.value || secondary;
+    const textPicked = document.getElementById('newThemeText')?.value || '';
+    const baseDefaults = dark
+      ? { surface: 'rgba(3,10,22,0.93)', surfaceAlt: 'rgba(7,18,36,0.96)', surfaceDeep: 'rgba(12,28,52,0.84)', text: textPicked || '#eaf2fc', textAlt: '#cdd9ee', textMuted: '#8eaacc', textFaint: '#6a8cb0' }
+      : { surface: 'rgba(255,255,255,0.97)', surfaceAlt: 'rgba(248,250,252,0.99)', surfaceDeep: 'rgba(241,245,249,0.95)', text: textPicked || '#0f172a', textAlt: '#1e293b', textMuted: '#475569', textFaint: '#64748b' };
+    const bgAlt = _blendHex(bg, dark ? '#ffffff' : '#000000', 0.06);
+    const border = dark ? _blendHex(bg, '#ffffff', 0.12) : _blendHex(bg, '#000000', 0.18);
+    const newTheme = { id, label, dark, colors: { bg, bgAlt, primary, secondary, tertiary, border, ...baseDefaults } };
+    setThemes([...getThemes(), newTheme]);
+    renderAppearanceForm();
+  });
+
+  document.getElementById('saveThemesBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('saveThemesBtn');
+    if (btn) btn.disabled = true;
+    try {
+      const ok = await saveThemesJson();
+      if (ok) showSaveToast();
+    } catch (e) {
+      window.alert(`Failed to save themes: ${e.message}`);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+}
+
+function _applyLiveEditColor(key, value) {
+  if (!_editingThemeId) return;
+  const updated = getThemes().map((t) => {
+    if (t.id !== _editingThemeId) return t;
+    const newColors = { ...t.colors, [key]: value };
+    if (key === 'bg') {
+      newColors.bgAlt = _blendHex(value, t.dark ? '#ffffff' : '#000000', 0.06);
+    }
+    return { ...t, colors: newColors };
+  });
+  setThemes(updated);
+}
+
+function _applyLiveEditMeta() {
+  if (!_editingThemeId) return;
+  const label = document.getElementById('editThemeLabel')?.value.trim() || '';
+  const dark = document.getElementById('editThemeDark')?.checked ?? true;
+  const updated = getThemes().map((t) => {
+    if (t.id !== _editingThemeId) return t;
+    return { ...t, label: label || t.label, dark };
+  });
+  setThemes(updated);
+  applyThemeClass(_editingThemeId);
+}
+
 function renderEventMetaForm() {
   const event = state.dataset?.event || {};
   const visibleFields = EVENT_META_FIELDS.filter((field) => !['id', 'name', 'logo', 'flickr'].includes(field));
 
   const html = visibleFields.map((field) => {
     const config = EVENT_META_FIELD_CONFIG[field] || { label: field, description: '' };
-    const isWide = field === 'website' || field === 'scheduleURL';
+    const isWide = field === 'website' || field === 'scheduleURLs';
     const spanClass = isWide ? 'md:col-span-2 xl:col-span-3' : '';
 
     if (field === 'timezone') {
@@ -2342,6 +3039,7 @@ function renderEventMetaForm() {
         renderTimeline(els.timelineCanvas, state.dataset, {
           markDirty: () => markDirty(true),
           trackQuickSessionChange,
+          undoPush,
           utcIsoToLocalInput,
           localInputToUtcIso,
           getEventTimezone,
@@ -2435,7 +3133,7 @@ function setSponsorWorkspaceExpanded(expanded) {
 }
 
 function setActiveEditorTab(tab) {
-  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline'].includes(tab) ? tab : 'event';
+  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline', 'appearance'].includes(tab) ? tab : 'event';
   state.activeEditorTab = nextTab;
 
   if (els.eventWorkspacePanel) {
@@ -2501,16 +3199,26 @@ function setActiveEditorTab(tab) {
       renderTimeline(els.timelineCanvas, state.dataset, {
         markDirty: () => markDirty(true),
         trackQuickSessionChange,
+        undoPush,
         utcIsoToLocalInput,
         localInputToUtcIso,
         getEventTimezone,
       });
     }
   }
+  if (els.appearanceWorkspacePanel) {
+    els.appearanceWorkspacePanel.classList.toggle('hidden', nextTab !== 'appearance');
+  }
+  if (els.showAppearanceTab) {
+    const active = nextTab === 'appearance';
+    els.showAppearanceTab.classList.toggle('is-active', active);
+    els.showAppearanceTab.setAttribute('aria-selected', active ? 'true' : 'false');
+    if (active) renderAppearanceForm();
+  }
 }
 
 function switchEditorTab(tab) {
-  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline'].includes(tab) ? tab : 'event';
+  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline', 'appearance'].includes(tab) ? tab : 'event';
   if (nextTab === state.activeEditorTab) return;
   setActiveEditorTab(nextTab);
 }
@@ -3033,7 +3741,7 @@ function renderSessionForm() {
       const key = input.dataset.sessionField;
       const raw = input.value;
 
-      if (key === 'track' || key === 'speaker_usernames' || key === 'speakers') {
+      if (key === 'track' || key === 'speakers') {
         const values = parseMultiValue(raw);
         item[key] = values.length <= 1 ? (values[0] || '') : values;
       } else if (key === 'startTime' || key === 'endTime') {
@@ -3079,9 +3787,8 @@ async function addSession() {
     endTime: seed.endTime || '',
     location: seed.location || '',
     duration: '',
-    track: seed.track || '',
-    speakers: '',
-    speaker_usernames: '',
+    track: seed.track || [],
+    speakers: [],
     full_description: '',
     sponsorIds: '',
     link: '',
@@ -3942,6 +4649,28 @@ async function writeFileHandle(handle) {
 async function saveAsDataset() {
   if (!state.dataset) return;
 
+  if (isApiMode()) {
+    const suggested = outputBasename(state.outputPath) || state.file || 'new-event.json';
+    const raw = window.prompt('Save As — enter filename (in data/):', suggested);
+    if (!raw) return;
+    const cleanName = String(raw).trim().toLowerCase().replace(/\.json$/i, '').replace(/[^a-z0-9-]/g, '-') + '.json';
+    state.outputPath = `data/${cleanName}`;
+    state.file = cleanName;
+    setCurrentFilenameLabel();
+    await saveViaApi();
+    clearPhotosBackup();
+    clearLogoBackup();
+    markDirty(false);
+    resetSessionQuickEditState();
+    resetSponsorQuickEditState();
+    markSessionDirty(false);
+    markSponsorDirty(false);
+    capturePersistedSnapshot();
+    clearRecoverySnapshot();
+    showSaveToast();
+    return;
+  }
+
   if (typeof window.showSaveFilePicker !== 'function') {
     exportDataset();
     markDirty(false);
@@ -3981,6 +4710,32 @@ async function saveAsDataset() {
 
 async function saveDataset() {
   if (!state.dataset) return;
+  const { valid, errors } = await validateDataset(state.dataset);
+  if (!valid) {
+    console.error('Validation errors:', errors);
+    const errorDetails = formatValidationErrors(errors, state.dataset);
+    console.error('Formatted errors:', errorDetails);
+    window.alert(
+      `Cannot save: dataset has ${errors.length} schema error${errors.length === 1 ? '' : 's'}.\n\n${errorDetails}`
+    );
+    return;
+  }
+  console.log('Dataset validation passed, saving...');
+  if (isApiMode()) {
+    await saveViaApi();
+    clearPhotosBackup();
+    clearLogoBackup();
+    markDirty(false);
+    resetSessionQuickEditState();
+    resetSponsorQuickEditState();
+    markSessionDirty(false);
+    markSponsorDirty(false);
+    capturePersistedSnapshot();
+    clearRecoverySnapshot();
+    showSaveToast();
+    renderAppearanceForm();
+    return;
+  }
   if (!state.fileHandle) {
     if (state.projectDirHandle) {
       try {
@@ -4016,6 +4771,7 @@ async function saveDataset() {
   capturePersistedSnapshot();
   clearRecoverySnapshot();
   showSaveToast();
+  renderAppearanceForm();
 }
 
 async function saveCurrentSession() {
@@ -4041,7 +4797,10 @@ async function buildSponsorEventCounts() {
     .map((e) => e.file)
     .filter((f) => f && f.endsWith('.json') && f !== 'sponsors.json');
   const results = await Promise.allSettled(
-    files.map((f) => fetch(`./data/${f}`).then((r) => r.json()))
+    files.map((f) => {
+      const url = isApiMode() ? `${state.apiEndpoint}/api/data/${encodeURIComponent(f)}` : `./data/${f}`;
+      return fetch(url).then((r) => r.json());
+    })
   );
   const counts = new Map();
   for (const result of results) {
@@ -4088,6 +4847,45 @@ function bustDatasetForPreview(dataset) {
   return clone;
 }
 
+function isApiMode() {
+  return Boolean(state.apiEndpoint);
+}
+
+async function saveViaApi() {
+  const filename = outputBasename(state.outputPath) || state.file;
+  if (!filename) throw new Error('No output filename configured.');
+  const res = await fetch(`${state.apiEndpoint}/api/data/${encodeURIComponent(filename)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: datasetJsonText(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+}
+
+async function uploadViaApi(file, relativePath) {
+  const form = new FormData();
+  form.append('file', file, file.name || 'upload');
+  form.append('targetPath', relativePath.replace(/^\.\//, ''));
+  const res = await fetch(`${state.apiEndpoint}/api/upload`, { method: 'POST', body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+}
+
+function syncApiModeUI() {
+  const dot = document.getElementById('apiStatusDot');
+  if (dot) {
+    dot.className = `ml-2 w-2 h-2 rounded-full ${isApiMode() ? 'bg-green-500' : 'bg-gray-300'} inline-block`;
+  }
+  if (els.folderConnectionToggle) {
+    els.folderConnectionToggle.classList.toggle('hidden', isApiMode());
+  }
+}
+
 function escapeHtml(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -4108,7 +4906,7 @@ function renderSitemap() {
   const meta = state.dataset?.event || {};
   const items = state.dataset?.items || [];
 
-  const rawUrl = String(meta.website || meta.scheduleURL || '').trim();
+  const rawUrl = String(meta.website || meta.scheduleURLs?.[0] || '').trim();
   if (!rawUrl) {
     container.innerHTML = '<p class="text-sm text-gray-400 py-4">No event website URL is configured. Set the <strong>Website</strong> field in the Event tab.</p>';
     return;
@@ -4123,7 +4921,9 @@ function renderSitemap() {
 
   const eventUrls = [];
   if (meta.website) eventUrls.push(meta.website);
-  if (meta.scheduleURL && meta.scheduleURL !== meta.website) eventUrls.push(meta.scheduleURL);
+  for (const u of meta.scheduleURLs ?? []) {
+    if (u && u !== meta.website) eventUrls.push(u);
+  }
 
   const sessionEntries = [];
   const seen = new Set(eventUrls);
@@ -4276,6 +5076,128 @@ function bindEvents() {
   const welcomeConnectBtn = document.getElementById('welcomeConnectFolder');
   if (welcomeConnectBtn) {
     welcomeConnectBtn.addEventListener('click', () => handleConnectFolder());
+  }
+
+  const welcomeApiSettingsBtn = document.getElementById('welcomeApiSettings');
+  if (welcomeApiSettingsBtn) {
+    welcomeApiSettingsBtn.addEventListener('click', () => {
+      const modal = document.getElementById('apiSettingsModal');
+      const input = document.getElementById('apiEndpointInput');
+      const result = document.getElementById('apiTestResult');
+      if (input) input.value = state.apiEndpoint;
+      if (result) { result.textContent = ''; result.className = 'text-sm hidden'; }
+      if (modal) { modal.classList.remove('hidden'); modal.setAttribute('aria-hidden', 'false'); }
+    });
+  }
+
+  const welcomeApiContinueBtn = document.getElementById('welcomeApiContinue');
+  if (welcomeApiContinueBtn) {
+    welcomeApiContinueBtn.addEventListener('click', () => showWelcomeScreen2());
+  }
+
+  const welcomeApiDisconnectBtn = document.getElementById('welcomeApiDisconnectBtn');
+  if (welcomeApiDisconnectBtn) {
+    welcomeApiDisconnectBtn.addEventListener('click', () => {
+      state.apiEndpoint = '';
+      localStorage.removeItem('editorApiEndpoint');
+      syncApiModeUI();
+      setFolderConnectionButtonState();
+      syncWelcomeScreen1State();
+    });
+  }
+
+  const apiSettingsBtn = document.getElementById('apiSettingsBtn');
+  const apiSettingsModal = document.getElementById('apiSettingsModal');
+  const closeApiSettingsBtn = document.getElementById('closeApiSettings');
+  const apiEndpointInput = document.getElementById('apiEndpointInput');
+  const apiTestBtn = document.getElementById('apiTestBtn');
+  const apiSaveBtn = document.getElementById('apiSaveBtn');
+  const apiClearBtn = document.getElementById('apiClearBtn');
+  const apiTestResult = document.getElementById('apiTestResult');
+
+  if (apiSettingsBtn && apiSettingsModal) {
+    const openApiModal = () => {
+      if (apiEndpointInput) apiEndpointInput.value = state.apiEndpoint;
+      if (apiTestResult) { apiTestResult.textContent = ''; apiTestResult.className = 'text-sm hidden'; }
+      apiSettingsModal.classList.remove('hidden');
+      apiSettingsModal.setAttribute('aria-hidden', 'false');
+    };
+    const closeApiModal = () => {
+      apiSettingsModal.classList.add('hidden');
+      apiSettingsModal.setAttribute('aria-hidden', 'true');
+    };
+
+    apiSettingsBtn.addEventListener('click', openApiModal);
+    if (closeApiSettingsBtn) closeApiSettingsBtn.addEventListener('click', closeApiModal);
+    apiSettingsModal.addEventListener('click', (e) => { if (e.target === apiSettingsModal) closeApiModal(); });
+
+    if (apiTestBtn && apiEndpointInput && apiTestResult) {
+      apiTestBtn.addEventListener('click', async () => {
+        const endpoint = apiEndpointInput.value.trim().replace(/\/$/, '');
+        if (!endpoint) {
+          apiTestResult.textContent = 'Enter an endpoint URL first.';
+          apiTestResult.className = 'text-sm text-yellow-600';
+          return;
+        }
+        apiTestBtn.disabled = true;
+        apiTestResult.textContent = 'Testing…';
+        apiTestResult.className = 'text-sm text-gray-500';
+        try {
+          const res = await fetch(`${endpoint}/api/health`);
+          if (res.ok) {
+            apiTestResult.textContent = 'Connected successfully.';
+            apiTestResult.className = 'text-sm text-green-600';
+          } else {
+            apiTestResult.textContent = `Server responded with HTTP ${res.status}.`;
+            apiTestResult.className = 'text-sm text-red-600';
+          }
+        } catch (e) {
+          apiTestResult.textContent = `Could not connect: ${e.message}`;
+          apiTestResult.className = 'text-sm text-red-600';
+        }
+        apiTestBtn.disabled = false;
+      });
+    }
+
+    if (apiSaveBtn && apiEndpointInput) {
+      apiSaveBtn.addEventListener('click', async () => {
+        const endpoint = apiEndpointInput.value.trim().replace(/\/$/, '');
+        state.apiEndpoint = endpoint;
+        if (endpoint) {
+          localStorage.setItem('editorApiEndpoint', endpoint);
+        } else {
+          localStorage.removeItem('editorApiEndpoint');
+        }
+        syncApiModeUI();
+        setFolderConnectionButtonState();
+        closeApiModal();
+        if (endpoint && !state.dataset) {
+          await renderDatasetOptionsFromConnectedFolder();
+          setDatasetLoadingEnabled(true);
+          showWelcomeScreen2();
+        } else {
+          syncWelcomeScreen1State();
+        }
+        await refreshEditorSearch();
+      });
+    }
+
+    if (apiClearBtn) {
+      apiClearBtn.addEventListener('click', () => {
+        if (apiEndpointInput) apiEndpointInput.value = '';
+        state.apiEndpoint = '';
+        localStorage.removeItem('editorApiEndpoint');
+        syncApiModeUI();
+        setFolderConnectionButtonState();
+        closeApiModal();
+        if (!state.dataset) {
+          renderDatasetOptionsFromConnectedFolder().then(() => {
+            setDatasetLoadingEnabled(!!(state.projectDirHandle && state.folderConnectedInSession));
+            syncWelcomePanel();
+          });
+        }
+      });
+    }
   }
 
   if (els.previewDataset) {
@@ -4487,9 +5409,9 @@ function bindEvents() {
     });
   }
 
-  if (els.timelineSaveBtn) {
-    els.timelineSaveBtn.addEventListener('click', async () => {
-      try { await saveDataset(); } catch (e) { window.alert(e?.message || String(e)); }
+  if (els.showAppearanceTab) {
+    els.showAppearanceTab.addEventListener('click', () => {
+      switchEditorTab('appearance');
     });
   }
 
@@ -4572,6 +5494,73 @@ function bindEvents() {
   });
 }
 
+function _mapApiSearchRecords(records) {
+  return records
+    .filter((r) => isEditorDatasetFile(r.file))
+    .map((r) => ({
+      file: r.file,
+      category: r.designation || 'Other',
+      designation: r.designation,
+      location: r.location,
+      year: r.year,
+      region: r.region,
+      venue: r.venue,
+      label: r.label,
+      enabled: r.enabled,
+    }))
+    .sort((a, b) => {
+      const ya = Number.parseInt(a.year, 10);
+      const yb = Number.parseInt(b.year, 10);
+      if (Number.isFinite(ya) && Number.isFinite(yb) && ya !== yb) return yb - ya;
+      return a.label.localeCompare(b.label);
+    });
+}
+
+async function buildApiSearchCatalog() {
+  try {
+    if (isApiMode()) {
+      // Single request returns metadata for all files — no items arrays transferred.
+      const res = await fetch(`${state.apiEndpoint}/api/meta`);
+      if (!res.ok) return [];
+      const metas = await res.json();
+      if (!Array.isArray(metas) || metas.length === 0) return [];
+      return metas
+        .filter((m) => m && isEditorDatasetFile(m.file))
+        .map((m) => ({
+          file: m.file,
+          category: m.designation || 'Other',
+          designation: m.designation,
+          location: m.location,
+          year: m.year,
+          region: m.region,
+          venue: m.venue,
+          label: buildDatasetOptionLabel(m.file, m),
+          enabled: m.enabled,
+        }))
+        .sort((a, b) => {
+          const ya = Number.parseInt(a.year, 10);
+          const yb = Number.parseInt(b.year, 10);
+          if (Number.isFinite(ya) && Number.isFinite(yb) && ya !== yb) return yb - ya;
+          return a.label.localeCompare(b.label);
+        });
+    }
+
+    // Non-API mode (no folder connected): fetch index and individual metadata via static URLs.
+    // (handles the case where loadEventCatalog() failed or was memoized before the server was reachable)
+    const res = await fetch('./data/index.json');
+    if (!res.ok) return [];
+    const payload = await res.json();
+    const files = (Array.isArray(payload?.files) ? payload.files : [])
+      .map((e) => (typeof e === 'string' ? e : e?.file))
+      .filter((f) => f && isEditorDatasetFile(f));
+    if (files.length === 0) return [];
+    const records = await loadDatasetMetaForGroupingViaFetch(files);
+    return _mapApiSearchRecords(records);
+  } catch {
+    return [];
+  }
+}
+
 async function buildConnectedFolderSearchCatalog() {
   const files = await listDatasetFilesFromConnectedFolder();
   const dataDir = await getDataDirectoryHandle(false);
@@ -4602,6 +5591,7 @@ async function buildConnectedFolderSearchCatalog() {
           region: String(meta.region || '').trim(),
           venue: String(meta.venue || '').trim(),
           label,
+          enabled: meta.enabled !== false,
         };
       } catch {
         return null;
@@ -4620,36 +5610,48 @@ async function buildConnectedFolderSearchCatalog() {
 }
 
 async function refreshEditorSearch() {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
+  const hasFolder = state.projectDirHandle && state.folderConnectedInSession;
+
+  try {
+    const searchableEvents = hasFolder
+      ? await buildConnectedFolderSearchCatalog()
+      : await buildApiSearchCatalog();
+
+    configureEventSearch({
+      getEvents: () => searchableEvents,
+      onSelect: async (_category, file) => {
+        if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${file}`))) {
+          try {
+            els.datasetSelect.value = file;
+            await loadDataset(file);
+          } catch (error) {
+            els.datasetSelect.value = state.lastDatasetSelectValue || '';
+            window.alert(`Could not load dataset: ${error.message}`);
+          }
+        }
+      },
+    });
+  } catch (e) {
+    console.error('[refreshEditorSearch]', e);
     configureEventSearch({ getEvents: () => [], onSelect: async () => {} });
-    if (els.editorSearchEvents) els.editorSearchEvents.disabled = true;
-    return;
   }
 
-  const searchableEvents = await buildConnectedFolderSearchCatalog();
-
-  configureEventSearch({
-    getEvents: () => searchableEvents,
-    onSelect: async (_category, file) => {
-      if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${file}`))) {
-        try {
-          els.datasetSelect.value = file;
-          await loadDataset(file);
-        } catch (error) {
-          els.datasetSelect.value = state.lastDatasetSelectValue || '';
-          window.alert(`Could not load dataset: ${error.message}`);
-        }
-      }
-    },
-  });
-
+  // Always enable the search button so users can quickly access the search modal
   if (els.editorSearchEvents) els.editorSearchEvents.disabled = false;
 }
 
+function revealPage() {
+  document.documentElement.style.opacity = '1';
+}
+
 async function init() {
+  await loadThemes();
+  applyThemeClass(getCurrentThemeId());
+
   if (!isLocalhost()) {
     els.blocked.classList.remove('hidden');
     els.app.classList.add('hidden');
+    revealPage();
     return;
   }
 
@@ -4658,10 +5660,12 @@ async function init() {
   if (els.editorSearchEvents) {
     els.editorSearchEvents.addEventListener('click', openEventSearchModal);
   }
-  // Require explicit "Connect Folder" each session before loading datasets.
-  // We keep stored handles for save-linking, but do not auto-activate folder loading.
+  // In API mode, populate select from catalog and enable loading immediately.
+  // In FS mode, require explicit "Connect Folder" each session.
   await renderDatasetOptionsFromConnectedFolder();
-  setDatasetLoadingEnabled(false);
+  setDatasetLoadingEnabled(isApiMode());
+  syncApiModeUI();
+  await refreshEditorSearch();
   bindEvents();
   markDirty(false);
   resetSessionQuickEditState();
@@ -4692,6 +5696,7 @@ async function init() {
   }, 30_000);
 
   syncWelcomePanel();
+  revealPage();
 }
 
 void init();

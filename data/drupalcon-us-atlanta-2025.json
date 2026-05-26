@@ -7,7 +7,6 @@
     "region": "America",
     "startDate": "2025-03-24T11:00:00Z",
     "endDate": "2025-03-28T01:00:00Z",
-    "scheduleURL": "https://events.drupal.org/atlanta2025/schedule",
     "venue": "Hyatt Regency Atlanta",
     "timezone": "America/New_York",
     "columns": 3,
@@ -15,7 +14,11 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://events.drupal.org/atlanta2025/schedule"
+    ],
+    "flickr": null
   },
   "items": [
     {
@@ -26,7 +29,7 @@
       "location": "Location Terrace Foyer (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/registration",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T12:00:00Z",
@@ -36,7 +39,7 @@
       "location": "Location Centennial Ballroom I (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/general-contribution",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T12:00:00Z",
@@ -46,7 +49,7 @@
       "location": "Location Edgewood (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-edgewood-room-monday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T12:00:00Z",
@@ -56,7 +59,7 @@
       "location": "Location Executive Conference Room 219 - Hotel 2nd Floor",
       "link": "https://events.drupal.org//atlanta2025/session/quiet-room",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T12:00:00Z",
@@ -66,7 +69,7 @@
       "location": "Location Harris (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-harris-room-monday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T12:00:00Z",
@@ -76,7 +79,7 @@
       "location": "Location Lenox (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-lenox-room-monday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T12:00:00Z",
@@ -86,7 +89,7 @@
       "location": "Location Marietta (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-marietta-room-monday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T12:00:00Z",
@@ -96,7 +99,7 @@
       "location": "Location Regency VII (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/new-member-local-drupal-community-meeting-space",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T12:30:00Z",
@@ -144,7 +147,7 @@
       "location": "Location Hanover FG (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/government-summit",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T12:30:00Z",
@@ -174,7 +177,7 @@
       "location": "Location Regency VI (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/community-summit",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T13:00:00Z",
@@ -184,7 +187,7 @@
       "location": "Location Baker (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/drupalcms-preview-drupaleasy",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T13:00:00Z",
@@ -194,7 +197,7 @@
       "location": "Location Dunwoody (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/drupal-theming-sdc-and-tailwindcss-evolving-web",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T13:00:00Z",
@@ -204,7 +207,7 @@
       "location": "Location Hanover AB (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/unlock-new-possibilities-advanced-drupal-11-module-development-oop-debug",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T16:00:00Z",
@@ -214,7 +217,7 @@
       "location": "Location Hanover Foyer (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/lunch-those-participating-summits-and-trainings",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T18:00:00Z",
@@ -236,7 +239,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/expo-hall-open",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T20:45:00Z",
@@ -246,7 +249,7 @@
       "location": "Location Regency VII (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/new-member-local-drupal-community-meet-prior-welcome-reception",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-24T21:00:00Z",
@@ -256,7 +259,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/welcome-reception",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T12:00:00Z",
@@ -266,7 +269,7 @@
       "location": "Location Centennial Ballroom I (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/general-contribution-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T12:00:00Z",
@@ -276,7 +279,7 @@
       "location": "Location Edgewood (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-edgewood-room-tuesday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T12:00:00Z",
@@ -286,7 +289,7 @@
       "location": "Location Executive Conference Room 219 - Hotel 2nd Floor",
       "link": "https://events.drupal.org//atlanta2025/session/quiet-room-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T12:00:00Z",
@@ -296,7 +299,7 @@
       "location": "Location Greenbriar (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/scholarship-breakfast-invite-only",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T12:00:00Z",
@@ -306,7 +309,7 @@
       "location": "Location Harris (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-harris-room-tuesday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T12:00:00Z",
@@ -316,7 +319,7 @@
       "location": "Location Lenox (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-lenox-room-tuesday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T12:00:00Z",
@@ -326,7 +329,7 @@
       "location": "Location Marietta (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-marietta-room-tuesday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T12:00:00Z",
@@ -336,7 +339,7 @@
       "location": "Location Regency VII (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/new-member-local-drupal-community-meeting-space-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T12:00:00Z",
@@ -346,7 +349,7 @@
       "location": "Location Terrace Foyer (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/registration-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T12:30:00Z",
@@ -356,7 +359,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/coffee-break-expo-hall",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T13:00:00Z",
@@ -520,7 +523,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/coffee-break-expo-hall-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T14:00:00Z",
@@ -558,7 +561,7 @@
       "location": "Location Regency VII (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/new-member-local-drupal-community-meet-prior-keynote",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T14:30:00Z",
@@ -568,7 +571,7 @@
       "location": "Location Centennial Ballroom II-IV (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/keynote-welcome-aaron-winborn-award",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T14:45:00Z",
@@ -604,7 +607,7 @@
       "location": "Location Centennial Ballroom I (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/drupalcon-group-photo",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T16:15:00Z",
@@ -614,7 +617,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/lunch-expo-hall",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T16:15:00Z",
@@ -834,7 +837,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/coffee-break-expo-hall-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T19:00:00Z",
@@ -1015,7 +1018,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/expo-hall-networking",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-25T20:10:00Z",
@@ -1208,7 +1211,7 @@
       "location": "Location Centennial Ballroom I (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/general-contribution-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T12:00:00Z",
@@ -1218,7 +1221,7 @@
       "location": "Location Edgewood (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-edgewood-room-wednesday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T12:00:00Z",
@@ -1228,7 +1231,7 @@
       "location": "Location Executive Conference Room 219 - Hotel 2nd Floor",
       "link": "https://events.drupal.org//atlanta2025/session/quiet-room-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T12:00:00Z",
@@ -1238,7 +1241,7 @@
       "location": "Location Harris (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-harris-room-wednesday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T12:00:00Z",
@@ -1248,7 +1251,7 @@
       "location": "Location Lenox (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-lenox-room-wednesday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T12:00:00Z",
@@ -1258,7 +1261,7 @@
       "location": "Location Marietta (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-marietta-room-wednesday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T12:00:00Z",
@@ -1281,7 +1284,7 @@
       "location": "Location Regency VII (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/new-member-local-drupal-community-meeting-space-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T12:00:00Z",
@@ -1291,7 +1294,7 @@
       "location": "Location Terrace Foyer (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/registration-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T12:30:00Z",
@@ -1301,7 +1304,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/coffee-break-expo-hall-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T13:00:00Z",
@@ -1441,7 +1444,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/coffee-break-expo-hall-3",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T14:00:00Z",
@@ -1465,7 +1468,7 @@
       "location": "Location Regency VII (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/new-member-local-drupal-community-meet-prior-keynote-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T14:45:00Z",
@@ -1487,7 +1490,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/lunch-expo-hall-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T16:00:00Z",
@@ -1762,7 +1765,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/coffee-break-expo-hall-4",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T19:00:00Z",
@@ -1940,7 +1943,7 @@
       "location": "Location Grand Hall (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/expo-hall-networking-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-26T20:10:00Z",
@@ -2108,7 +2111,7 @@
       "location": "Location Centennial Ballroom I (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/general-contribution-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-27T12:00:00Z",
@@ -2118,7 +2121,7 @@
       "location": "Location Edgewood (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-edgewood-room-thursday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-27T12:00:00Z",
@@ -2128,7 +2131,7 @@
       "location": "Location Executive Conference Room 219 - Hotel 2nd Floor",
       "link": "https://events.drupal.org//atlanta2025/session/quiet-room-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-27T12:00:00Z",
@@ -2138,7 +2141,7 @@
       "location": "Location Hanover AB (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/mentored-contribution",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-27T12:00:00Z",
@@ -2148,7 +2151,7 @@
       "location": "Location Harris (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-harris-room-thursday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-27T12:00:00Z",
@@ -2158,7 +2161,7 @@
       "location": "Location Lenox (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-lenox-room-thursday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-27T12:00:00Z",
@@ -2168,7 +2171,7 @@
       "location": "Location Marietta (LL3)",
       "link": "https://events.drupal.org//atlanta2025/session/birds-feather-marietta-room-thursday",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-27T12:00:00Z",
@@ -2178,7 +2181,7 @@
       "location": "Location Regency VII (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/new-member-local-drupal-community-meeting-space-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-27T12:00:00Z",
@@ -2188,7 +2191,7 @@
       "location": "Location Terrace Foyer (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/registration-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-27T13:00:00Z",
@@ -2224,7 +2227,7 @@
       "location": "Location Hanover Foyer (LL2)",
       "link": "https://events.drupal.org//atlanta2025/session/lunch-those-participating-contribution-day",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2025-03-27T22:00:00Z",
@@ -2234,7 +2237,7 @@
       "location": "Location Regency V (LL1)",
       "link": "https://events.drupal.org//atlanta2025/session/trivia-night",
       "track": [],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "success",

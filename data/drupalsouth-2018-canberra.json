@@ -7,7 +7,6 @@
     "region": "Australia – Canberra",
     "endDate": "2018-12-05T04:00:00Z",
     "startDate": "2018-12-02T22:00:00Z",
-    "scheduleURL": "https://drupalsouth.org/events/canberra-2018/schedule",
     "venue": "Hotel Realm",
     "timezone": "Australia/Sydney",
     "enabled": true,
@@ -287,7 +286,10 @@
         "enabled": true
       }
     ],
-    "columns": 3
+    "columns": 3,
+    "scheduleURLs": [
+      "https://drupalsouth.org/events/canberra-2018/schedule"
+    ]
   },
   "items": [
     {
@@ -319,9 +321,6 @@
       ],
       "speakers": [
         "Ivan Zugec"
-      ],
-      "speakers_usernames": [
-        "zugec"
       ],
       "full_description": "This session will focus on how to add media management functionality into a Drupal 8 site.\n\nUsing the following modules:\n\n- Entity browser\n\n- Entity Embed\n\n- DropzoneJS\n\n- Inline Entity Form\n\nUnfortunately, setting all this up isn't as simple as one thinks.",
       "video_url": "https://www.youtube.com/watch?v=AccTCn5b5_U",
@@ -373,7 +372,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -390,9 +389,6 @@
       ],
       "speakers": [
         "Akhil Bhandari"
-      ],
-      "speaker_usernames": [
-        "akhil-bhandari"
       ],
       "full_description": "Public consultation is essential to getting government services and policy development right. But creating an effective, efficient, easy to use and manage platform seem like a mythical unicorn for citizen consultation platforms. Here's how far we come in trying to catch our Having Your Say unicorn.",
       "video_url": "https://www.youtube.com/watch?v=5XZD6_y0O1g",
@@ -477,7 +473,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -512,9 +508,6 @@
       "speakers": [
         "Si Hobbs",
         "Dan Laush"
-      ],
-      "speaker_usernames": [
-        "sime"
       ],
       "full_description": "For WorkSafe Victoria, a decoupled Drupal architecture allowed our project to be driven by Service Design. Our component library captures user interactions, branding and accessibility, while editors focus on content via Drupal. The result is rapid prototyping and design innovation.",
       "video_url": "https://www.youtube.com/watch?v=MQC0M1JO9q0",
@@ -584,9 +577,6 @@
       "speakers": [
         "Fonda Le"
       ],
-      "speaker_usernames": [
-        "fonda"
-      ],
       "full_description": "You hear it all the time - companies asking you for feedback, a rating, a review... but what should they be doing with this feedback? There’s a lot we can learn from companies who have successfully used feedback to their advantage to help increase customer satisfaction, retention and loyalty.",
       "video_url": "",
       "sponsorIds": ""
@@ -601,7 +591,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -654,9 +644,6 @@
         "Murray Woodman",
         "Toby Bellwood"
       ],
-      "speaker_usernames": [
-        "murrayw"
-      ],
       "full_description": "The newly released GovCMS8 distribution ships with a brand-new base theme, designed to deliver a great-looking, functional site - straight out of the box, with no theming or coding required. Suitable for government agencies, platform evaluators as well as site builders and themers.",
       "video_url": "https://www.youtube.com/watch?v=499RZ5aNx9s",
       "sponsorIds": ""
@@ -705,7 +692,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -828,9 +815,6 @@
       "speakers": [
         "Adam Bramley"
       ],
-      "speaker_usernames": [
-        "acbramley"
-      ],
       "full_description": "A common problem that I’ve faced, is how to deliver the complex, component driven design that clients want while also giving content authors full flexibility with those components without creating an un-maintainable, or brittle product.\n\nIn this talk, we'll go over how to achieve just that!",
       "video_url": "",
       "sponsorIds": ""
@@ -879,7 +863,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -911,7 +895,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "WHEN: Monday December 3rd, straight after the Keynote\n\nWHERE: Hotel Realm Sydney and Melbourne Foyers\n\nWhat better way to end Day One of DrupalSouth by joining Salsa Digital and Amazee.io for opening night drinks, jazz, and good times in the classy surrounds of the Hotel Realm.",
       "video_url": "",
       "sponsorIds": ""
@@ -926,7 +910,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "Chris Skene (Platform.sh) and Piyush Poddar (Axelerant) are bringing back the Digital Leaders Dinner in Canberra this year, which will take place on Monday the 3rd of December.\n\nIf you are a Digital Leader at a Drupal Agency or Government, please join us for a special evening. Last year we had the dinner in Auckland and were joined by Leaders from GovCMS, Salsa Digital, PreviousNext, Amazee, Digital8 to name a few. You can read a recap at http://bit.ly/AgencyLeadersDinnerRecap\n\nWe organise this dinner to have meaningful discussions, share knowledge, fun stories and ideas around how to battle the common challenges faced by those seeking to innovate in the digital space.\n\nThe dinner will be held at Belluci's Manuka. It will be a three-course dinner followed by drinks.\n\nEVENT INFORMATION\n\nDate: Monday, December 3rd, 2018\n\nTime: 19:00-22:00\n\nLocation: Belluci's Manuka\n\nRSVP: Please book your seat via Eventbrite\n\nPrice: We will enjoy a three-course dinner and it will cost around AUD$50 per person.",
       "video_url": "",
       "sponsorIds": ""
@@ -958,7 +942,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -975,9 +959,6 @@
       ],
       "speakers": [
         "Sean Hamlin"
-      ],
-      "speaker_usernames": [
-        "wiifm"
       ],
       "full_description": "With the number of exploits and poorly configured Drupal sites in the wild, having a WAF will allow you to weather the storm of script kiddies and bots, and free up resources on your origin. This session will go through best practice WAF tuning, and how you can adapt this to your site.",
       "video_url": "",
@@ -1062,7 +1043,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1166,7 +1147,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1253,7 +1234,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1270,9 +1251,6 @@
       ],
       "speakers": [
         "Akhil Bhandari"
-      ],
-      "speaker_usernames": [
-        "akhil-bhandari"
       ],
       "full_description": "Given a plethora of social media platforms rise & fall daily, how do we better serve our Minister’s social content?\n\nWith an ‘easier said than done’ idea to add live social content to our Minister’s site we rebuilt it in GovCMS and integrated it with a 3rd party platform & added a clever theme layer.",
       "video_url": "",
@@ -1360,7 +1338,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1395,9 +1373,6 @@
       "speakers": [
         "Alex Skrypnyk",
         "Stuart Rowlands"
-      ],
-      "speaker_usernames": [
-        "alex.skrypnyk"
       ],
       "full_description": "Moving GovCMS SaaS and PaaS sites between Acquia and Lagoon shouldn’t be that hard, right? In this talk, we’ll discuss how we created system utilising AWX-based runners, building an automated workflow that can be continuously used and reused to easily migrate sites of different level of complexity.",
       "video_url": "",
@@ -1447,7 +1422,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1479,7 +1454,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1494,7 +1469,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "WHERE: Ostani, Hotel Realm WHEN: December 4th, 530pm till late Supported by:...",
       "video_url": "",
       "sponsorIds": ""
@@ -1509,7 +1484,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "WHERE: Hotel Realm\n\nWHEN: Wednesday December 5th, 2018, from 9am\n\nWhat's a Sprint Day about anyway?\n\nContribution Sprints are a great opportunity to get involved in contributing to Drupal. Contributions don't have to be just about code. Issue triage, documentation, and manual testing are examples of non-code contributions.\n\nIf you are new to contributing, you can take a look at the New Contributor tasks on the Drupal.org Contributor Tasks page.\n\nWhile there will be experienced contributors there on the day to help, keep in mind, this is not a training session. :-)\n\nSet Up a Development Environment\n\nThere is more than one way to shear a sheep, and there is also more than one way to set up a local development environment for working on Drupal.\n\nWe've create a Drupal project starter kit for sprint attendees which should speed up this process. Head over to https://github.com/previousnext/drupal-project and follow the README.\n\nIf you have any issues, feel free to post them in the Github issue queue https://github.com/previousnext/drupal-project/issues and we'll try and resolve them before the day.\n\nFind Issues to Work On\n\nIf you want to see what might be an interesting issue to work on, head over to the Drupal.org Issue Queue and look for issues tagged with 'DrupalSouth 2018'. These are issues that others have tagged.\n\nYou can also tag an issue yourself to be added to the list.\n\nBeing face-to-face with fellow contributors is a great opportunity to have discussions and put forward ideas. Don't feel like you need to come away from the day having completed lines and lines of code.\n\nWe look forward to seeing you all there!",
       "video_url": "",
       "sponsorIds": ""

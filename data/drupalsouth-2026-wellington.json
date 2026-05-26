@@ -7,7 +7,6 @@
     "region": "New Zealand – Wellington",
     "endDate": "2026-05-14T04:30:00Z",
     "startDate": "2026-05-11T21:00:00Z",
-    "scheduleURL": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule",
     "venue": "Harbourside Function Venue",
     "timezone": "Pacific/Auckland",
     "sourceCache": "manual/2026-05-13/drupalsouth-wellington-2026",
@@ -15,6 +14,7 @@
     "enabled": true,
     "flickr": {
       "enabled": true,
+      "provider": "",
       "groupUrl": "https://flic.kr/g/3gCxkw",
       "image": "./img/flickr/drupalsouth/2026-wellington.jpg",
       "imageAlt": "DrupalSouth logo"
@@ -285,6 +285,9 @@
         "aspect": "auto",
         "enabled": true
       }
+    ],
+    "scheduleURLs": [
+      "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule"
     ]
   },
   "items": [
@@ -298,7 +301,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -309,9 +312,8 @@
       "endTime": "2026-05-12T21:00:00Z",
       "location": "",
       "duration": "P60M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -323,9 +325,8 @@
       "endTime": "2026-05-12T21:30:00Z",
       "location": "",
       "duration": "P30M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -409,7 +410,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-18"
@@ -475,7 +476,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -541,7 +542,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -607,7 +608,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -673,7 +674,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -795,7 +796,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-18"
@@ -823,9 +824,8 @@
       "endTime": "2026-05-13T04:40:00Z",
       "location": "",
       "duration": "P10M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -841,7 +841,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -856,7 +856,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-17"
@@ -866,10 +866,9 @@
       "startTime": "2026-05-13T07:00:00Z",
       "endTime": "2026-05-13T07:00:00Z",
       "location": "",
-      "duration": "",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "duration": "P0M",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -881,9 +880,8 @@
       "endTime": "2026-05-13T20:30:00Z",
       "location": "",
       "duration": "P30M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -895,9 +893,8 @@
       "endTime": "2026-05-13T21:00:00Z",
       "location": "",
       "duration": "P10M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -909,9 +906,8 @@
       "endTime": "2026-05-13T20:50:00Z",
       "location": "",
       "duration": "P20M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "sponsor-18",
       "link": "",
@@ -927,7 +923,9 @@
       "track": [
         "Keynote"
       ],
-      "speakers": "Pamela Barone",
+      "speakers": [
+        "Pamela Barone"
+      ],
       "full_description": "When Drupal CMS was announced almost two years ago, the focus on user experience for less technical users may have felt like a pivot for a project that has largely prioritised developers in recent years. But rather than changing the focus, the introduction of a product-ised release is all about growing adoption by expanding Drupal's reach. This is more than just marketing -- although that's important too! -- and the convergence of new developments in the last year or so does feel like the start of a new era for Drupal, not only for newbies but for all of us.\n\nNow that we are a few months on from the release of Drupal CMS 2.0, it's a good time to reflect on the initiative and see where things stand. In this session, I will:\n\nRevisit the strategy for Drupal CMS and how fits in with the larger project\nExplain what Drupal CMS actually is and touch on some of the highlights from the latest release\nProvide some observations about outcomes so far\nLook ahead to what's coming up",
       "video_url": "https://youtu.be/tT5xOX-GRnI",
       "sponsorIds": ""
@@ -942,7 +940,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1008,7 +1006,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-18"
@@ -1074,7 +1072,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1143,7 +1141,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1209,7 +1207,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1275,7 +1273,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1341,7 +1339,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1407,7 +1405,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-18"
@@ -1456,7 +1454,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""

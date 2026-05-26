@@ -5,7 +5,6 @@
     "year": "2014",
     "website": "https://austin2014.drupal.org/",
     "region": "America",
-    "scheduleURL": "https://austin2014.drupal.org/schedule",
     "venue": "Austin Convention Center",
     "timezone": "America/Chicago",
     "startDate": "2014-06-02T12:00:00Z",
@@ -15,7 +14,11 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://austin2014.drupal.org/schedule"
+    ],
+    "flickr": null
   },
   "items": [
     {
@@ -26,7 +29,7 @@
       "location": "Atrium | Registration | 1st floor",
       "link": "https://austin2014.drupal.org/registration/monday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -36,7 +39,7 @@
       "location": "12 - Mediacurrent | 4th floor",
       "link": "https://austin2014.drupal.org/community-summit.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -46,7 +49,7 @@
       "location": "4B | 3rd floor",
       "link": "https://austin2014.drupal.org/training/ux-bootcamp-evaluating-and-improving-your-web-sites.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -56,7 +59,7 @@
       "location": "5B | 3rd floor",
       "link": "https://austin2014.drupal.org/training/absolute-beginners-guide-drupal.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -66,7 +69,7 @@
       "location": "6A | 3rd floor",
       "link": "https://austin2014.drupal.org/training/drupal-beginners.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -76,7 +79,7 @@
       "location": "8C - VML | 3rd floor",
       "link": "https://austin2014.drupal.org/training/level-your-themer.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -86,7 +89,7 @@
       "location": "4C | 3rd floor",
       "link": "https://austin2014.drupal.org/training/advanced-sass-and-compass-rwd.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -96,7 +99,7 @@
       "location": "10C - HS2 Solutions | 3rd floor",
       "link": "https://austin2014.drupal.org/training/drupal-performance-and-scalability-dream-team.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -106,7 +109,7 @@
       "location": "17 - Forum One | 4th floor",
       "link": "https://austin2014.drupal.org/training/security-process-code-hands-training.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -116,7 +119,7 @@
       "location": "7 | 3rd floor",
       "link": "https://austin2014.drupal.org/training/drupal-8-drupalistas.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -126,7 +129,7 @@
       "location": "4A | 3rd floor",
       "link": "https://austin2014.drupal.org/training/breaking-down-component-based-web-design.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -136,7 +139,7 @@
       "location": "5A | 3rd floor",
       "link": "https://austin2014.drupal.org/training/views-configuration.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -146,7 +149,7 @@
       "location": "5C | 3rd floor",
       "link": "https://austin2014.drupal.org/training/introduction-symfony-core-components.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -156,7 +159,7 @@
       "location": "8B - Unicon | 3rd floor",
       "link": "https://austin2014.drupal.org/training/search-api-apachesolr.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -166,7 +169,7 @@
       "location": "6B | 3rd floor",
       "link": "https://austin2014.drupal.org/training/introduction-symfony2-getting-ready-d8.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -176,7 +179,7 @@
       "location": "16 - Pantheon | 4th floor",
       "link": "https://austin2014.drupal.org/training/launching-online-store-commerce-kickstart.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -186,7 +189,7 @@
       "location": "8A - JustDigital | 3rd floor",
       "link": "https://austin2014.drupal.org/training/professional-agile-project-management-drupal-projects.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T14:00:00Z",
@@ -196,7 +199,7 @@
       "location": "10 | 3rd Floor",
       "link": "https://austin2014.drupal.org/business-summit.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T15:00:00Z",
@@ -206,7 +209,7 @@
       "location": "S15 | 2nd floor",
       "link": "https://austin2014.drupal.org/100k-app-showdown-contest.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-02T22:00:00Z",
@@ -216,7 +219,7 @@
       "location": "Exhibit Hall | 1st floor",
       "link": "https://austin2014.drupal.org/node/4693.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-03T12:00:00Z",
@@ -226,7 +229,7 @@
       "location": "Atrium | Registration | 1st floor",
       "link": "https://austin2014.drupal.org/registration/tuesday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-03T13:00:00Z",
@@ -236,7 +239,7 @@
       "location": "Exhibit Hall - Keynotes | 1st floor",
       "link": "https://austin2014.drupal.org/welcome-to-drupalcon.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-03T14:00:00Z",
@@ -246,7 +249,7 @@
       "location": "Exhibit Hall - Keynotes | 1st floor",
       "link": "https://austin2014.drupal.org/keynote-dries-buytaert.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-03T15:15:00Z",
@@ -256,7 +259,7 @@
       "location": "Exhibit Hall | 1st floor",
       "link": "https://austin2014.drupal.org/coffee-break/tuesday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-03T15:45:00Z",
@@ -420,7 +423,7 @@
       "location": "Exhibit Hall | 1st floor",
       "link": "https://austin2014.drupal.org/lunch/tuesday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-03T18:00:00Z",
@@ -702,7 +705,7 @@
       "location": "13B - Working Groups",
       "link": "https://austin2014.drupal.org/future-drupalorg-developer-tools.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-03T19:15:00Z",
@@ -757,7 +760,7 @@
       "location": "Exhibit Hall | 1st floor",
       "link": "https://austin2014.drupal.org/walking-break/tuesday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-03T20:45:00Z",
@@ -1088,7 +1091,7 @@
       "location": "Max's Wine Dive",
       "link": "https://austin2014.drupal.org/node/4748.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-04T13:00:00Z",
@@ -1098,7 +1101,7 @@
       "location": "Atrium | Registration | 1st floor",
       "link": "https://austin2014.drupal.org/registration/wednesday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-04T14:00:00Z",
@@ -1108,7 +1111,7 @@
       "location": "Exhibit Hall - Keynotes | 1st floor",
       "link": "https://austin2014.drupal.org/keynote-erynn-petersen.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-04T15:15:00Z",
@@ -1118,7 +1121,7 @@
       "location": "Exhibit Hall | 1st floor",
       "link": "https://austin2014.drupal.org/coffee-break/wednesday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-04T15:15:00Z",
@@ -1128,7 +1131,7 @@
       "location": "Exhibit Hall - DA Booth | 1st floor",
       "link": "https://austin2014.drupal.org/100k-app-showdown-contest-results.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-04T15:45:00Z",
@@ -1284,7 +1287,7 @@
       "location": "10B - Blink Reaction | 3rd floor",
       "link": "https://austin2014.drupal.org/drupal-association-public-board-meeting.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-04T16:45:00Z",
@@ -1294,7 +1297,7 @@
       "location": "Exhibit Hall | 1st floor",
       "link": "https://austin2014.drupal.org/lunch/wednesday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-04T18:00:00Z",
@@ -1568,7 +1571,7 @@
       "location": "13B - Working Groups",
       "link": "https://austin2014.drupal.org/drupalorg-working-groups.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-04T19:15:00Z",
@@ -1609,7 +1612,7 @@
       "location": "Exhibit Hall | 1st floor",
       "link": "https://austin2014.drupal.org/walking-break/wednesday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-04T20:45:00Z",
@@ -1908,7 +1911,7 @@
       "location": "Exhibit Hall - Keynotes | 1st floor",
       "link": "https://austin2014.drupal.org/keynote-hugh-forrest.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-05T13:30:00Z",
@@ -1918,7 +1921,7 @@
       "location": "Atrium | Registration | 1st floor",
       "link": "https://austin2014.drupal.org/registration/thursday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-05T15:15:00Z",
@@ -1928,7 +1931,7 @@
       "location": "Exhibit Hall | 1st floor",
       "link": "https://austin2014.drupal.org/coffee-break/thursday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-05T15:45:00Z",
@@ -2085,7 +2088,7 @@
       "location": "Exhibit Hall | 1st floor",
       "link": "https://austin2014.drupal.org/lunch/thursday.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-05T18:00:00Z",
@@ -2227,7 +2230,7 @@
       "location": "13B - Working Groups",
       "link": "https://austin2014.drupal.org/drupalorg-infrastructure-team-meeting.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-05T18:00:00Z",
@@ -2383,7 +2386,7 @@
       "location": "13B - Working Groups",
       "link": "https://austin2014.drupal.org/future-drupalorg-community-tools.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-05T19:15:00Z",
@@ -2410,7 +2413,7 @@
       "location": "Exhibit Hall - Keynotes | 1st floor",
       "link": "https://austin2014.drupal.org/closing-session.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-05T14:00:00Z",
@@ -2420,7 +2423,7 @@
       "location": "Raddison Hotel | Riverside Ballroom",
       "link": "https://austin2014.drupal.org/node/4688.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-06T14:00:00Z",
@@ -2430,7 +2433,7 @@
       "location": "G - Trellon | 4th floor",
       "link": "https://austin2014.drupal.org/core-mentoring.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-06T14:00:00Z",
@@ -2440,7 +2443,7 @@
       "location": "F - Blackmesh | 4th floor",
       "link": "https://austin2014.drupal.org/get-involved-with-core.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2014-06-06T14:00:00Z",
@@ -2450,7 +2453,7 @@
       "location": "18 - Acquia | 4th floor",
       "link": "https://austin2014.drupal.org/contribution-sprints.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "success",

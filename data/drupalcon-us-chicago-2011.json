@@ -5,7 +5,6 @@
     "year": "2011",
     "website": "https://chicago2011.drupal.org/",
     "region": "America",
-    "scheduleURL": "https://chicago2011.drupal.org/schedule",
     "venue": "Sheraton Hotel & Towers",
     "timezone": "America/Chicago",
     "startDate": "2011-03-08T14:30:00Z",
@@ -15,7 +14,11 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://chicago2011.drupal.org/schedule"
+    ],
+    "flickr": null
   },
   "items": [
     {
@@ -41,7 +44,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/keynote-dries-buytaert",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-08T17:00:00Z",
@@ -51,7 +54,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/lunch-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-08T18:30:00Z",
@@ -216,7 +219,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/break",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-08T21:15:00Z",
@@ -406,7 +409,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/field-museum-party",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-09T15:00:00Z",
@@ -416,7 +419,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/keynote-clay-shirky",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-09T16:00:00Z",
@@ -426,7 +429,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/break-0",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-09T17:00:00Z",
@@ -539,7 +542,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/lunch",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-09T19:00:00Z",
@@ -759,7 +762,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/break-4",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-09T21:45:00Z",
@@ -985,7 +988,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/keynote-jared-spool",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-10T16:00:00Z",
@@ -995,7 +998,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/break-2",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-10T17:00:00Z",
@@ -1108,7 +1111,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/lunch-1",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-10T19:00:00Z",
@@ -1321,7 +1324,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/break-3",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2011-03-10T21:45:00Z",
@@ -1441,7 +1444,7 @@
       "location": "Sheraton 4 & 5",
       "link": "https://chicago2011.drupal.org/closing-plenary",
       "track": [],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "success",

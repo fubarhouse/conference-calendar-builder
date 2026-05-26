@@ -5,7 +5,6 @@
     "year": "2008",
     "website": "https://groups.drupal.org/node/15171",
     "region": "Australia – Sydney",
-    "scheduleURL": "https://groups.drupal.org/node/15165",
     "venue": "Faculty of Pharmacy, Pharmacy Building (A15), University of Sydney, Sydney NSW 2006, Australia",
     "timezone": "Australia/Sydney",
     "startDate": "2008-10-17T22:00:00Z",
@@ -15,18 +14,17 @@
       "enabled": true,
       "groupUrl": "",
       "image": "",
-      "imageAlt": "",
-      "title": "",
-      "text": "",
-      "buttonLabel": "",
-      "mode": ""
+      "imageAlt": ""
     },
     "columns": 3,
     "enabled": true,
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCamp logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://groups.drupal.org/node/15165"
+    ]
   },
   "items": [
     {
@@ -39,7 +37,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": ""
     },
@@ -181,7 +179,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": ""
     },
@@ -259,7 +257,7 @@
       "track": [
         "Track B"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": ""
     },
@@ -289,7 +287,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": ""
     }
