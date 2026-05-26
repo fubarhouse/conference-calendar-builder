@@ -108,6 +108,40 @@
           "type": "string",
           "description": "Path to a locally cached copy of the video playlist."
         },
+        "id": {
+          "type": "string",
+          "description": "Internal identifier for this event dataset."
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name for this event dataset."
+        },
+        "theme": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Per-event theme overrides. All fields optional.",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Theme ID to use for this event (overrides the global default)."
+            },
+            "primaryColor": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "Custom primary accent color (e.g. \"#00cfff\")."
+            },
+            "secondaryColor": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "Custom secondary accent color (e.g. \"#4a90d9\")."
+            },
+            "tertiaryColor": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "Custom tertiary accent color used for background glows (e.g. \"#7c3aed\")."
+            }
+          }
+        },
         "logo": {
           "type": "object",
           "additionalProperties": false,
@@ -135,6 +169,10 @@
             "enabled": {
               "type": "boolean",
               "description": "Whether the Flickr photo promo card is shown."
+            },
+            "provider": {
+              "type": "string",
+              "description": "Name of the photo platform shown in the callout (e.g. Flickr, Google Photos, SmugMug)."
             },
             "groupUrl": {
               "type": "string",

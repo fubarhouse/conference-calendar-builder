@@ -13,11 +13,7 @@
       "enabled": false,
       "groupUrl": "",
       "image": "",
-      "imageAlt": "",
-      "title": "",
-      "text": "",
-      "buttonLabel": "",
-      "mode": ""
+      "imageAlt": ""
     },
     "columns": 3,
     "enabled": false,

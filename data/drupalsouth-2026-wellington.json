@@ -14,6 +14,7 @@
     "enabled": true,
     "flickr": {
       "enabled": true,
+      "provider": "",
       "groupUrl": "https://flic.kr/g/3gCxkw",
       "image": "./img/flickr/drupalsouth/2026-wellington.jpg",
       "imageAlt": "DrupalSouth logo"
@@ -865,7 +866,7 @@
       "startTime": "2026-05-13T07:00:00Z",
       "endTime": "2026-05-13T07:00:00Z",
       "location": "",
-      "duration": "",
+      "duration": "P0M",
       "track": [],
       "speakers": [],
       "full_description": "",

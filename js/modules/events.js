@@ -20,14 +20,18 @@ import {
   toggleEventSelection
 } from './calendar.js';
 import { configureEventSearch, openEventSearchModal } from './eventSearch.js';
+import {
+  loadThemes,
+  THEME_STORAGE_KEY,
+  normalizeThemeId,
+  setCurrentThemeId,
+  applyThemeClass,
+  applyEventColors,
+} from './theme.js';
 
-const DESIGN_STORAGE_KEY = 'scheduleDesignMode';
-const THEME_STORAGE_KEY = 'scheduleThemeMode';
 const SHARE_MODAL_ID = 'shareScheduleModal';
 const SHARE_CURRENT_SCHEDULE_PARAM = 'currentSchedule';
 const MOBILE_VIEWPORT_MEDIA_QUERY = '(max-width: 639px)';
-// Hard-coded default layout mode. Toggle this between 'drupalsouth' and 'drupalcon'.
-const DEFAULT_DESIGN_MODE = 'drupalcon';
 
 let updateSelectionOverview = () => {};
 let updateStageStats = () => {};
@@ -40,7 +44,6 @@ let hasBoundViewportScheduleLockUi = false;
 
 function parseModeFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  const design = String(params.get('design') || params.get('layout') || '').toLowerCase();
   const theme = String(params.get('theme') || '').toLowerCase();
   const id = String(params.get('id') || '').trim().toLowerCase();
   const currentSchedule =
@@ -51,30 +54,9 @@ function parseModeFromUrl() {
         params.get('schedule_only')
     ) === true;
   const preview = params.get('preview') === '1';
-  return { design, theme, id, currentSchedule, preview };
+  return { theme, id, currentSchedule, preview };
 }
 
-function normalizeDesignMode(design) {
-  if (design === 'drupalcon') return 'drupalcon';
-  if (design === 'drupalsouth') return 'drupalsouth';
-  if (design === 'default') return 'drupalsouth';
-  return 'drupalcon';
-}
-
-function normalizeThemeMode(theme) {
-  return theme === 'light' ? 'light' : 'dark';
-}
-
-function applyDesignClass(designMode) {
-  const body = document.body;
-  body.classList.toggle('design-drupalcon', designMode === 'drupalcon');
-  body.classList.toggle('design-drupalsouth', designMode === 'drupalsouth');
-}
-
-function applyThemeClass(themeMode) {
-  const body = document.body;
-  body.classList.toggle('theme-dark', themeMode === 'dark');
-}
 
 function isMobileViewport() {
   mobileViewportMediaQuery ||= window.matchMedia(MOBILE_VIEWPORT_MEDIA_QUERY);
@@ -936,7 +918,7 @@ export async function fetchEvents(filename) {
     }
   }
   try {
-    const response = await fetch(`./data/${filename}`);
+    const response = await fetch(`./data/${filename}`, { cache: 'no-cache' });
     const data = await response.json();
     state.eventMeta = data.event;
     return processEventItems(data.items);
@@ -975,6 +957,14 @@ export async function loadEvent(filename) {
     updateHeaderBranding(state.currentEventCategory);
   }
   const meta = state.eventMeta || {};
+  const themeVal = meta.theme;
+  const themeId = typeof themeVal === 'object' ? themeVal?.id : themeVal;
+  applyThemeClass(themeId ? normalizeThemeId(themeId) : state.themeMode);
+  applyEventColors(
+    typeof themeVal === 'object' ? themeVal?.primaryColor : meta.primaryColor,
+    typeof themeVal === 'object' ? themeVal?.secondaryColor : meta.secondaryColor,
+    typeof themeVal === 'object' ? themeVal?.tertiaryColor : meta.tertiaryColor
+  );
   state.eventColumns = Number(meta.columns) > 0 ? Number(meta.columns) : 3;
   const eventDisplayName = updateDocumentTitle(meta, manifestItem);
 
@@ -1089,13 +1079,8 @@ export function setupEventListeners() {
 
 function parseAndApplyStartupModes(urlModes) {
   state.scheduleLockedToCurrentEvent = urlModes.currentSchedule;
-  const savedDesign = localStorage.getItem(DESIGN_STORAGE_KEY) || '';
   const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || '';
-  state.designMode = normalizeDesignMode(urlModes.design || savedDesign || DEFAULT_DESIGN_MODE);
-  state.themeMode = normalizeThemeMode(urlModes.theme || savedTheme || 'dark');
-  localStorage.setItem(DESIGN_STORAGE_KEY, state.designMode);
-  localStorage.setItem(THEME_STORAGE_KEY, state.themeMode);
-  applyDesignClass(state.designMode);
+  state.themeMode = setCurrentThemeId(normalizeThemeId(urlModes.theme || savedTheme));
   applyThemeClass(state.themeMode);
 }
 
@@ -1113,6 +1098,7 @@ function showPreviewBanner() {
   banner.innerHTML = `<i class="fas fa-eye"></i><span><strong>Preview mode</strong> — these changes have not been saved yet.</span>${backControl}`;
   document.body.prepend(banner);
   document.body.classList.add('has-preview-banner');
+  document.getElementById('searchEvents')?.classList.add('hidden');
   if (canReturn) {
     document.getElementById('previewBannerBack')?.addEventListener('click', () => {
       window.opener.focus();
@@ -1124,6 +1110,7 @@ function showPreviewBanner() {
 export async function init() {
   setupEditorAccessButton();
   bindViewportScheduleLockUi();
+  await loadThemes();
   const urlModes = parseModeFromUrl();
 
   if (urlModes.preview) {

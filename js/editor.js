@@ -4,6 +4,17 @@ import { isLocalhost, slugify } from './modules/utils.js';
 import { configureEventSearch, openEventSearchModal } from './modules/eventSearch.js';
 import { renderTimeline } from './modules/timeline.js';
 import { validateDataset, formatValidationErrors } from './modules/validator.js';
+import {
+  loadThemes,
+  getThemes,
+  setThemes,
+  getThemeById,
+  normalizeThemeId,
+  getCurrentThemeId,
+  setCurrentThemeId,
+  applyThemeClass,
+  applyEventColors,
+} from './modules/theme.js';
 
 const state = {
   dataset: null,
@@ -38,6 +49,7 @@ const state = {
   sponsorEventCounts: null,
   apiEndpoint: localStorage.getItem('editorApiEndpoint') || ''
 };
+
 
 const UNDO_STACK = [];
 const UNDO_LIMIT = 50;
@@ -214,6 +226,7 @@ const els = {
   toggleEventMetaIcon: document.getElementById('toggleEventMetaIcon'),
   eventMetaBody: document.getElementById('eventMetaBody'),
   eventMetaForm: document.getElementById('eventMetaForm'),
+  appearanceForm: document.getElementById('appearanceForm'),
   eventWorkspacePanel: document.getElementById('eventWorkspacePanel'),
   logoForm: document.getElementById('logoForm'),
   flickrForm: document.getElementById('flickrForm'),
@@ -266,6 +279,8 @@ const els = {
   showTimelineTab: document.getElementById('showTimelineTab'),
   timelineWorkspacePanel: document.getElementById('timelineWorkspacePanel'),
   timelineCanvas: document.getElementById('timelineCanvas'),
+  showAppearanceTab: document.getElementById('showAppearanceTab'),
+  appearanceWorkspacePanel: document.getElementById('appearanceWorkspacePanel'),
 
   sponsorSessionPickerModal: document.getElementById('sponsorSessionPickerModal'),
   sponsorSessionPickerList: document.getElementById('sponsorSessionPickerList'),
@@ -679,6 +694,7 @@ async function restorePersistedSnapshot() {
   markSessionDirty(false);
   markSponsorDirty(false);
   renderEventMetaForm();
+  renderAppearanceForm();
   renderLogoForm();
   renderFlickrForm();
   renderSessionList();
@@ -739,6 +755,7 @@ function applyRecovery(recovery) {
   setEditorButtonsEnabled(true);
   setCurrentFilenameLabel();
   renderEventMetaForm();
+  renderAppearanceForm();
   renderSessionList();
   renderSessionForm();
   renderSponsorList();
@@ -807,6 +824,7 @@ async function performUndo() {
   markSponsorDirty(false);
   updateUndoButton();
   renderEventMetaForm();
+  renderAppearanceForm();
   renderSessionList();
   renderSessionForm();
   renderSponsorList();
@@ -1254,11 +1272,15 @@ function deriveSessionDurationValue(startTime, endTime) {
   return durationToCanonical(minutes);
 }
 
+const _DURATION_RE = /^P\d+M$/;
 function syncSessionDuration(item) {
-  if (!item || typeof item !== 'object') return '';
-  const duration = deriveSessionDurationValue(item.startTime, item.endTime);
-  item.duration = duration;
-  return duration;
+  if (!item || typeof item !== 'object') return 'P0M';
+  const derived = deriveSessionDurationValue(item.startTime, item.endTime);
+  const existing = item.duration;
+  item.duration = _DURATION_RE.test(derived) ? derived
+    : _DURATION_RE.test(existing) ? existing
+    : 'P0M';
+  return item.duration;
 }
 
 function syncAllSessionDurations() {
@@ -1607,6 +1629,23 @@ function normalizeDatasetShape() {
   }
   if (!state.dataset.event.timezone) state.dataset.event.timezone = 'UTC';
   if (state.dataset.event.columns == null || state.dataset.event.columns === '') state.dataset.event.columns = 3;
+  const hexPattern = /^#[0-9a-fA-F]{6}$/;
+  // Migrate legacy string theme and top-level color fields into the theme object
+  if (typeof state.dataset.event.theme === 'string') {
+    state.dataset.event.theme = { id: state.dataset.event.theme };
+  } else if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') {
+    state.dataset.event.theme = {};
+  }
+  for (const colorField of ['primaryColor', 'secondaryColor', 'tertiaryColor']) {
+    const topLevel = state.dataset.event[colorField];
+    if (topLevel) {
+      if (!state.dataset.event.theme[colorField]) state.dataset.event.theme[colorField] = topLevel;
+      delete state.dataset.event[colorField];
+    }
+    const v = state.dataset.event.theme[colorField];
+    if (v != null && !hexPattern.test(v)) delete state.dataset.event.theme[colorField];
+  }
+  if (Object.keys(state.dataset.event.theme).length === 0) delete state.dataset.event.theme;
   syncAllSessionDurations();
   state.dataset.items.forEach((item) => {
     if (!item || typeof item !== 'object') return;
@@ -1671,7 +1710,11 @@ async function loadDataset(file) {
   undoClear();
   clearRecoverySnapshot();
   setCurrentFilenameLabel();
+  const themeObj = state.dataset?.event?.theme;
+  applyThemeClass(themeObj?.id ? normalizeThemeId(themeObj.id) : getCurrentThemeId());
+  applyEventColors(themeObj?.primaryColor, themeObj?.secondaryColor, themeObj?.tertiaryColor);
   renderEventMetaForm();
+  renderAppearanceForm();
   renderLogoForm();
   renderFlickrForm();
   renderSessionList();
@@ -1733,6 +1776,7 @@ function createDatasetScaffold(pathValue) {
   capturePersistedSnapshot();
   setCurrentFilenameLabel();
   renderEventMetaForm();
+  renderAppearanceForm();
   renderLogoForm();
   renderFlickrForm();
   renderSessionList();
@@ -2350,6 +2394,537 @@ function renderFlickrForm() {
   bindFlickrFormEvents(els.flickrForm);
 }
 
+
+function setEventColor(field, value) {
+  if (!state.dataset?.event) return;
+  if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') state.dataset.event.theme = {};
+  state.dataset.event.theme[field] = value;
+  markDirty(true);
+  const resetIds = { primaryColor: 'clearPrimaryColor', secondaryColor: 'clearSecondaryColor', tertiaryColor: 'clearTertiaryColor' };
+  document.getElementById(resetIds[field])?.classList.remove('hidden');
+  applyEventColors(state.dataset.event.theme.primaryColor, state.dataset.event.theme.secondaryColor, state.dataset.event.theme.tertiaryColor);
+}
+
+function clearEventColor(field, picker, hex, clearBtn, defaultColor) {
+  if (!state.dataset?.event) return;
+  if (state.dataset.event.theme) delete state.dataset.event.theme[field];
+  markDirty(true);
+  picker.value = defaultColor;
+  hex.value = '';
+  hex.placeholder = defaultColor;
+  clearBtn.classList.add('hidden');
+  applyEventColors(state.dataset.event.theme?.primaryColor, state.dataset.event.theme?.secondaryColor, state.dataset.event.theme?.tertiaryColor);
+}
+
+let _editingThemeId = null;
+let _editingThemeSnapshot = null;
+let _preEditThemeId = null;
+
+const _THEME_EDIT_FIELDS = [
+  { key: 'bg',        label: 'Background', def: '#010810' },
+  { key: 'primary',   label: 'Primary',    def: '#00cfff' },
+  { key: 'secondary', label: 'Secondary',  def: '#4a90d9' },
+  { key: 'tertiary',  label: 'Tertiary',   def: '#7c3aed' },
+  { key: 'text',      label: 'Text',       def: '#eaf2fc' },
+  { key: 'border',    label: 'Border',     def: '#162c4c' },
+];
+
+function _blendHex(hex, toward, amount) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex) || !/^#[0-9a-fA-F]{6}$/.test(toward)) return hex;
+  const lerp = (a, b) => Math.round(a + (b - a) * amount).toString(16).padStart(2, '0');
+  const r = lerp(parseInt(hex.slice(1, 3), 16), parseInt(toward.slice(1, 3), 16));
+  const g = lerp(parseInt(hex.slice(3, 5), 16), parseInt(toward.slice(3, 5), 16));
+  const b = lerp(parseInt(hex.slice(5, 7), 16), parseInt(toward.slice(5, 7), 16));
+  return `#${r}${g}${b}`;
+}
+
+function _themeCardHtml(t, selectedId, nameAttr, liveThemeId, savedThemeId) {
+  const c = t.colors || {};
+  const selected = t.id === selectedId;
+  const isSaved = !!savedThemeId && t.id === savedThemeId;
+  const isLive = !!liveThemeId && t.id === liveThemeId;
+  const isDirty = selected && !isSaved && state.dirty;
+  let badgeClass = '';
+  let badgeText = '';
+  if (isLive) {
+    badgeClass = 'theme-card-live-badge';
+    badgeText = 'Live';
+  } else if (isSaved) {
+    badgeClass = 'theme-card-saved-badge';
+    badgeText = 'Saved';
+  } else if (isDirty) {
+    badgeClass = 'theme-card-dirty-badge';
+    badgeText = 'Unsaved';
+  }
+  return `<label class="appearance-theme-card${selected ? ' is-selected' : ''}${isLive ? ' is-live' : ''}${isSaved ? ' is-saved' : ''}${isDirty ? ' is-dirty' : ''}" title="${escapeAttr(t.label)}">
+    <input type="radio" name="${nameAttr}" value="${escapeAttr(t.id)}" ${selected ? 'checked' : ''} class="sr-only">
+    <div class="theme-card-swatch-row">
+      <span class="theme-swatch-chip" style="background:${c.bg || '#000'}"></span>
+      <span class="theme-swatch-chip" style="background:${c.primary || '#00cfff'}"></span>
+      <span class="theme-swatch-chip" style="background:${c.text || '#fff'}"></span>
+    </div>
+    <span class="theme-card-label">${escapeHtml(t.label)}</span>
+    ${badgeText ? `<span class="${badgeClass}">${badgeText}</span>` : ''}
+  </label>`;
+}
+
+async function saveThemesJson() {
+  const json = JSON.stringify(getThemes(), null, 2) + '\n';
+  if (isApiMode()) {
+    const res = await fetch(`${state.apiEndpoint}/api/data/themes.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: json,
+    });
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    return true;
+  }
+  window.alert('Theme editing requires the API server.\nStart it with: node server.js');
+  return false;
+}
+
+function renderAppearanceForm() {
+  if (!els.appearanceForm) return;
+  const event = state.dataset?.event || null;
+  const themes = getThemes();
+
+  // --- Per-event section ---
+  const eventThemeObj = event?.theme || {};
+  const eventThemeId = eventThemeObj.id || '';
+  const effectiveThemeId = eventThemeId || getCurrentThemeId();
+  const themeColors = getThemeById(effectiveThemeId)?.colors || {};
+  const primaryColor = eventThemeObj.primaryColor || '';
+  const secondaryColor = eventThemeObj.secondaryColor || '';
+  const tertiaryColor = eventThemeObj.tertiaryColor || '';
+  const disabled = !event;
+  const colorDisabledAttr = disabled ? ' disabled' : '';
+  const savedThemeId = state.persistedSnapshot?.dataset?.event?.theme?.id || '';
+
+  const eventThemeCards = themes.map((t) => _themeCardHtml(t, eventThemeId || '__none__', 'eventTheme', _editingThemeId, savedThemeId)).join('');
+  const pickerPrimary = primaryColor || themeColors.primary || '#00cfff';
+  const pickerSecondary = secondaryColor || themeColors.secondary || '#4a90d9';
+  const pickerTertiary = tertiaryColor || themeColors.tertiary || '#7c3aed';
+
+  // --- Theme library section ---
+  const libraryItems = themes.map((t) => {
+    const c = t.colors || {};
+    if (_editingThemeId === t.id) {
+      const colorPairs = _THEME_EDIT_FIELDS.map((f) => {
+        const v = c[f.key] || f.def;
+        return `<div class="appearance-add-field">
+          <span>${f.label}</span>
+          <div class="appearance-color-pair">
+            <input type="color" id="editColor-${f.key}" value="${escapeAttr(v)}">
+            <input type="text" id="editColorHex-${f.key}" value="${escapeAttr(v)}" maxlength="7" class="appearance-hex-input" placeholder="${escapeAttr(f.def)}">
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="appearance-library-item appearance-library-item--editing">
+        <div style="width:100%">
+          <p class="theme-edit-live-note"><span class="theme-edit-live-dot"></span>Previewing live on page — changes apply instantly</p>
+          <div class="appearance-add-theme-fields">
+            <label class="appearance-add-field">
+              <span>Name</span>
+              <input type="text" id="editThemeLabel" value="${escapeAttr(t.label)}" maxlength="32">
+            </label>
+            <label class="appearance-add-field appearance-add-field--check">
+              <input type="checkbox" id="editThemeDark"${t.dark ? ' checked' : ''}>
+              <span>Dark bg</span>
+            </label>
+            ${colorPairs}
+          </div>
+          <div class="flex gap-2 mt-2">
+            <button type="button" id="doneEditTheme" class="appearance-btn-primary">Done</button>
+            <button type="button" id="cancelEditTheme" class="appearance-btn-secondary">Cancel</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    return `<div class="appearance-library-item" data-theme-id="${escapeAttr(t.id)}">
+      <div class="theme-card-swatch-row">
+        <span class="theme-swatch-chip" style="background:${c.bg || '#000'}"></span>
+        <span class="theme-swatch-chip" style="background:${c.primary || '#00cfff'}"></span>
+        <span class="theme-swatch-chip" style="background:${c.secondary || c.primary || '#888'}"></span>
+        <span class="theme-swatch-chip" style="background:${c.text || '#fff'}"></span>
+      </div>
+      <span class="appearance-library-label">${escapeHtml(t.label)}</span>
+      <button type="button" class="appearance-library-edit" data-edit-theme="${escapeAttr(t.id)}" title="Edit theme">
+        <i class="fas fa-pen text-[0.72rem]"></i>
+      </button>
+      <button type="button" class="appearance-library-delete" data-delete-theme="${escapeAttr(t.id)}" title="Delete theme">
+        <i class="fas fa-trash text-[0.72rem]"></i>
+      </button>
+    </div>`;
+  }).join('');
+
+  els.appearanceForm.innerHTML = `
+    <section class="appearance-panel-section">
+      <div class="appearance-panel-header">
+        <div>
+          <h3 class="appearance-panel-title">Event Appearance</h3>
+          <p class="appearance-panel-desc">Theme and accent colours for this event.${disabled ? ' <span class="appearance-hint">Open an event to customise.</span>' : ''}</p>
+        </div>
+      </div>
+      <div class="${disabled ? 'appearance-section--disabled' : ''}">
+        <div class="appearance-section-label">Theme</div>
+        <div class="appearance-theme-selector" id="eventThemeSelector">
+          <label class="appearance-theme-card${!eventThemeId ? ' is-selected' : ''}${!savedThemeId ? ' is-saved' : ''}${!eventThemeId && state.dirty && savedThemeId ? ' is-dirty' : ''}" title="Use global default">
+            <input type="radio" name="eventTheme" value="" ${!eventThemeId ? 'checked' : ''} class="sr-only"${colorDisabledAttr}>
+            <div class="theme-card-swatch-row">
+              <span class="theme-swatch-chip" style="background:#f5f5f5"></span>
+              <span class="theme-swatch-chip" style="background:#006aa9"></span>
+              <span class="theme-swatch-chip" style="background:#1f2937"></span>
+            </div>
+            <span class="theme-card-label">Default</span>
+            ${!savedThemeId ? '<span class="theme-card-saved-badge">Saved</span>' : ''}${!eventThemeId && state.dirty && savedThemeId ? '<span class="theme-card-dirty-badge">Unsaved</span>' : ''}
+          </label>
+          ${eventThemeCards}
+        </div>
+        <div class="appearance-section mt-4">
+          <div class="appearance-section-label">Accent colours</div>
+          <div class="appearance-color-fields">
+            <div class="appearance-color-row">
+              <span class="appearance-color-label">Primary</span>
+              <div class="appearance-color-pair">
+                <input type="color" id="primaryColorPicker" value="${escapeAttr(pickerPrimary)}"${colorDisabledAttr}>
+                <input type="text" id="primaryColorHex" value="${escapeAttr(primaryColor)}" placeholder="${escapeAttr(pickerPrimary)}" maxlength="7"${colorDisabledAttr}>
+                <button type="button" id="clearPrimaryColor" class="appearance-color-reset${primaryColor ? '' : ' hidden'}"${colorDisabledAttr}>Reset</button>
+              </div>
+            </div>
+            <div class="appearance-color-row">
+              <span class="appearance-color-label">Secondary</span>
+              <div class="appearance-color-pair">
+                <input type="color" id="secondaryColorPicker" value="${escapeAttr(pickerSecondary)}"${colorDisabledAttr}>
+                <input type="text" id="secondaryColorHex" value="${escapeAttr(secondaryColor)}" placeholder="${escapeAttr(pickerSecondary)}" maxlength="7"${colorDisabledAttr}>
+                <button type="button" id="clearSecondaryColor" class="appearance-color-reset${secondaryColor ? '' : ' hidden'}"${colorDisabledAttr}>Reset</button>
+              </div>
+            </div>
+            <div class="appearance-color-row">
+              <span class="appearance-color-label">Tertiary</span>
+              <div class="appearance-color-pair">
+                <input type="color" id="tertiaryColorPicker" value="${escapeAttr(pickerTertiary)}"${colorDisabledAttr}>
+                <input type="text" id="tertiaryColorHex" value="${escapeAttr(tertiaryColor)}" placeholder="${escapeAttr(pickerTertiary)}" maxlength="7"${colorDisabledAttr}>
+                <button type="button" id="clearTertiaryColor" class="appearance-color-reset${tertiaryColor ? '' : ' hidden'}"${colorDisabledAttr}>Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="appearance-preview mt-4">
+          <div class="appearance-preview-label">Live preview</div>
+          <div class="appearance-preview-swatches">
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--bg-1)"></div><span>Background</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--surface-1)"></div><span>Surface</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--accent)"></div><span>Primary</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--color-secondary)"></div><span>Secondary</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--color-tertiary)"></div><span>Tertiary</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--text-0)"></div><span>Text</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--line-0)"></div><span>Border</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="appearance-panel-section mt-4">
+      <div class="appearance-panel-header">
+        <div>
+          <h3 class="appearance-panel-title">Theme Library</h3>
+          <p class="appearance-panel-desc">Add or remove themes. Changes are saved to <code>data/themes.json</code>.</p>
+        </div>
+      </div>
+      <div id="themeLibraryList" class="appearance-library-list">${libraryItems}</div>
+      <div id="addThemeFormWrap" class="hidden appearance-add-theme-form mt-3">
+        <div class="appearance-add-theme-fields">
+          <label class="appearance-add-field">
+            <span>Name</span>
+            <input type="text" id="newThemeLabel" placeholder="My Theme" maxlength="32">
+          </label>
+          <label class="appearance-add-field appearance-add-field--check">
+            <input type="checkbox" id="newThemeDark" checked>
+            <span>Dark background</span>
+          </label>
+          <div class="appearance-add-field">
+            <span>Background</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeBg" value="#010810">
+              <input type="text" id="newThemeBgHex" value="#010810" maxlength="7" class="appearance-hex-input" placeholder="#010810">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Primary</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemePrimary" value="#00cfff">
+              <input type="text" id="newThemePrimaryHex" value="#00cfff" maxlength="7" class="appearance-hex-input" placeholder="#00cfff">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Secondary</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeSecondary" value="#4a90d9">
+              <input type="text" id="newThemeSecondaryHex" value="#4a90d9" maxlength="7" class="appearance-hex-input" placeholder="#4a90d9">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Tertiary</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeTertiary" value="#7c3aed">
+              <input type="text" id="newThemeTertiaryHex" value="#7c3aed" maxlength="7" class="appearance-hex-input" placeholder="#7c3aed">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Text</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeText" value="#eaf2fc">
+              <input type="text" id="newThemeTextHex" value="#eaf2fc" maxlength="7" class="appearance-hex-input" placeholder="#eaf2fc">
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button type="button" id="confirmAddTheme" class="appearance-btn-primary">Add</button>
+          <button type="button" id="cancelAddTheme" class="appearance-btn-secondary">Cancel</button>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button type="button" id="showAddThemeForm" class="appearance-btn-secondary"><i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add theme</button>
+        <button type="button" id="saveThemesBtn" class="appearance-btn-primary"><i class="fas fa-floppy-disk mr-1.5 text-[0.72rem]"></i>Save themes</button>
+      </div>
+    </section>`;
+
+  applyThemeClass(_editingThemeId || effectiveThemeId);
+  applyEventColors(primaryColor, secondaryColor, tertiaryColor);
+
+  // --- Per-event theme radios ---
+  els.appearanceForm.querySelectorAll('input[name="eventTheme"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      if (!radio.checked || !state.dataset?.event) return;
+      const val = radio.value;
+      if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') state.dataset.event.theme = {};
+      if (val) {
+        state.dataset.event.theme.id = val;
+      } else {
+        delete state.dataset.event.theme.id;
+      }
+      markDirty(true);
+      const newEffective = val || getCurrentThemeId();
+      applyThemeClass(newEffective);
+      applyEventColors(state.dataset.event.theme.primaryColor, state.dataset.event.theme.secondaryColor, state.dataset.event.theme.tertiaryColor);
+      renderAppearanceForm();
+    });
+  });
+
+  // --- Accent color pickers ---
+  if (!disabled) {
+    const primaryPicker = document.getElementById('primaryColorPicker');
+    const primaryHex = document.getElementById('primaryColorHex');
+    const clearPrimary = document.getElementById('clearPrimaryColor');
+    const secondaryPicker = document.getElementById('secondaryColorPicker');
+    const secondaryHex = document.getElementById('secondaryColorHex');
+    const clearSecondary = document.getElementById('clearSecondaryColor');
+
+    primaryPicker?.addEventListener('input', () => {
+      primaryHex.value = primaryPicker.value.toUpperCase();
+      setEventColor('primaryColor', primaryPicker.value);
+    });
+    primaryHex?.addEventListener('input', () => {
+      const v = primaryHex.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { primaryPicker.value = v; setEventColor('primaryColor', v); }
+    });
+    clearPrimary?.addEventListener('click', () => {
+      const c = getThemeById(effectiveThemeId)?.colors || {};
+      clearEventColor('primaryColor', primaryPicker, primaryHex, clearPrimary, c.primary || '#00cfff');
+    });
+    secondaryPicker?.addEventListener('input', () => {
+      secondaryHex.value = secondaryPicker.value.toUpperCase();
+      setEventColor('secondaryColor', secondaryPicker.value);
+    });
+    secondaryHex?.addEventListener('input', () => {
+      const v = secondaryHex.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { secondaryPicker.value = v; setEventColor('secondaryColor', v); }
+    });
+    clearSecondary?.addEventListener('click', () => {
+      const c = getThemeById(effectiveThemeId)?.colors || {};
+      clearEventColor('secondaryColor', secondaryPicker, secondaryHex, clearSecondary, c.secondary || '#4a90d9');
+    });
+    const tertiaryPicker = document.getElementById('tertiaryColorPicker');
+    const tertiaryHex = document.getElementById('tertiaryColorHex');
+    const clearTertiary = document.getElementById('clearTertiaryColor');
+    tertiaryPicker?.addEventListener('input', () => {
+      tertiaryHex.value = tertiaryPicker.value.toUpperCase();
+      setEventColor('tertiaryColor', tertiaryPicker.value);
+    });
+    tertiaryHex?.addEventListener('input', () => {
+      const v = tertiaryHex.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { tertiaryPicker.value = v; setEventColor('tertiaryColor', v); }
+    });
+    clearTertiary?.addEventListener('click', () => {
+      const c = getThemeById(effectiveThemeId)?.colors || {};
+      clearEventColor('tertiaryColor', tertiaryPicker, tertiaryHex, clearTertiary, c.tertiary || '#7c3aed');
+    });
+  }
+
+  // --- Theme library controls ---
+  els.appearanceForm.querySelectorAll('[data-delete-theme]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.deleteTheme;
+      if (getThemes().length <= 1) {
+        window.alert('Cannot delete the last theme.');
+        return;
+      }
+      if (!window.confirm(`Delete theme "${id}"?`)) return;
+      const updated = getThemes().filter((t) => t.id !== id);
+      setThemes(updated);
+      if (_editingThemeId === id) { _editingThemeId = null; _editingThemeSnapshot = null; }
+      renderAppearanceForm();
+    });
+  });
+
+  els.appearanceForm.querySelectorAll('[data-edit-theme]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      _preEditThemeId = _editingThemeId || effectiveThemeId;
+      _editingThemeId = btn.dataset.editTheme;
+      _editingThemeSnapshot = JSON.parse(JSON.stringify(getThemeById(_editingThemeId)));
+      renderAppearanceForm();
+    });
+  });
+
+  document.getElementById('doneEditTheme')?.addEventListener('click', () => {
+    const restoreId = _preEditThemeId || effectiveThemeId;
+    _editingThemeId = null;
+    _editingThemeSnapshot = null;
+    _preEditThemeId = null;
+    applyThemeClass(restoreId);
+    renderAppearanceForm();
+  });
+
+  document.getElementById('cancelEditTheme')?.addEventListener('click', () => {
+    if (_editingThemeSnapshot) {
+      const reverted = getThemes().map((t) => t.id === _editingThemeId ? _editingThemeSnapshot : t);
+      setThemes(reverted);
+    }
+    const restoreId = _preEditThemeId || effectiveThemeId;
+    _editingThemeId = null;
+    _editingThemeSnapshot = null;
+    _preEditThemeId = null;
+    applyThemeClass(restoreId);
+    renderAppearanceForm();
+  });
+
+  // Live color + meta updates while editing a theme
+  _THEME_EDIT_FIELDS.forEach(({ key }) => {
+    const picker = document.getElementById(`editColor-${key}`);
+    const hexInp = document.getElementById(`editColorHex-${key}`);
+    if (!picker) return;
+    picker.addEventListener('input', () => {
+      if (hexInp) hexInp.value = picker.value.toUpperCase();
+      _applyLiveEditColor(key, picker.value);
+    });
+    hexInp?.addEventListener('input', () => {
+      const v = hexInp.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { picker.value = v; _applyLiveEditColor(key, v); }
+    });
+  });
+
+  document.getElementById('editThemeLabel')?.addEventListener('input', _applyLiveEditMeta);
+  document.getElementById('editThemeDark')?.addEventListener('change', _applyLiveEditMeta);
+
+  // Hex↔picker sync for add form
+  [
+    ['newThemeBg', 'newThemeBgHex'],
+    ['newThemePrimary', 'newThemePrimaryHex'],
+    ['newThemeSecondary', 'newThemeSecondaryHex'],
+    ['newThemeTertiary', 'newThemeTertiaryHex'],
+    ['newThemeText', 'newThemeTextHex'],
+  ].forEach(([pickerId, hexId]) => {
+    const picker = document.getElementById(pickerId);
+    const hexInp = document.getElementById(hexId);
+    if (!picker || !hexInp) return;
+    picker.addEventListener('input', () => { hexInp.value = picker.value.toUpperCase(); });
+    hexInp.addEventListener('input', () => {
+      const v = hexInp.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) picker.value = v;
+    });
+  });
+
+  document.getElementById('showAddThemeForm')?.addEventListener('click', () => {
+    document.getElementById('addThemeFormWrap')?.classList.remove('hidden');
+    document.getElementById('showAddThemeForm')?.classList.add('hidden');
+  });
+  document.getElementById('newThemeDark')?.addEventListener('change', () => {
+    const isDark = document.getElementById('newThemeDark')?.checked ?? true;
+    const textPicker = document.getElementById('newThemeText');
+    const textHex = document.getElementById('newThemeTextHex');
+    if (!textPicker || !textHex) return;
+    const defaultText = isDark ? '#eaf2fc' : '#0f172a';
+    textPicker.value = defaultText;
+    textHex.value = defaultText;
+    textHex.placeholder = defaultText;
+  });
+  document.getElementById('cancelAddTheme')?.addEventListener('click', () => {
+    document.getElementById('addThemeFormWrap')?.classList.add('hidden');
+    document.getElementById('showAddThemeForm')?.classList.remove('hidden');
+  });
+  document.getElementById('confirmAddTheme')?.addEventListener('click', () => {
+    const label = document.getElementById('newThemeLabel')?.value.trim();
+    if (!label) { window.alert('Please enter a theme name.'); return; }
+    const id = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (getThemes().some((t) => t.id === id)) {
+      window.alert(`A theme with id "${id}" already exists. Choose a different name.`);
+      return;
+    }
+    const dark = document.getElementById('newThemeDark')?.checked ?? true;
+    const bg = document.getElementById('newThemeBg')?.value || '#010810';
+    const primary = document.getElementById('newThemePrimary')?.value || '#00cfff';
+    const secondary = document.getElementById('newThemeSecondary')?.value || '#4a90d9';
+    const tertiary = document.getElementById('newThemeTertiary')?.value || secondary;
+    const textPicked = document.getElementById('newThemeText')?.value || '';
+    const baseDefaults = dark
+      ? { surface: 'rgba(3,10,22,0.93)', surfaceAlt: 'rgba(7,18,36,0.96)', surfaceDeep: 'rgba(12,28,52,0.84)', text: textPicked || '#eaf2fc', textAlt: '#cdd9ee', textMuted: '#8eaacc', textFaint: '#6a8cb0' }
+      : { surface: 'rgba(255,255,255,0.97)', surfaceAlt: 'rgba(248,250,252,0.99)', surfaceDeep: 'rgba(241,245,249,0.95)', text: textPicked || '#0f172a', textAlt: '#1e293b', textMuted: '#475569', textFaint: '#64748b' };
+    const bgAlt = _blendHex(bg, dark ? '#ffffff' : '#000000', 0.06);
+    const border = dark ? _blendHex(bg, '#ffffff', 0.12) : _blendHex(bg, '#000000', 0.18);
+    const newTheme = { id, label, dark, colors: { bg, bgAlt, primary, secondary, tertiary, border, ...baseDefaults } };
+    setThemes([...getThemes(), newTheme]);
+    renderAppearanceForm();
+  });
+
+  document.getElementById('saveThemesBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('saveThemesBtn');
+    if (btn) btn.disabled = true;
+    try {
+      const ok = await saveThemesJson();
+      if (ok) showSaveToast();
+    } catch (e) {
+      window.alert(`Failed to save themes: ${e.message}`);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+}
+
+function _applyLiveEditColor(key, value) {
+  if (!_editingThemeId) return;
+  const updated = getThemes().map((t) => {
+    if (t.id !== _editingThemeId) return t;
+    const newColors = { ...t.colors, [key]: value };
+    if (key === 'bg') {
+      newColors.bgAlt = _blendHex(value, t.dark ? '#ffffff' : '#000000', 0.06);
+    }
+    return { ...t, colors: newColors };
+  });
+  setThemes(updated);
+}
+
+function _applyLiveEditMeta() {
+  if (!_editingThemeId) return;
+  const label = document.getElementById('editThemeLabel')?.value.trim() || '';
+  const dark = document.getElementById('editThemeDark')?.checked ?? true;
+  const updated = getThemes().map((t) => {
+    if (t.id !== _editingThemeId) return t;
+    return { ...t, label: label || t.label, dark };
+  });
+  setThemes(updated);
+  applyThemeClass(_editingThemeId);
+}
+
 function renderEventMetaForm() {
   const event = state.dataset?.event || {};
   const visibleFields = EVENT_META_FIELDS.filter((field) => !['id', 'name', 'logo', 'flickr'].includes(field));
@@ -2558,7 +3133,7 @@ function setSponsorWorkspaceExpanded(expanded) {
 }
 
 function setActiveEditorTab(tab) {
-  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline'].includes(tab) ? tab : 'event';
+  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline', 'appearance'].includes(tab) ? tab : 'event';
   state.activeEditorTab = nextTab;
 
   if (els.eventWorkspacePanel) {
@@ -2631,10 +3206,19 @@ function setActiveEditorTab(tab) {
       });
     }
   }
+  if (els.appearanceWorkspacePanel) {
+    els.appearanceWorkspacePanel.classList.toggle('hidden', nextTab !== 'appearance');
+  }
+  if (els.showAppearanceTab) {
+    const active = nextTab === 'appearance';
+    els.showAppearanceTab.classList.toggle('is-active', active);
+    els.showAppearanceTab.setAttribute('aria-selected', active ? 'true' : 'false');
+    if (active) renderAppearanceForm();
+  }
 }
 
 function switchEditorTab(tab) {
-  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline'].includes(tab) ? tab : 'event';
+  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline', 'appearance'].includes(tab) ? tab : 'event';
   if (nextTab === state.activeEditorTab) return;
   setActiveEditorTab(nextTab);
 }
@@ -4128,11 +4712,15 @@ async function saveDataset() {
   if (!state.dataset) return;
   const { valid, errors } = await validateDataset(state.dataset);
   if (!valid) {
+    console.error('Validation errors:', errors);
+    const errorDetails = formatValidationErrors(errors, state.dataset);
+    console.error('Formatted errors:', errorDetails);
     window.alert(
-      `Cannot save: dataset has ${errors.length} schema error${errors.length === 1 ? '' : 's'}.\n\n${formatValidationErrors(errors)}`
+      `Cannot save: dataset has ${errors.length} schema error${errors.length === 1 ? '' : 's'}.\n\n${errorDetails}`
     );
     return;
   }
+  console.log('Dataset validation passed, saving...');
   if (isApiMode()) {
     await saveViaApi();
     clearPhotosBackup();
@@ -4145,6 +4733,7 @@ async function saveDataset() {
     capturePersistedSnapshot();
     clearRecoverySnapshot();
     showSaveToast();
+    renderAppearanceForm();
     return;
   }
   if (!state.fileHandle) {
@@ -4182,6 +4771,7 @@ async function saveDataset() {
   capturePersistedSnapshot();
   clearRecoverySnapshot();
   showSaveToast();
+  renderAppearanceForm();
 }
 
 async function saveCurrentSession() {
@@ -4819,6 +5409,12 @@ function bindEvents() {
     });
   }
 
+  if (els.showAppearanceTab) {
+    els.showAppearanceTab.addEventListener('click', () => {
+      switchEditorTab('appearance');
+    });
+  }
+
   if (els.closeSponsorSessionPicker) {
     els.closeSponsorSessionPicker.addEventListener('click', closeSponsorSessionPicker);
   }
@@ -5049,6 +5645,9 @@ function revealPage() {
 }
 
 async function init() {
+  await loadThemes();
+  applyThemeClass(getCurrentThemeId());
+
   if (!isLocalhost()) {
     els.blocked.classList.remove('hidden');
     els.app.classList.add('hidden');

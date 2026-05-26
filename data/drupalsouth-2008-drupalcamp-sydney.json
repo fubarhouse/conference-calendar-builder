@@ -14,11 +14,7 @@
       "enabled": true,
       "groupUrl": "",
       "image": "",
-      "imageAlt": "",
-      "title": "",
-      "text": "",
-      "buttonLabel": "",
-      "mode": ""
+      "imageAlt": ""
     },
     "columns": 3,
     "enabled": true,
