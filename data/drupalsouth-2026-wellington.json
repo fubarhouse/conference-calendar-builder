@@ -865,7 +865,7 @@
       "startTime": "2026-05-13T07:00:00Z",
       "endTime": "2026-05-13T07:00:00Z",
       "location": "",
-      "duration": "",
+      "duration": "P60M",
       "track": [],
       "speakers": [],
       "full_description": "",

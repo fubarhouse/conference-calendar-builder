@@ -67,8 +67,10 @@ export function applyThemeClass(themeId) {
   body.classList.add('design-drupalcon');
 }
 
-export function applyEventColors(primaryColor, secondaryColor) {
-  const root = document.documentElement;
+export function applyEventColors(primaryColor, secondaryColor, tertiaryColor) {
+  // Must target document.body (not documentElement) — body.theme-* stylesheet rules
+  // redefine custom properties at the body scope, so only body inline styles can override them.
+  const root = document.body;
   if (primaryColor) {
     root.style.setProperty('--accent', primaryColor);
     root.style.setProperty('--accent-strong', _lightenHex(primaryColor, 0.12));
@@ -80,6 +82,11 @@ export function applyEventColors(primaryColor, secondaryColor) {
     root.style.setProperty('--color-secondary', secondaryColor);
   } else {
     root.style.removeProperty('--color-secondary');
+  }
+  if (tertiaryColor) {
+    root.style.setProperty('--glow-2', _hexToRgba(tertiaryColor, 0.13));
+  } else {
+    root.style.removeProperty('--glow-2');
   }
 }
 

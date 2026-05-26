@@ -959,7 +959,7 @@ export async function loadEvent(filename) {
   const meta = state.eventMeta || {};
   const eventTheme = meta.theme ? normalizeThemeId(meta.theme) : state.themeMode;
   applyThemeClass(eventTheme);
-  applyEventColors(meta.primaryColor, meta.secondaryColor);
+  applyEventColors(meta.primaryColor, meta.secondaryColor, meta.tertiaryColor);
   state.eventColumns = Number(meta.columns) > 0 ? Number(meta.columns) : 3;
   const eventDisplayName = updateDocumentTitle(meta, manifestItem);
 
@@ -1093,6 +1093,7 @@ function showPreviewBanner() {
   banner.innerHTML = `<i class="fas fa-eye"></i><span><strong>Preview mode</strong> — these changes have not been saved yet.</span>${backControl}`;
   document.body.prepend(banner);
   document.body.classList.add('has-preview-banner');
+  document.getElementById('searchEvents')?.classList.add('hidden');
   if (canReturn) {
     document.getElementById('previewBannerBack')?.addEventListener('click', () => {
       window.opener.focus();

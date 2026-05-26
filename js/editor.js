@@ -138,10 +138,6 @@ const FLICKR_FIELD_CONFIG = {
     label: 'Show photos block',
     description: 'Displays the photo callout on the public event page when a URL is provided.'
   },
-  provider: {
-    label: 'Photo provider',
-    description: 'Name of the photo platform shown in the callout (e.g. Flickr, Google Photos, SmugMug).'
-  },
   groupUrl: {
     label: 'Photos URL',
     description: 'The public link to the photo album, group, or gallery used by the call-to-action button.'
@@ -1150,7 +1146,6 @@ function normalizeFlickrObject(raw = null) {
   const enabled = !(input.enabled === false || String(input.enabled || '').toLowerCase() === 'false');
   return {
     enabled,
-    provider: String(input.provider || '').trim(),
     groupUrl: String(input.groupUrl || '').trim(),
     image: String(input.image || '').trim(),
     imageAlt: String(input.imageAlt || '').trim()
@@ -1691,7 +1686,7 @@ async function loadDataset(file) {
   setCurrentFilenameLabel();
   const loadedTheme = state.dataset?.event?.theme;
   applyThemeClass(loadedTheme ? normalizeThemeId(loadedTheme) : getCurrentThemeId());
-  applyEventColors(state.dataset?.event?.primaryColor, state.dataset?.event?.secondaryColor);
+  applyEventColors(state.dataset?.event?.primaryColor, state.dataset?.event?.secondaryColor, state.dataset?.event?.tertiaryColor);
   renderEventMetaForm();
   renderAppearanceForm();
   renderLogoForm();
@@ -2106,16 +2101,12 @@ function renderFlickrCopyPreviewContent(automated) {
 }
 
 function renderFlickrBlock(flickr) {
-  const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickr.provider);
+  const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, 'Photos');
   const imageSrc = (flickr.image || '').trim();
-  const providerLabel = (flickr.provider || 'Photos').toUpperCase();
+  const providerLabel = 'Photos'.toUpperCase();
   return `
     <div class="col-span-full flex gap-5 items-start">
       <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <label class="editor-form-field md:col-span-2">
-          ${renderFieldIntro('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}
-          <input data-flickr-field="provider" type="text" value="${escapeAttr(flickr.provider)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="Flickr"${fieldDescriptionAttr('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}>
-        </label>
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}
           <input data-flickr-field="groupUrl" type="text" value="${escapeAttr(flickr.groupUrl)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="https://flic.kr/g/..."${fieldDescriptionAttr('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}>
@@ -2238,14 +2229,11 @@ function bindFlickrFormEvents(container) {
         if (card) card.classList.toggle('opacity-50', !input.checked);
       }
 
-      if (key === 'provider' || key === 'groupUrl') {
-        const flickrNow = normalizeFlickrObject(state.dataset.event.flickr);
-        const auto = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickrNow.provider);
-        const providerEl = container.querySelector('.flickr-preview-provider');
+      if (key === 'groupUrl') {
+        const auto = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, 'Photos');
         const headingEl = container.querySelector('.flickr-preview-heading');
         const descEl = container.querySelector('.flickr-preview-desc');
         const btnEl = container.querySelector('.flickr-preview-btn');
-        if (providerEl) providerEl.textContent = (flickrNow.provider || 'Photos').toUpperCase();
         if (headingEl) headingEl.textContent = auto.heading;
         if (descEl) descEl.textContent = auto.description;
         if (btnEl) btnEl.textContent = auto.buttonText;
@@ -2378,9 +2366,9 @@ function setEventColor(field, value) {
   if (!state.dataset?.event) return;
   state.dataset.event[field] = value;
   markDirty(true);
-  const resetId = field === 'primaryColor' ? 'clearPrimaryColor' : 'clearSecondaryColor';
-  document.getElementById(resetId)?.classList.remove('hidden');
-  applyEventColors(state.dataset.event.primaryColor, state.dataset.event.secondaryColor);
+  const resetIds = { primaryColor: 'clearPrimaryColor', secondaryColor: 'clearSecondaryColor', tertiaryColor: 'clearTertiaryColor' };
+  document.getElementById(resetIds[field])?.classList.remove('hidden');
+  applyEventColors(state.dataset.event.primaryColor, state.dataset.event.secondaryColor, state.dataset.event.tertiaryColor);
 }
 
 function clearEventColor(field, picker, hex, clearBtn, defaultColor) {
@@ -2391,8 +2379,21 @@ function clearEventColor(field, picker, hex, clearBtn, defaultColor) {
   hex.value = '';
   hex.placeholder = defaultColor;
   clearBtn.classList.add('hidden');
-  applyEventColors(state.dataset.event.primaryColor, state.dataset.event.secondaryColor);
+  applyEventColors(state.dataset.event.primaryColor, state.dataset.event.secondaryColor, state.dataset.event.tertiaryColor);
 }
+
+let _editingThemeId = null;
+let _editingThemeSnapshot = null;
+let _preEditThemeId = null;
+
+const _THEME_EDIT_FIELDS = [
+  { key: 'bg',        label: 'Background', def: '#010810' },
+  { key: 'primary',   label: 'Primary',    def: '#00cfff' },
+  { key: 'secondary', label: 'Secondary',  def: '#4a90d9' },
+  { key: 'tertiary',  label: 'Tertiary',   def: '#7c3aed' },
+  { key: 'text',      label: 'Text',       def: '#eaf2fc' },
+  { key: 'border',    label: 'Border',     def: '#162c4c' },
+];
 
 function _blendHex(hex, toward, amount) {
   if (!/^#[0-9a-fA-F]{6}$/.test(hex) || !/^#[0-9a-fA-F]{6}$/.test(toward)) return hex;
@@ -2403,10 +2404,25 @@ function _blendHex(hex, toward, amount) {
   return `#${r}${g}${b}`;
 }
 
-function _themeCardHtml(t, selectedId, nameAttr) {
+function _themeCardHtml(t, selectedId, nameAttr, liveThemeId, savedThemeId) {
   const c = t.colors || {};
   const selected = t.id === selectedId;
-  return `<label class="appearance-theme-card${selected ? ' is-selected' : ''}" title="${escapeAttr(t.label)}">
+  const isSaved = !!savedThemeId && t.id === savedThemeId;
+  const isLive = !!liveThemeId && t.id === liveThemeId;
+  const isDirty = selected && !isSaved && state.dirty;
+  let badgeClass = '';
+  let badgeText = '';
+  if (isLive) {
+    badgeClass = 'theme-card-live-badge';
+    badgeText = 'Live';
+  } else if (isSaved) {
+    badgeClass = 'theme-card-saved-badge';
+    badgeText = 'Saved';
+  } else if (isDirty) {
+    badgeClass = 'theme-card-dirty-badge';
+    badgeText = 'Unsaved';
+  }
+  return `<label class="appearance-theme-card${selected ? ' is-selected' : ''}${isLive ? ' is-live' : ''}${isSaved ? ' is-saved' : ''}${isDirty ? ' is-dirty' : ''}" title="${escapeAttr(t.label)}">
     <input type="radio" name="${nameAttr}" value="${escapeAttr(t.id)}" ${selected ? 'checked' : ''} class="sr-only">
     <div class="theme-card-swatch-row">
       <span class="theme-swatch-chip" style="background:${c.bg || '#000'}"></span>
@@ -2414,6 +2430,7 @@ function _themeCardHtml(t, selectedId, nameAttr) {
       <span class="theme-swatch-chip" style="background:${c.text || '#fff'}"></span>
     </div>
     <span class="theme-card-label">${escapeHtml(t.label)}</span>
+    ${badgeText ? `<span class="${badgeClass}">${badgeText}</span>` : ''}
   </label>`;
 }
 
@@ -2443,16 +2460,51 @@ function renderAppearanceForm() {
   const themeColors = getThemeById(effectiveThemeId)?.colors || {};
   const primaryColor = event?.primaryColor || '';
   const secondaryColor = event?.secondaryColor || '';
+  const tertiaryColor = event?.tertiaryColor || '';
   const disabled = !event;
   const colorDisabledAttr = disabled ? ' disabled' : '';
+  const savedThemeId = state.persistedSnapshot?.event?.theme || '';
 
-  const eventThemeCards = themes.map((t) => _themeCardHtml(t, eventThemeId || '__none__', 'eventTheme')).join('');
+  const eventThemeCards = themes.map((t) => _themeCardHtml(t, eventThemeId || '__none__', 'eventTheme', _editingThemeId, savedThemeId)).join('');
   const pickerPrimary = primaryColor || themeColors.primary || '#00cfff';
   const pickerSecondary = secondaryColor || themeColors.secondary || '#4a90d9';
+  const pickerTertiary = tertiaryColor || themeColors.tertiary || '#7c3aed';
 
   // --- Theme library section ---
   const libraryItems = themes.map((t) => {
     const c = t.colors || {};
+    if (_editingThemeId === t.id) {
+      const colorPairs = _THEME_EDIT_FIELDS.map((f) => {
+        const v = c[f.key] || f.def;
+        return `<div class="appearance-add-field">
+          <span>${f.label}</span>
+          <div class="appearance-color-pair">
+            <input type="color" id="editColor-${f.key}" value="${escapeAttr(v)}">
+            <input type="text" id="editColorHex-${f.key}" value="${escapeAttr(v)}" maxlength="7" class="appearance-hex-input" placeholder="${escapeAttr(f.def)}">
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="appearance-library-item appearance-library-item--editing">
+        <div style="width:100%">
+          <p class="theme-edit-live-note"><span class="theme-edit-live-dot"></span>Previewing live on page — changes apply instantly</p>
+          <div class="appearance-add-theme-fields">
+            <label class="appearance-add-field">
+              <span>Name</span>
+              <input type="text" id="editThemeLabel" value="${escapeAttr(t.label)}" maxlength="32">
+            </label>
+            <label class="appearance-add-field appearance-add-field--check">
+              <input type="checkbox" id="editThemeDark"${t.dark ? ' checked' : ''}>
+              <span>Dark bg</span>
+            </label>
+            ${colorPairs}
+          </div>
+          <div class="flex gap-2 mt-2">
+            <button type="button" id="doneEditTheme" class="appearance-btn-primary">Done</button>
+            <button type="button" id="cancelEditTheme" class="appearance-btn-secondary">Cancel</button>
+          </div>
+        </div>
+      </div>`;
+    }
     return `<div class="appearance-library-item" data-theme-id="${escapeAttr(t.id)}">
       <div class="theme-card-swatch-row">
         <span class="theme-swatch-chip" style="background:${c.bg || '#000'}"></span>
@@ -2461,6 +2513,9 @@ function renderAppearanceForm() {
         <span class="theme-swatch-chip" style="background:${c.text || '#fff'}"></span>
       </div>
       <span class="appearance-library-label">${escapeHtml(t.label)}</span>
+      <button type="button" class="appearance-library-edit" data-edit-theme="${escapeAttr(t.id)}" title="Edit theme">
+        <i class="fas fa-pen text-[0.72rem]"></i>
+      </button>
       <button type="button" class="appearance-library-delete" data-delete-theme="${escapeAttr(t.id)}" title="Delete theme">
         <i class="fas fa-trash text-[0.72rem]"></i>
       </button>
@@ -2478,14 +2533,15 @@ function renderAppearanceForm() {
       <div class="${disabled ? 'appearance-section--disabled' : ''}">
         <div class="appearance-section-label">Theme</div>
         <div class="appearance-theme-selector" id="eventThemeSelector">
-          <label class="appearance-theme-card${!eventThemeId ? ' is-selected' : ''}" title="Use global default">
+          <label class="appearance-theme-card${!eventThemeId ? ' is-selected' : ''}${!savedThemeId ? ' is-saved' : ''}${!eventThemeId && state.dirty && savedThemeId ? ' is-dirty' : ''}" title="Use global default">
             <input type="radio" name="eventTheme" value="" ${!eventThemeId ? 'checked' : ''} class="sr-only"${colorDisabledAttr}>
             <div class="theme-card-swatch-row">
-              <span class="theme-swatch-chip" style="background:#444"></span>
-              <span class="theme-swatch-chip" style="background:#888"></span>
-              <span class="theme-swatch-chip" style="background:#ccc"></span>
+              <span class="theme-swatch-chip" style="background:#f5f5f5"></span>
+              <span class="theme-swatch-chip" style="background:#006aa9"></span>
+              <span class="theme-swatch-chip" style="background:#1f2937"></span>
             </div>
             <span class="theme-card-label">Default</span>
+            ${!savedThemeId ? '<span class="theme-card-saved-badge">Saved</span>' : ''}${!eventThemeId && state.dirty && savedThemeId ? '<span class="theme-card-dirty-badge">Unsaved</span>' : ''}
           </label>
           ${eventThemeCards}
         </div>
@@ -2508,6 +2564,14 @@ function renderAppearanceForm() {
                 <button type="button" id="clearSecondaryColor" class="appearance-color-reset${secondaryColor ? '' : ' hidden'}"${colorDisabledAttr}>Reset</button>
               </div>
             </div>
+            <div class="appearance-color-row">
+              <span class="appearance-color-label">Tertiary</span>
+              <div class="appearance-color-pair">
+                <input type="color" id="tertiaryColorPicker" value="${escapeAttr(pickerTertiary)}"${colorDisabledAttr}>
+                <input type="text" id="tertiaryColorHex" value="${escapeAttr(tertiaryColor)}" placeholder="${escapeAttr(pickerTertiary)}" maxlength="7"${colorDisabledAttr}>
+                <button type="button" id="clearTertiaryColor" class="appearance-color-reset${tertiaryColor ? '' : ' hidden'}"${colorDisabledAttr}>Reset</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="appearance-preview mt-4">
@@ -2517,6 +2581,7 @@ function renderAppearanceForm() {
             <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--surface-1)"></div><span>Surface</span></div>
             <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--accent)"></div><span>Primary</span></div>
             <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--color-secondary)"></div><span>Secondary</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--glow-2)"></div><span>Tertiary</span></div>
             <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--text-0)"></div><span>Text</span></div>
             <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--line-0)"></div><span>Border</span></div>
           </div>
@@ -2542,22 +2607,41 @@ function renderAppearanceForm() {
             <input type="checkbox" id="newThemeDark" checked>
             <span>Dark background</span>
           </label>
-          <label class="appearance-add-field">
+          <div class="appearance-add-field">
             <span>Background</span>
-            <input type="color" id="newThemeBg" value="#010810">
-          </label>
-          <label class="appearance-add-field">
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeBg" value="#010810">
+              <input type="text" id="newThemeBgHex" value="#010810" maxlength="7" class="appearance-hex-input" placeholder="#010810">
+            </div>
+          </div>
+          <div class="appearance-add-field">
             <span>Primary</span>
-            <input type="color" id="newThemePrimary" value="#00cfff">
-          </label>
-          <label class="appearance-add-field">
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemePrimary" value="#00cfff">
+              <input type="text" id="newThemePrimaryHex" value="#00cfff" maxlength="7" class="appearance-hex-input" placeholder="#00cfff">
+            </div>
+          </div>
+          <div class="appearance-add-field">
             <span>Secondary</span>
-            <input type="color" id="newThemeSecondary" value="#4a90d9">
-          </label>
-          <label class="appearance-add-field">
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeSecondary" value="#4a90d9">
+              <input type="text" id="newThemeSecondaryHex" value="#4a90d9" maxlength="7" class="appearance-hex-input" placeholder="#4a90d9">
+            </div>
+          </div>
+          <div class="appearance-add-field">
             <span>Tertiary</span>
-            <input type="color" id="newThemeTertiary" value="#7c3aed">
-          </label>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeTertiary" value="#7c3aed">
+              <input type="text" id="newThemeTertiaryHex" value="#7c3aed" maxlength="7" class="appearance-hex-input" placeholder="#7c3aed">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Text</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeText" value="#eaf2fc">
+              <input type="text" id="newThemeTextHex" value="#eaf2fc" maxlength="7" class="appearance-hex-input" placeholder="#eaf2fc">
+            </div>
+          </div>
         </div>
         <div class="flex gap-2 mt-2">
           <button type="button" id="confirmAddTheme" class="appearance-btn-primary">Add</button>
@@ -2570,8 +2654,8 @@ function renderAppearanceForm() {
       </div>
     </section>`;
 
-  applyThemeClass(effectiveThemeId);
-  applyEventColors(primaryColor, secondaryColor);
+  applyThemeClass(_editingThemeId || effectiveThemeId);
+  applyEventColors(primaryColor, secondaryColor, tertiaryColor);
 
   // --- Per-event theme radios ---
   els.appearanceForm.querySelectorAll('input[name="eventTheme"]').forEach((radio) => {
@@ -2586,7 +2670,8 @@ function renderAppearanceForm() {
       markDirty(true);
       const newEffective = val || getCurrentThemeId();
       applyThemeClass(newEffective);
-      applyEventColors(state.dataset.event.primaryColor, state.dataset.event.secondaryColor);
+      applyEventColors(state.dataset.event.primaryColor, state.dataset.event.secondaryColor, state.dataset.event.tertiaryColor);
+      renderAppearanceForm();
     });
   });
 
@@ -2623,6 +2708,21 @@ function renderAppearanceForm() {
       const c = getThemeById(effectiveThemeId)?.colors || {};
       clearEventColor('secondaryColor', secondaryPicker, secondaryHex, clearSecondary, c.secondary || '#4a90d9');
     });
+    const tertiaryPicker = document.getElementById('tertiaryColorPicker');
+    const tertiaryHex = document.getElementById('tertiaryColorHex');
+    const clearTertiary = document.getElementById('clearTertiaryColor');
+    tertiaryPicker?.addEventListener('input', () => {
+      tertiaryHex.value = tertiaryPicker.value.toUpperCase();
+      setEventColor('tertiaryColor', tertiaryPicker.value);
+    });
+    tertiaryHex?.addEventListener('input', () => {
+      const v = tertiaryHex.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { tertiaryPicker.value = v; setEventColor('tertiaryColor', v); }
+    });
+    clearTertiary?.addEventListener('click', () => {
+      const c = getThemeById(effectiveThemeId)?.colors || {};
+      clearEventColor('tertiaryColor', tertiaryPicker, tertiaryHex, clearTertiary, c.tertiary || '#7c3aed');
+    });
   }
 
   // --- Theme library controls ---
@@ -2636,13 +2736,91 @@ function renderAppearanceForm() {
       if (!window.confirm(`Delete theme "${id}"?`)) return;
       const updated = getThemes().filter((t) => t.id !== id);
       setThemes(updated);
+      if (_editingThemeId === id) { _editingThemeId = null; _editingThemeSnapshot = null; }
       renderAppearanceForm();
+    });
+  });
+
+  els.appearanceForm.querySelectorAll('[data-edit-theme]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      _preEditThemeId = _editingThemeId || effectiveThemeId;
+      _editingThemeId = btn.dataset.editTheme;
+      _editingThemeSnapshot = JSON.parse(JSON.stringify(getThemeById(_editingThemeId)));
+      renderAppearanceForm();
+    });
+  });
+
+  document.getElementById('doneEditTheme')?.addEventListener('click', () => {
+    const restoreId = _preEditThemeId || effectiveThemeId;
+    _editingThemeId = null;
+    _editingThemeSnapshot = null;
+    _preEditThemeId = null;
+    applyThemeClass(restoreId);
+    renderAppearanceForm();
+  });
+
+  document.getElementById('cancelEditTheme')?.addEventListener('click', () => {
+    if (_editingThemeSnapshot) {
+      const reverted = getThemes().map((t) => t.id === _editingThemeId ? _editingThemeSnapshot : t);
+      setThemes(reverted);
+    }
+    const restoreId = _preEditThemeId || effectiveThemeId;
+    _editingThemeId = null;
+    _editingThemeSnapshot = null;
+    _preEditThemeId = null;
+    applyThemeClass(restoreId);
+    renderAppearanceForm();
+  });
+
+  // Live color + meta updates while editing a theme
+  _THEME_EDIT_FIELDS.forEach(({ key }) => {
+    const picker = document.getElementById(`editColor-${key}`);
+    const hexInp = document.getElementById(`editColorHex-${key}`);
+    if (!picker) return;
+    picker.addEventListener('input', () => {
+      if (hexInp) hexInp.value = picker.value.toUpperCase();
+      _applyLiveEditColor(key, picker.value);
+    });
+    hexInp?.addEventListener('input', () => {
+      const v = hexInp.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { picker.value = v; _applyLiveEditColor(key, v); }
+    });
+  });
+
+  document.getElementById('editThemeLabel')?.addEventListener('input', _applyLiveEditMeta);
+  document.getElementById('editThemeDark')?.addEventListener('change', _applyLiveEditMeta);
+
+  // Hex↔picker sync for add form
+  [
+    ['newThemeBg', 'newThemeBgHex'],
+    ['newThemePrimary', 'newThemePrimaryHex'],
+    ['newThemeSecondary', 'newThemeSecondaryHex'],
+    ['newThemeTertiary', 'newThemeTertiaryHex'],
+    ['newThemeText', 'newThemeTextHex'],
+  ].forEach(([pickerId, hexId]) => {
+    const picker = document.getElementById(pickerId);
+    const hexInp = document.getElementById(hexId);
+    if (!picker || !hexInp) return;
+    picker.addEventListener('input', () => { hexInp.value = picker.value.toUpperCase(); });
+    hexInp.addEventListener('input', () => {
+      const v = hexInp.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) picker.value = v;
     });
   });
 
   document.getElementById('showAddThemeForm')?.addEventListener('click', () => {
     document.getElementById('addThemeFormWrap')?.classList.remove('hidden');
     document.getElementById('showAddThemeForm')?.classList.add('hidden');
+  });
+  document.getElementById('newThemeDark')?.addEventListener('change', () => {
+    const isDark = document.getElementById('newThemeDark')?.checked ?? true;
+    const textPicker = document.getElementById('newThemeText');
+    const textHex = document.getElementById('newThemeTextHex');
+    if (!textPicker || !textHex) return;
+    const defaultText = isDark ? '#eaf2fc' : '#0f172a';
+    textPicker.value = defaultText;
+    textHex.value = defaultText;
+    textHex.placeholder = defaultText;
   });
   document.getElementById('cancelAddTheme')?.addEventListener('click', () => {
     document.getElementById('addThemeFormWrap')?.classList.add('hidden');
@@ -2661,9 +2839,10 @@ function renderAppearanceForm() {
     const primary = document.getElementById('newThemePrimary')?.value || '#00cfff';
     const secondary = document.getElementById('newThemeSecondary')?.value || '#4a90d9';
     const tertiary = document.getElementById('newThemeTertiary')?.value || secondary;
+    const textPicked = document.getElementById('newThemeText')?.value || '';
     const baseDefaults = dark
-      ? { surface: 'rgba(3,10,22,0.93)', surfaceAlt: 'rgba(7,18,36,0.96)', surfaceDeep: 'rgba(12,28,52,0.84)', text: '#eaf2fc', textAlt: '#cdd9ee', textMuted: '#8eaacc', textFaint: '#6a8cb0' }
-      : { surface: 'rgba(255,255,255,0.97)', surfaceAlt: 'rgba(248,250,252,0.99)', surfaceDeep: 'rgba(241,245,249,0.95)', text: '#0f172a', textAlt: '#1e293b', textMuted: '#475569', textFaint: '#64748b' };
+      ? { surface: 'rgba(3,10,22,0.93)', surfaceAlt: 'rgba(7,18,36,0.96)', surfaceDeep: 'rgba(12,28,52,0.84)', text: textPicked || '#eaf2fc', textAlt: '#cdd9ee', textMuted: '#8eaacc', textFaint: '#6a8cb0' }
+      : { surface: 'rgba(255,255,255,0.97)', surfaceAlt: 'rgba(248,250,252,0.99)', surfaceDeep: 'rgba(241,245,249,0.95)', text: textPicked || '#0f172a', textAlt: '#1e293b', textMuted: '#475569', textFaint: '#64748b' };
     const bgAlt = _blendHex(bg, dark ? '#ffffff' : '#000000', 0.06);
     const border = dark ? _blendHex(bg, '#ffffff', 0.12) : _blendHex(bg, '#000000', 0.18);
     const newTheme = { id, label, dark, colors: { bg, bgAlt, primary, secondary, tertiary, border, ...baseDefaults } };
@@ -2683,6 +2862,31 @@ function renderAppearanceForm() {
       if (btn) btn.disabled = false;
     }
   });
+}
+
+function _applyLiveEditColor(key, value) {
+  if (!_editingThemeId) return;
+  const updated = getThemes().map((t) => {
+    if (t.id !== _editingThemeId) return t;
+    const newColors = { ...t.colors, [key]: value };
+    if (key === 'bg') {
+      newColors.bgAlt = _blendHex(value, t.dark ? '#ffffff' : '#000000', 0.06);
+    }
+    return { ...t, colors: newColors };
+  });
+  setThemes(updated);
+}
+
+function _applyLiveEditMeta() {
+  if (!_editingThemeId) return;
+  const label = document.getElementById('editThemeLabel')?.value.trim() || '';
+  const dark = document.getElementById('editThemeDark')?.checked ?? true;
+  const updated = getThemes().map((t) => {
+    if (t.id !== _editingThemeId) return t;
+    return { ...t, label: label || t.label, dark };
+  });
+  setThemes(updated);
+  applyThemeClass(_editingThemeId);
 }
 
 function renderEventMetaForm() {
@@ -4472,11 +4676,15 @@ async function saveDataset() {
   if (!state.dataset) return;
   const { valid, errors } = await validateDataset(state.dataset);
   if (!valid) {
+    console.error('Validation errors:', errors);
+    const errorDetails = formatValidationErrors(errors, state.dataset);
+    console.error('Formatted errors:', errorDetails);
     window.alert(
-      `Cannot save: dataset has ${errors.length} schema error${errors.length === 1 ? '' : 's'}.\n\n${formatValidationErrors(errors)}`
+      `Cannot save: dataset has ${errors.length} schema error${errors.length === 1 ? '' : 's'}.\n\n${errorDetails}`
     );
     return;
   }
+  console.log('Dataset validation passed, saving...');
   if (isApiMode()) {
     await saveViaApi();
     clearPhotosBackup();

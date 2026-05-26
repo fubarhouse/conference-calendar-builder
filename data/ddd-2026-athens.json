@@ -384,7 +384,7 @@
     {
       "startTime": "2026-04-22T18:00:00Z",
       "endTime": "2026-04-22T18:00:00Z",
-      "duration": "",
+      "duration": "P60M",
       "title": "Banana Athens bar",
       "location": "Banana Athens bar",
       "link": "",
@@ -1102,7 +1102,7 @@
     {
       "startTime": "2026-04-24T17:00:00Z",
       "endTime": "2026-04-24T17:00:00Z",
-      "duration": "",
+      "duration": "P60M",
       "title": "Acropolis Museum",
       "location": "Acropolis Museum",
       "link": "",

@@ -191,8 +191,7 @@
         "link": "https://www.acquia.com/",
         "bgStyle": "auto",
         "aspect": "auto",
-        "enabled": true,
-        "subtitle": "Treasure Hunt"
+        "enabled": true
       },
       {
         "id": "sponsor-14",
@@ -205,8 +204,7 @@
         "link": "https://dxtimes.net/",
         "bgStyle": "auto",
         "aspect": "auto",
-        "enabled": true,
-        "subtitle": "Media Sponsor"
+        "enabled": true
       },
       {
         "id": "sponsor-15",
@@ -219,8 +217,7 @@
         "link": "https://genero.jp/",
         "bgStyle": "auto",
         "aspect": "auto",
-        "enabled": true,
-        "subtitle": "T-Shirt"
+        "enabled": true
       },
       {
         "id": "sponsor-16",
@@ -233,8 +230,7 @@
         "link": "https://www.ironstar.io/",
         "bgStyle": "auto",
         "aspect": "auto",
-        "enabled": true,
-        "subtitle": "T-Shirt"
+        "enabled": true
       },
       {
         "id": "sponsor-17",
@@ -247,8 +243,7 @@
         "link": "https://www.ironstar.io/",
         "bgStyle": "auto",
         "aspect": "auto",
-        "enabled": true,
-        "subtitle": "Treasure Hunt"
+        "enabled": true
       },
       {
         "id": "sponsor-18",
@@ -261,8 +256,7 @@
         "link": "https://www.meta-info.co.jp/",
         "bgStyle": "auto",
         "aspect": "auto",
-        "enabled": true,
-        "subtitle": "Health & Safety Sponsor"
+        "enabled": true
       },
       {
         "id": "sponsor-19",
@@ -275,8 +269,7 @@
         "link": "https://www.city.nara.lg.jp/site/ricchi/",
         "bgStyle": "auto",
         "aspect": "auto",
-        "enabled": true,
-        "subtitle": "Treasure Hunt"
+        "enabled": true
       },
       {
         "id": "sponsor-20",
@@ -289,8 +282,7 @@
         "link": "https://www.pixelonion.com/",
         "bgStyle": "auto",
         "aspect": "auto",
-        "enabled": true,
-        "subtitle": "Health & Safety Sponsor"
+        "enabled": true
       },
       {
         "id": "sponsor-21",
@@ -303,8 +295,7 @@
         "link": "https://www.tag1consulting.com/",
         "bgStyle": "auto",
         "aspect": "auto",
-        "enabled": true,
-        "subtitle": "Lanyard"
+        "enabled": true
       },
       {
         "id": "sponsor-22",
@@ -317,8 +308,7 @@
         "link": "https://www.technocrat.com.au/",
         "bgStyle": "auto",
         "aspect": "auto",
-        "enabled": true,
-        "subtitle": "Agency Leaders Dinner"
+        "enabled": true
       },
       {
         "id": "sponsor-23",
@@ -331,13 +321,13 @@
         "link": "https://www.thedroptimes.com/",
         "bgStyle": "auto",
         "aspect": "auto",
-        "enabled": true,
-        "subtitle": "Media"
+        "enabled": true
       }
     ],
     "scheduleURLs": [
       "https://events.drupal.org/nara2025/schedule"
-    ]
+    ],
+    "theme": "light"
   },
   "items": [
     {

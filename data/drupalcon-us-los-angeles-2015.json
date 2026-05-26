@@ -16,11 +16,7 @@
       "enabled": false,
       "groupUrl": "",
       "image": "",
-      "imageAlt": "",
-      "title": "",
-      "text": "",
-      "buttonLabel": "",
-      "mode": ""
+      "imageAlt": ""
     },
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
