@@ -654,7 +654,11 @@ function renderEventCard(event, { keywordsFilter, isDrupalConDesign, timeSlotBgC
         </label>
         ${selectedBadge}
       </div>
-      <span class="absolute bottom-3 right-3 text-xs text-gray-500 whitespace-nowrap">${durationText}</span>
+      <div class="absolute bottom-3 right-3 flex items-center gap-1.5">
+        ${event.video_url ? '<span class="session-card-indicator" title="Recording available"><i class="fab fa-youtube"></i></span>' : ''}
+        ${event.link ? '<span class="session-card-indicator session-card-indicator-link" title="Session page available"><i class="fas fa-external-link-alt"></i></span>' : ''}
+        <span class="text-xs text-gray-500 whitespace-nowrap">${durationText}</span>
+      </div>
       <div class="flex items-start space-x-3 flex-1 self-stretch">
         <div class="flex-1 flex flex-col h-full pr-16">
           <h3 class="text-[0.96rem] leading-[1.32] font-medium text-gray-900 mb-1">${highlightedSummary}</h3>
@@ -664,8 +668,6 @@ function renderEventCard(event, { keywordsFilter, isDrupalConDesign, timeSlotBgC
             ? `<p class="text-xs text-gray-500 mb-1"><i class="far fa-clock mr-1" aria-hidden="true"></i>${timelineTime}</p>`
             : `<p class="text-sm text-gray-600 mb-1"><i class="far fa-clock mr-1" aria-hidden="true"></i>${fullDateTime}</p>`}
           ${descriptionText ? `<div class="session-description-preview text-sm text-gray-700 mb-1">${highlightedDescription}</div>` : '<div class="mb-1"></div>'}
-          ${event.link && hasDescription ? `<p class="text-sm mb-1"><a href="${event.link}" target="_blank" class="schedule-link"><span>View Session Details</span> <i class="fas fa-external-link-alt ml-1"></i></a></p>` : ''}
-          ${event.video_url ? `<p class="text-sm mb-1"><a href="${event.video_url}" target="_blank" class="schedule-link inline-flex items-center"><i class="fab fa-youtube mr-1"></i><span>Watch recording</span></a></p>` : ''}
           ${trackLabels.length > 0 ? `<div class="mt-auto pt-[5px] flex flex-wrap gap-1">${highlightedTrack}</div>` : ''}
         </div>
       </div>

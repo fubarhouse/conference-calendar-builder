@@ -138,6 +138,10 @@ const FLICKR_FIELD_CONFIG = {
     label: 'Show photos block',
     description: 'Displays the photo callout on the public event page when a URL is provided.'
   },
+  provider: {
+    label: 'Photo provider',
+    description: 'Name of the photo platform shown in the callout (e.g. Flickr, Google Photos, SmugMug).'
+  },
   groupUrl: {
     label: 'Photos URL',
     description: 'The public link to the photo album, group, or gallery used by the call-to-action button.'
@@ -1146,6 +1150,7 @@ function normalizeFlickrObject(raw = null) {
   const enabled = !(input.enabled === false || String(input.enabled || '').toLowerCase() === 'false');
   return {
     enabled,
+    provider: String(input.provider || '').trim(),
     groupUrl: String(input.groupUrl || '').trim(),
     image: String(input.image || '').trim(),
     imageAlt: String(input.imageAlt || '').trim()
@@ -1267,11 +1272,15 @@ function deriveSessionDurationValue(startTime, endTime) {
   return durationToCanonical(minutes);
 }
 
+const _DURATION_RE = /^P\d+M$/;
 function syncSessionDuration(item) {
-  if (!item || typeof item !== 'object') return '';
-  const duration = deriveSessionDurationValue(item.startTime, item.endTime);
-  item.duration = duration;
-  return duration;
+  if (!item || typeof item !== 'object') return 'P0M';
+  const derived = deriveSessionDurationValue(item.startTime, item.endTime);
+  const existing = item.duration;
+  item.duration = _DURATION_RE.test(derived) ? derived
+    : _DURATION_RE.test(existing) ? existing
+    : 'P0M';
+  return item.duration;
 }
 
 function syncAllSessionDurations() {
@@ -1620,6 +1629,23 @@ function normalizeDatasetShape() {
   }
   if (!state.dataset.event.timezone) state.dataset.event.timezone = 'UTC';
   if (state.dataset.event.columns == null || state.dataset.event.columns === '') state.dataset.event.columns = 3;
+  const hexPattern = /^#[0-9a-fA-F]{6}$/;
+  // Migrate legacy string theme and top-level color fields into the theme object
+  if (typeof state.dataset.event.theme === 'string') {
+    state.dataset.event.theme = { id: state.dataset.event.theme };
+  } else if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') {
+    state.dataset.event.theme = {};
+  }
+  for (const colorField of ['primaryColor', 'secondaryColor', 'tertiaryColor']) {
+    const topLevel = state.dataset.event[colorField];
+    if (topLevel) {
+      if (!state.dataset.event.theme[colorField]) state.dataset.event.theme[colorField] = topLevel;
+      delete state.dataset.event[colorField];
+    }
+    const v = state.dataset.event.theme[colorField];
+    if (v != null && !hexPattern.test(v)) delete state.dataset.event.theme[colorField];
+  }
+  if (Object.keys(state.dataset.event.theme).length === 0) delete state.dataset.event.theme;
   syncAllSessionDurations();
   state.dataset.items.forEach((item) => {
     if (!item || typeof item !== 'object') return;
@@ -1684,9 +1710,9 @@ async function loadDataset(file) {
   undoClear();
   clearRecoverySnapshot();
   setCurrentFilenameLabel();
-  const loadedTheme = state.dataset?.event?.theme;
-  applyThemeClass(loadedTheme ? normalizeThemeId(loadedTheme) : getCurrentThemeId());
-  applyEventColors(state.dataset?.event?.primaryColor, state.dataset?.event?.secondaryColor, state.dataset?.event?.tertiaryColor);
+  const themeObj = state.dataset?.event?.theme;
+  applyThemeClass(themeObj?.id ? normalizeThemeId(themeObj.id) : getCurrentThemeId());
+  applyEventColors(themeObj?.primaryColor, themeObj?.secondaryColor, themeObj?.tertiaryColor);
   renderEventMetaForm();
   renderAppearanceForm();
   renderLogoForm();
@@ -2101,12 +2127,16 @@ function renderFlickrCopyPreviewContent(automated) {
 }
 
 function renderFlickrBlock(flickr) {
-  const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, 'Photos');
+  const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickr.provider);
   const imageSrc = (flickr.image || '').trim();
-  const providerLabel = 'Photos'.toUpperCase();
+  const providerLabel = (flickr.provider || 'Photos').toUpperCase();
   return `
     <div class="col-span-full flex gap-5 items-start">
       <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label class="editor-form-field md:col-span-2">
+          ${renderFieldIntro('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}
+          <input data-flickr-field="provider" type="text" value="${escapeAttr(flickr.provider)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="Flickr"${fieldDescriptionAttr('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}>
+        </label>
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}
           <input data-flickr-field="groupUrl" type="text" value="${escapeAttr(flickr.groupUrl)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="https://flic.kr/g/..."${fieldDescriptionAttr('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}>
@@ -2229,11 +2259,14 @@ function bindFlickrFormEvents(container) {
         if (card) card.classList.toggle('opacity-50', !input.checked);
       }
 
-      if (key === 'groupUrl') {
-        const auto = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, 'Photos');
+      if (key === 'provider' || key === 'groupUrl') {
+        const flickrNow = normalizeFlickrObject(state.dataset.event.flickr);
+        const auto = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickrNow.provider);
+        const providerEl = container.querySelector('.flickr-preview-provider');
         const headingEl = container.querySelector('.flickr-preview-heading');
         const descEl = container.querySelector('.flickr-preview-desc');
         const btnEl = container.querySelector('.flickr-preview-btn');
+        if (providerEl) providerEl.textContent = (flickrNow.provider || 'Photos').toUpperCase();
         if (headingEl) headingEl.textContent = auto.heading;
         if (descEl) descEl.textContent = auto.description;
         if (btnEl) btnEl.textContent = auto.buttonText;
@@ -2364,22 +2397,23 @@ function renderFlickrForm() {
 
 function setEventColor(field, value) {
   if (!state.dataset?.event) return;
-  state.dataset.event[field] = value;
+  if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') state.dataset.event.theme = {};
+  state.dataset.event.theme[field] = value;
   markDirty(true);
   const resetIds = { primaryColor: 'clearPrimaryColor', secondaryColor: 'clearSecondaryColor', tertiaryColor: 'clearTertiaryColor' };
   document.getElementById(resetIds[field])?.classList.remove('hidden');
-  applyEventColors(state.dataset.event.primaryColor, state.dataset.event.secondaryColor, state.dataset.event.tertiaryColor);
+  applyEventColors(state.dataset.event.theme.primaryColor, state.dataset.event.theme.secondaryColor, state.dataset.event.theme.tertiaryColor);
 }
 
 function clearEventColor(field, picker, hex, clearBtn, defaultColor) {
   if (!state.dataset?.event) return;
-  delete state.dataset.event[field];
+  if (state.dataset.event.theme) delete state.dataset.event.theme[field];
   markDirty(true);
   picker.value = defaultColor;
   hex.value = '';
   hex.placeholder = defaultColor;
   clearBtn.classList.add('hidden');
-  applyEventColors(state.dataset.event.primaryColor, state.dataset.event.secondaryColor, state.dataset.event.tertiaryColor);
+  applyEventColors(state.dataset.event.theme?.primaryColor, state.dataset.event.theme?.secondaryColor, state.dataset.event.theme?.tertiaryColor);
 }
 
 let _editingThemeId = null;
@@ -2455,15 +2489,16 @@ function renderAppearanceForm() {
   const themes = getThemes();
 
   // --- Per-event section ---
-  const eventThemeId = event?.theme || '';
+  const eventThemeObj = event?.theme || {};
+  const eventThemeId = eventThemeObj.id || '';
   const effectiveThemeId = eventThemeId || getCurrentThemeId();
   const themeColors = getThemeById(effectiveThemeId)?.colors || {};
-  const primaryColor = event?.primaryColor || '';
-  const secondaryColor = event?.secondaryColor || '';
-  const tertiaryColor = event?.tertiaryColor || '';
+  const primaryColor = eventThemeObj.primaryColor || '';
+  const secondaryColor = eventThemeObj.secondaryColor || '';
+  const tertiaryColor = eventThemeObj.tertiaryColor || '';
   const disabled = !event;
   const colorDisabledAttr = disabled ? ' disabled' : '';
-  const savedThemeId = state.persistedSnapshot?.event?.theme || '';
+  const savedThemeId = state.persistedSnapshot?.dataset?.event?.theme?.id || '';
 
   const eventThemeCards = themes.map((t) => _themeCardHtml(t, eventThemeId || '__none__', 'eventTheme', _editingThemeId, savedThemeId)).join('');
   const pickerPrimary = primaryColor || themeColors.primary || '#00cfff';
@@ -2581,7 +2616,7 @@ function renderAppearanceForm() {
             <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--surface-1)"></div><span>Surface</span></div>
             <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--accent)"></div><span>Primary</span></div>
             <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--color-secondary)"></div><span>Secondary</span></div>
-            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--glow-2)"></div><span>Tertiary</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--color-tertiary)"></div><span>Tertiary</span></div>
             <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--text-0)"></div><span>Text</span></div>
             <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--line-0)"></div><span>Border</span></div>
           </div>
@@ -2662,15 +2697,16 @@ function renderAppearanceForm() {
     radio.addEventListener('change', () => {
       if (!radio.checked || !state.dataset?.event) return;
       const val = radio.value;
+      if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') state.dataset.event.theme = {};
       if (val) {
-        state.dataset.event.theme = val;
+        state.dataset.event.theme.id = val;
       } else {
-        delete state.dataset.event.theme;
+        delete state.dataset.event.theme.id;
       }
       markDirty(true);
       const newEffective = val || getCurrentThemeId();
       applyThemeClass(newEffective);
-      applyEventColors(state.dataset.event.primaryColor, state.dataset.event.secondaryColor, state.dataset.event.tertiaryColor);
+      applyEventColors(state.dataset.event.theme.primaryColor, state.dataset.event.theme.secondaryColor, state.dataset.event.theme.tertiaryColor);
       renderAppearanceForm();
     });
   });
@@ -4697,6 +4733,7 @@ async function saveDataset() {
     capturePersistedSnapshot();
     clearRecoverySnapshot();
     showSaveToast();
+    renderAppearanceForm();
     return;
   }
   if (!state.fileHandle) {
@@ -4734,6 +4771,7 @@ async function saveDataset() {
   capturePersistedSnapshot();
   clearRecoverySnapshot();
   showSaveToast();
+  renderAppearanceForm();
 }
 
 async function saveCurrentSession() {

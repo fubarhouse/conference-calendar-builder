@@ -14,6 +14,7 @@
     "enabled": true,
     "flickr": {
       "enabled": true,
+      "provider": "",
       "groupUrl": "https://flic.kr/g/3gCxkw",
       "image": "./img/flickr/drupalsouth/2026-wellington.jpg",
       "imageAlt": "DrupalSouth logo"

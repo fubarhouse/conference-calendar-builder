@@ -14,6 +14,7 @@
     "enabled": true,
     "flickr": {
       "enabled": true,
+      "provider": "",
       "groupUrl": "https://flic.kr/g/3gSEEc",
       "image": "./img/flickr/drupalcon-asia/2025-nara.jpg",
       "imageAlt": "DrupalSouth logo"
@@ -326,8 +327,7 @@
     ],
     "scheduleURLs": [
       "https://events.drupal.org/nara2025/schedule"
-    ],
-    "theme": "light"
+    ]
   },
   "items": [
     {

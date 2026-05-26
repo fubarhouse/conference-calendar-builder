@@ -918,7 +918,7 @@ export async function fetchEvents(filename) {
     }
   }
   try {
-    const response = await fetch(`./data/${filename}`);
+    const response = await fetch(`./data/${filename}`, { cache: 'no-cache' });
     const data = await response.json();
     state.eventMeta = data.event;
     return processEventItems(data.items);
@@ -957,9 +957,14 @@ export async function loadEvent(filename) {
     updateHeaderBranding(state.currentEventCategory);
   }
   const meta = state.eventMeta || {};
-  const eventTheme = meta.theme ? normalizeThemeId(meta.theme) : state.themeMode;
-  applyThemeClass(eventTheme);
-  applyEventColors(meta.primaryColor, meta.secondaryColor, meta.tertiaryColor);
+  const themeVal = meta.theme;
+  const themeId = typeof themeVal === 'object' ? themeVal?.id : themeVal;
+  applyThemeClass(themeId ? normalizeThemeId(themeId) : state.themeMode);
+  applyEventColors(
+    typeof themeVal === 'object' ? themeVal?.primaryColor : meta.primaryColor,
+    typeof themeVal === 'object' ? themeVal?.secondaryColor : meta.secondaryColor,
+    typeof themeVal === 'object' ? themeVal?.tertiaryColor : meta.tertiaryColor
+  );
   state.eventColumns = Number(meta.columns) > 0 ? Number(meta.columns) : 3;
   const eventDisplayName = updateDocumentTitle(meta, manifestItem);
 

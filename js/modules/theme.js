@@ -84,8 +84,10 @@ export function applyEventColors(primaryColor, secondaryColor, tertiaryColor) {
     root.style.removeProperty('--color-secondary');
   }
   if (tertiaryColor) {
-    root.style.setProperty('--glow-2', _hexToRgba(tertiaryColor, 0.13));
+    root.style.setProperty('--color-tertiary', tertiaryColor);
+    root.style.setProperty('--glow-2', _hexToRgba(tertiaryColor, 0.22));
   } else {
+    root.style.removeProperty('--color-tertiary');
     root.style.removeProperty('--glow-2');
   }
 }
@@ -107,8 +109,9 @@ function _injectThemeStyles(themes) {
     const accent       = `  --accent: ${primary};`;
     const accentStrong = `  --accent-strong: ${_lightenHex(primary, 0.12)};`;
     const colorSec     = `  --color-secondary: ${c.secondary || primary};`;
+    const colorTert    = `  --color-tertiary: ${c.tertiary || c.secondary || primary};`;
     const glow1        = `  --glow-1: ${_hexToRgba(primary,  theme.dark ? 0.20 : 0.15)};`;
-    const glow2        = `  --glow-2: ${_hexToRgba(tertiary, theme.dark ? 0.13 : 0.12)};`;
+    const glow2        = `  --glow-2: ${_hexToRgba(tertiary, theme.dark ? 0.22 : 0.16)};`;
 
     const bgGradient = theme.dark
       ? `radial-gradient(ellipse at 15% 0%,   var(--glow-1) 0%, transparent 52%),\n    radial-gradient(ellipse at 88% 96%,  var(--glow-2) 0%, transparent 44%),\n    radial-gradient(ellipse at 50% 110%, rgba(0,0,0,0.04) 0%, transparent 48%),\n    var(--bg-0)`
@@ -117,7 +120,7 @@ function _injectThemeStyles(themes) {
     return [
       `body.theme-${theme.id} {`,
       vars,
-      accent, accentStrong, colorSec, glow1, glow2,
+      accent, accentStrong, colorSec, colorTert, glow1, glow2,
       `  color: var(--text-0);`,
       `  background:\n    ${bgGradient};`,
       `}`,
