@@ -848,7 +848,7 @@
             font-size: 0.72rem;
             letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: rgba(79, 178, 255, 0.92);
+            color: var(--color-secondary);
         }
         .mobile-accordion-toggle {
             display: inline-flex;
@@ -982,9 +982,9 @@
             padding: 0.1em 0.55em 0.15em;
             margin-left: 0.5rem;
             border-radius: 0.35em;
-            border: 1px solid rgba(59, 190, 255, 0.38);
-            background: rgba(59, 190, 255, 0.12);
-            color: rgba(142, 212, 255, 0.95);
+            border: 1px solid color-mix(in srgb, var(--color-secondary) 40%, transparent);
+            background: color-mix(in srgb, var(--color-secondary) 12%, transparent);
+            color: var(--color-secondary);
             font-size: 0.55em;
             font-weight: 700;
             letter-spacing: 0.1em;
@@ -993,7 +993,7 @@
             line-height: 1.4;
         }
         .header-title .header-event {
-            background: linear-gradient(105deg, #ffffff 0%, #70d4ff 48%, #a78bfa 100%);
+            background: linear-gradient(105deg, #ffffff 0%, var(--accent) 48%, var(--color-secondary) 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -1067,7 +1067,7 @@
         }
         .design-drupalcon .timeline-time-date {
             margin-top: 2px;
-            color: var(--text-2);
+            color: color-mix(in srgb, var(--color-secondary) 70%, var(--text-2));
             font-size: 0.73rem;
             line-height: 1.25;
         }
@@ -2672,6 +2672,12 @@
         #deselectAllDisplayed .fas, #deselectAllDisplayed .fa-solid,
         #editorSearchEvents .fas, #editorSearchEvents .fa-solid {
             margin-left: 1rem;
+        }
+        .design-drupalcon #filtersPanel button .fas,
+        .design-drupalcon #filtersPanel button .fa-solid,
+        .design-drupalcon #sessionFiltersPanel button:not(#clearKeywords) .fas,
+        .design-drupalcon #sessionFiltersPanel button:not(#clearKeywords) .fa-solid {
+            color: var(--color-secondary);
         }
 
         /* ── Event search modal ───────────────────────────────── */

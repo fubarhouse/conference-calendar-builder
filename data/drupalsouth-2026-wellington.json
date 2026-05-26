@@ -288,7 +288,12 @@
     ],
     "scheduleURLs": [
       "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule"
-    ]
+    ],
+    "theme": {
+      "primaryColor": "#9D00FF",
+      "secondaryColor": "#C5FD36",
+      "tertiaryColor": "#fdf8e0"
+    }
   },
   "items": [
     {
@@ -429,7 +434,7 @@
         "Daniel Veza"
       ],
       "full_description": "The session addresses limitations of traditional keyword search by introducing semantic search capabilities. \"Semantic search improves relevance by understanding intent, meaning and context, while Retrieval-Augmented Generation (RAG) goes a step further by transforming search results into clear, human friendly answers.\" The presentation covers practical implementation using OpenSearch and Skpr, including content indexing, embedding generation, result retrieval, and RAG-powered summarization that can \"summarise multiple documents, highlight key themes, and reduce information overload, while staying grounded in the indexed content.\"",
-      "video_url": "https://youtu.be/MBI1txvV85I",
+      "video_url": "",
       "sponsorIds": ""
     },
     {
@@ -561,7 +566,7 @@
         "Jason Kiss"
       ],
       "full_description": "The session explores CWAC (Centralised Web Accessibility Checker), an open-source tool developed by New Zealand's Chief Digital Officer. This software \"scans websites for accessibility issues to help ensure that government web content can be used by disabled people.\" The presentation covers CWAC's focus on Web Content Accessibility Guidelines (WCAG) 2.2 compliance, its community-driven development model, and how scan results are published as open data. A key discussion point involves the challenge of \"presenting and translating the results into action for agencies.\"",
-      "video_url": "https://youtu.be/V5US0ul_Qow",
+      "video_url": "https://www.youtube.com/watch?v=V5US0ul_Qow",
       "sponsorIds": ""
     },
     {
@@ -627,7 +632,7 @@
         "Ian Laslett"
       ],
       "full_description": "The session explores how Australian and New Zealand governments leverage Drupal for citizen-centered digital services despite budget constraints. Topics include governance models, multisite management, security considerations, and organizational capabilities needed for enterprise-scale platform success.",
-      "video_url": "https://youtu.be/QQAiDNLAWxg",
+      "video_url": "",
       "sponsorIds": ""
     },
     {
@@ -693,7 +698,7 @@
         "Alex Matthews"
       ],
       "full_description": "The presentation advocates for close collaboration between government leaders and development teams to maximize agile delivery benefits. The speaker contends that \"separation: between business cases, clients, project managers, developers, and expectations\" undermines waterfall projects. Using New Zealand government case studies, the session demonstrates how cross-disciplinary teamwork, risk-taking, and rapid testing enable effective digital transformation. Examples include HQSC's Health Measures Library, Department of Conservation's Smart Weed Alert Tool, and proof-of-concept initiatives within traditional government programs.",
-      "video_url": "https://youtu.be/HIF3AgA7j_A",
+      "video_url": "",
       "sponsorIds": ""
     },
     {
@@ -746,7 +751,7 @@
         "Emily Mills"
       ],
       "full_description": "The session addresses how discovery workshops can be designed to \"directly inform development decisions, content and UI—not just high-level ideas.\" Emily demonstrates techniques for \"turning discovery outputs into actionable inputs\" for Drupal projects, covering workshop planning, facilitation strategies, and practical activities that produce \"build-ready outcomes\" rather than vague discussions.",
-      "video_url": "https://youtu.be/cNiHOQwUHGo",
+      "video_url": "https://www.youtube.com/watch?v=cNiHOQwUHGo",
       "sponsorIds": ""
     },
     {
@@ -783,7 +788,7 @@
         "Simon Hobbs"
       ],
       "full_description": "The session explores using Drupal as the operational backend powering Shopify storefronts. Rather than deploying multiple custom Shopify apps with separate React frontends and Node backends, this approach consolidates business logic in Drupal, which handles operations while Shopify manages storefront, checkout, and payments. The speaker demonstrates how The Diggers Club implements this strategy for specialized processes like custom picking/quarantine workflows and seed packet label generation. The talk covers integration strategies, user experience optimization, and leveraging existing Drupal capabilities to reduce system complexity.",
-      "video_url": "https://youtu.be/A3xox7WIfFM",
+      "video_url": "https://www.youtube.com/watch?v=A3xox7WIfFM",
       "sponsorIds": ""
     },
     {
@@ -993,7 +998,7 @@
         "Marji Cermak"
       ],
       "full_description": "This presentation addresses content moderation workflows in Drupal, focusing on how automated testing with Cypress can validate complex approval processes. The speaker explains that \"Content Moderation is the technical approach taken to enforce workflows between editors and approvers\" and demonstrates testing methods for different user roles and access levels. Key topics include peer review concepts, government information security requirements, common misconfiguration issues, and an open-source helper library from Morpht.",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=zNiBmTB2KbM",
       "sponsorIds": ""
     },
     {
@@ -1059,7 +1064,7 @@
         "Morgan Goulding"
       ],
       "full_description": "Morgan explores how practical service design methodologies enable cross-disciplinary collaboration and client alignment. The presentation demonstrates leveraging continuous, lightweight research insights across teams to clarify design choices earlier, balancing both user satisfaction and organizational objectives.",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=mhVTUOlH8w0",
       "sponsorIds": "sponsor-2"
     },
     {
@@ -1128,7 +1133,7 @@
         "Rox Flame"
       ],
       "full_description": "Learn all about Eventa, a Drupal commerce based ticketing platform with support for complex seated events and fast check-ins,\n\nI'll take you through a tour of all our favorite features, from biometric check-ins, to advanced seating plans and fast check-ins, and show you how we made it and share stories of some of our biggest challenges including scaling for thousands of ticket sales and check-ins fo the World-press photo exhibit and meeting complex needs across a variety of event clients.\n\nWhether you want to know more about the ways Drupal can meet commerce and ticketing needs, or interested in hearing a story success overcoming on-the-ground challenges with event ticketing, or, if you just want to make sense of the process in which you purchased your own conference ticket, this talk is for you!",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=NuZPufVzYtc",
       "sponsorIds": "sponsor-5"
     },
     {
@@ -1194,7 +1199,7 @@
         "Sanjay D'Souza"
       ],
       "full_description": "Sanjay reflects on cultivating client relationships beyond winning contracts. Drawing from recent sales experience, he articulates how open source philosophy—centered on openness, autonomy, and collective participation—directly mirrors what organizations genuinely seek in vendor partnerships and solutions.",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=3GVOYqu7zLc",
       "sponsorIds": "sponsor-3"
     },
     {
@@ -1260,7 +1265,7 @@
         "Toby Bellwood"
       ],
       "full_description": "The presentation outlines a novel approach where organizers prioritized building robust AI infrastructure before developing use cases. The speaker explains how amazee.ai created an open-source platform utilizing LiteLLM that supports multiple AI providers while maintaining data sovereignty and ensuring no information is used for model training. Key topics include architectural decisions around authentication, vector databases, and multi-region deployment. Practical Drupal integrations include a custom AI Provider module, compatibility with Drupal CMS 2.0, batch alt-text generation for large product catalogs, and vector database-powered chatbots.",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=bKMP7taT10M",
       "sponsorIds": "sponsor-4"
     },
     {
@@ -1326,7 +1331,7 @@
         "Janna Malikova"
       ],
       "full_description": "The presentation addresses how organizations must adapt their web infrastructure as AI agents comprise approximately half of incoming traffic. Rather than traditional SEO practices, the focus shifts toward presenting content in machine-readable formats suitable for autonomous systems and language models. Key topics include distinguishing agent traffic, restructuring content delivery, supporting dual experiences for human users versus data streams, and strategic decisions around embracing AI agent access. The four main discussion points: (1) identifying and separating agent traffic, (2) balancing website modifications with structured markdown and specialized endpoints, (3) creating parallel experiences for humans and machines, (4) deciding whether to block or welcome agent traffic.",
-      "video_url": "https://youtu.be/v0qa4A7UeLY",
+      "video_url": "https://www.youtube.com/watch?v=v0qa4A7UeLY",
       "sponsorIds": ""
     },
     {
@@ -1392,7 +1397,7 @@
         "Millie Clery"
       ],
       "full_description": "The session examines how AI is subtly transforming digital interfaces. \"AI is introducing a quiet shift in how digital interfaces behave\" with systems that anticipate user needs and adapt content proactively. The talk covers practical guidance for designers and developers creating AI-assisted experiences while maintaining clarity, trustworthiness, and accessibility in Drupal environments.",
-      "video_url": "https://youtu.be/WXsF5ub8Wvs",
+      "video_url": "",
       "sponsorIds": ""
     },
     {
