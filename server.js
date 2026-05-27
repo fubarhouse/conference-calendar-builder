@@ -8,6 +8,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
 const DATA_DIR = join(ROOT, 'data');
 const IMG_DIR = join(ROOT, 'img');
+const PLANNER_DIR = join(ROOT, 'planner');
+const RECEIPT_DIR = join(ROOT, 'receipts');
 
 function guardPath(base, sub) {
   const full = resolve(join(base, sub));
@@ -94,6 +96,35 @@ app.put('/api/data/:file', express.text({ type: 'application/json', limit: '10mb
   }
 });
 
+// Read a planner file
+app.get('/api/planner/:file', async (req, res) => {
+  if (!req.params.file.endsWith('.json')) return res.status(400).json({ error: 'JSON files only' });
+  const target = guardPath(PLANNER_DIR, req.params.file);
+  if (!target) return res.status(400).json({ error: 'Invalid path' });
+  try {
+    const raw = await readFile(target, 'utf8');
+    res.type('application/json').send(raw);
+  } catch (e) {
+    if (e.code === 'ENOENT') return res.status(404).json({ error: 'Not found' });
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Write a planner file
+app.put('/api/planner/:file', express.text({ type: 'application/json', limit: '10mb' }), async (req, res) => {
+  if (!req.params.file.endsWith('.json')) return res.status(400).json({ error: 'JSON files only' });
+  const target = guardPath(PLANNER_DIR, req.params.file);
+  if (!target) return res.status(400).json({ error: 'Invalid path' });
+  try {
+    JSON.parse(req.body); // validate before writing
+    await mkdir(PLANNER_DIR, { recursive: true });
+    await writeFile(target, req.body, 'utf8');
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 // Upload an image into img/
 const upload = multer({ storage: multer.memoryStorage() });
 app.post('/api/upload', upload.single('file'), async (req, res) => {
@@ -108,6 +139,24 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     await mkdir(dirname(target), { recursive: true });
     await writeFile(target, req.file.buffer);
     res.json({ ok: true, path: `./${targetRelative}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Upload a receipt file into receipts/<slug>/
+app.post('/api/receipts', upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file received' });
+  const eventFile = String(req.body.eventFile || '').trim();
+  if (!eventFile || !eventFile.endsWith('.json')) return res.status(400).json({ error: 'eventFile required' });
+  const slug = eventFile.replace('.json', '');
+  const safeName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const target = guardPath(RECEIPT_DIR, join(slug, safeName));
+  if (!target) return res.status(400).json({ error: 'Invalid path' });
+  try {
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, req.file.buffer);
+    res.json({ ok: true, path: `receipts/${slug}/${safeName}` });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

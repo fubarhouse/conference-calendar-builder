@@ -218,6 +218,10 @@
             backdrop-filter: blur(22px) saturate(160%) !important;
         }
         .theme-dark .bg-gray-100 { background-color: transparent !important; }
+        .theme-dark .bg-gray-50 { background: var(--surface-1) !important; }
+        .theme-dark .hover\:bg-gray-50:hover  { background: var(--surface-1) !important; }
+        .theme-dark .hover\:bg-gray-100:hover,
+        .theme-dark .hover\:bg-gray-200:hover { background: var(--surface-2) !important; }
         .theme-dark .bg-black { background: linear-gradient(180deg, #0b1725, #09131f) !important; }
         .theme-dark .border-gray-200,
         .theme-dark .border-gray-300,

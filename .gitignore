@@ -3,3 +3,4 @@ cache/*
 .codegraph/*
 .idea/*
 scripts/*
+planner/*
