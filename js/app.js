@@ -1,6 +1,7 @@
 import { init, toggleEventSelectionPublic, wireStatsHandlers } from './modules/events.js';
 import { updateSelectionOverview, updateStageStats, setupStatsDelegation } from './modules/stats.js';
 import { setupEventsDelegation, setToggleSelectionFn } from './modules/render.js';
+import { initNowIndicator } from './modules/nowIndicator.js';
 
 wireStatsHandlers(updateSelectionOverview, updateStageStats);
 setToggleSelectionFn(toggleEventSelectionPublic);
@@ -30,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await init();
     setupMobileAccordion('usageInstructionsToggle', 'usageInstructionsContent');
     setupMobileAccordion('sessionFiltersToggle', 'sessionFiltersContent');
+    initNowIndicator();
   } finally {
     hideLoadingOverlay();
   }

@@ -4672,3 +4672,81 @@ body.has-preview-banner { padding-top: 2.25rem; }
     border-color: var(--accent);
     color: var(--accent);
 }
+
+/* ── Now indicator ──────────────────────────────────────────── */
+
+.design-drupalcon .now-indicator {
+    display: grid;
+    grid-template-columns: minmax(132px, 160px) minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    margin: 4px 0 8px;
+    pointer-events: none;
+}
+
+.design-drupalcon .now-indicator-label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    text-align: right;
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.design-drupalcon .now-indicator-line {
+    position: relative;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+    box-shadow: 0 0 8px var(--accent);
+}
+
+.design-drupalcon .now-indicator-line::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+}
+
+.now-indicator-dot {
+    font-size: 0.45rem;
+    animation: now-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes now-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.2; }
+}
+
+/* Jump-to-now button inherits accent colour */
+.now-jump-btn {
+    color: var(--accent, #00cfff);
+    border-color: var(--accent, #00cfff);
+    background: transparent;
+}
+.now-jump-btn:hover {
+    background: color-mix(in srgb, var(--accent, #00cfff) 10%, transparent);
+}
+
+/* Mobile: collapse to single-column (matches timeline-row mobile breakpoint) */
+@media (max-width: 639px) {
+    .design-drupalcon .now-indicator {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        margin: 6px 0 10px;
+    }
+    .design-drupalcon .now-indicator-label {
+        justify-content: flex-start;
+        text-align: left;
+    }
+}
