@@ -67,7 +67,7 @@ export function formatDateForICS(dateString) {
 }
 
 export function escapeHtml(text) {
-  return String(text)
+  return String(text ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

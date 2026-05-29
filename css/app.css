@@ -217,6 +217,30 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
             backdrop-filter: blur(22px) saturate(160%) !important;
         }
+        /* Buttons and links should not inherit the heavy card-style bg-white treatment */
+        .theme-dark button.bg-white,
+        .theme-dark a.bg-white {
+            background: var(--surface-1) !important;
+            border-color: var(--line-0) !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+        }
+        .theme-dark button.bg-white:hover,
+        .theme-dark a.bg-white:hover {
+            background: var(--surface-2) !important;
+        }
+        /* Dark button (bg-gray-800) stays legible */
+        .theme-dark button.bg-gray-800,
+        .theme-dark a.bg-gray-800 {
+            background: var(--surface-2) !important;
+            color: var(--text-0) !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+        }
+        .theme-dark button.bg-gray-800:hover,
+        .theme-dark a.bg-gray-800:hover {
+            background: color-mix(in srgb, var(--accent) 20%, var(--surface-2)) !important;
+        }
         .theme-dark .bg-gray-100 { background-color: transparent !important; }
         .theme-dark .bg-gray-50 { background: var(--surface-1) !important; }
         .theme-dark .hover\:bg-gray-50:hover  { background: var(--surface-1) !important; }
@@ -247,9 +271,19 @@
         .theme-dark input,
         .theme-dark select,
         .theme-dark textarea {
+            background: var(--surface-1) !important;
+            color: var(--text-0) !important;
+            border-color: var(--line-0) !important;
+            box-shadow: none !important;
+        }
+        .theme-dark input::placeholder,
+        .theme-dark textarea::placeholder {
+            color: var(--text-2) !important;
+            opacity: 0.7;
+        }
+        .theme-dark select option {
             background: var(--surface-1);
             color: var(--text-0);
-            border-color: var(--line-0) !important;
         }
         .editor-form-field {
             display: flex;
@@ -569,6 +603,9 @@
                 0 10px 26px rgba(13, 120, 204, 0.32),
                 inset 0 1px 0 rgba(255, 255, 255, 0.22),
                 0 0 0 1px rgba(46, 163, 255, 0.18);
+        }
+        .editor-tab-button.hidden {
+            display: none !important;
         }
         .editor-quick-edit-toggle-active {
             border-color: rgba(110, 192, 255, 0.75) !important;

@@ -37,6 +37,7 @@ export function makeEmptyPlanner(eventFile) {
     _version: PLANNER_VERSION,
     _eventFile: eventFile,
     _lastModified: new Date().toISOString(),
+    mode: 'personal',
     sessionNotes: {},
     contacts: [],
     tasks: [],
@@ -58,9 +59,26 @@ export function makeEmptyPlanner(eventFile) {
       timeline: { startDate: '', endDate: '' },
       swag: [],
       deliverables: [],
+      sponsorBudget: '',
+      sponsorActual: '',
+      sponsorCurrency: 'AUD',
+      sponsorId: '',
+      trackedSessions: [],
+      autoAddedSponsoredSessions: [],
     },
     itinerary: [],
     receipts: [],
+    personal: {
+      outboundLegs:   [],
+      returnLegs:     [],
+      accommodations: [],
+      budget:         '',
+      budgetActual:   '',
+      currency:       'AUD',
+      notes:          '',
+      trackedSessions: [],
+      itinerary:      [],
+    },
   };
 }
 
@@ -74,9 +92,28 @@ export function loadPlanner(eventFile) {
     return {
       ...empty,
       ...parsed,
-      org: { ...empty.org, ...(parsed.org || {}) },
+      mode: parsed.mode === 'individual' ? 'personal' : parsed.mode, // migrate old mode value
+      org: (() => {
+        const po = parsed.org || {};
+        // Migrate old swag items {label, done} → {name, quantity, budget, actual, currency, done, notes}
+        const swag = (po.swag || []).map((item) =>
+          item.name !== undefined ? item
+            : { ...item, name: item.label || '', quantity: 1, budget: '', actual: '', currency: 'AUD', notes: '' }
+        );
+        return { ...empty.org, ...po, swag };
+      })(),
       itinerary: parsed.itinerary || [],
       receipts: parsed.receipts || [],
+      personal: (() => {
+        const pi = parsed.personal || parsed.individual || {}; // fallback: old key was 'individual'
+        // Migrate old single-object accommodation to array
+        let accommodations = Array.isArray(pi.accommodations) ? pi.accommodations : [];
+        if (!accommodations.length && pi.accommodation && Object.values(pi.accommodation).some(Boolean)) {
+          const o = pi.accommodation;
+          accommodations = [{ id: makeItemId('ia'), name: o.name || '', address: o.address || '', checkIn: o.checkIn || '', checkOut: o.checkOut || '', confirmation: o.confirmation || '', budget: o.budget || '', budgetActual: o.budgetActual || '', currency: o.currency || 'AUD', notes: o.notes || '' }];
+        }
+        return { ...empty.personal, ...pi, accommodations };
+      })(),
     };
   } catch {
     return makeEmptyPlanner(eventFile);

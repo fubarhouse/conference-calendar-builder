@@ -19,6 +19,8 @@ import {
   saveGlobal,
 } from './modules/plannerStorage.js';
 
+import { escapeHtml, parseSponsorIds } from './modules/utils.js';
+
 // ── State ────────────────────────────────────────────────────────────────────
 
 const state = {
@@ -27,7 +29,7 @@ const state = {
   allSessions: [],
   planner: null,
   global: null,
-  activeTab: 'notes',
+  activeTab: 'personal',
   notesSearchQuery: '',
   tasksFilter: 'all',
   dirty: false,
@@ -35,9 +37,7 @@ const state = {
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 
-function esc(str) {
-  return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+const esc = escapeHtml;
 
 function getTimezone() {
   return state.eventMeta?.timezone || undefined;
@@ -127,6 +127,15 @@ function applyTheme() {
 
 const CURRENCIES = ['AUD', 'USD', 'EUR', 'GBP', 'NZD', 'CHF', 'CAD', 'JPY', 'SGD']
 
+const RECEIPT_CATEGORIES = [
+  { value: 'food',          label: 'Food & Drink' },
+  { value: 'travel',        label: 'Travel / Transport' },
+  { value: 'accommodation', label: 'Accommodation' },
+  { value: 'customer',      label: 'Customer' },
+  { value: 'team',          label: 'Team' },
+  { value: 'misc',          label: 'Misc' },
+]
+
 function currencyOptions(selected = 'AUD') {
   return CURRENCIES.map((c) => `<option value="${c}"${c === selected ? ' selected' : ''}>${c}</option>`).join('')
 }
@@ -145,32 +154,30 @@ function parseBudget(str) {
 
 // ── Tab system ───────────────────────────────────────────────────────────────
 
-const TABS = ['notes', 'contacts', 'tasks', 'org', 'team', 'itinerary', 'receipts', 'summary'];
+const TABS = ['contacts', 'tasks', 'sponsor', 'personal', 'team', 'receipts', 'summary'];
 
 const PANEL_IDS = {
-  notes:     'plannerNotesPanel',
-  contacts:  'plannerContactsPanel',
-  tasks:     'plannerTasksPanel',
-  org:       'plannerOrgPanel',
-  team:      'plannerTeamPanel',
-  itinerary: 'plannerItineraryPanel',
-  receipts:  'plannerReceiptsPanel',
-  summary:   'plannerSummaryPanel',
+  contacts:   'plannerContactsPanel',
+  tasks:      'plannerTasksPanel',
+  sponsor:    'plannerSponsorPanel',
+  personal: 'plannerPersonalPanel',
+  team:       'plannerTeamPanel',
+  receipts:   'plannerReceiptsPanel',
+  summary:    'plannerSummaryPanel',
 };
 
 const TAB_BTN_IDS = {
-  notes:     'showNotesTab',
-  contacts:  'showContactsTab',
-  tasks:     'showTasksTab',
-  org:       'showOrgTab',
-  team:      'showTeamTab',
-  itinerary: 'showItineraryTab',
-  receipts:  'showReceiptsTab',
-  summary:   'showSummaryTab',
+  contacts:   'showContactsTab',
+  tasks:      'showTasksTab',
+  sponsor:    'showSponsorTab',
+  personal: 'showPersonalTab',
+  team:       'showTeamTab',
+  receipts:   'showReceiptsTab',
+  summary:    'showSummaryTab',
 };
 
 function setActiveTab(tab) {
-  const next = TABS.includes(tab) ? tab : 'notes';
+  const next = TABS.includes(tab) ? tab : TABS[0];
   state.activeTab = next;
   TABS.forEach((t) => {
     const panel = document.getElementById(PANEL_IDS[t]);
@@ -542,6 +549,33 @@ function legCardHtml(leg, direction) {
     </div>`;
 }
 
+function personalLegRowHtml(leg, direction) {
+  const icon   = travelIcon(leg.mode || 'flight', direction === 'return');
+  const from   = leg.from || '';
+  const to     = leg.to   || '';
+  const date   = leg.date
+    ? new Date(leg.date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+    : '';
+  const ref    = leg.ref || '';
+  const route  = (from || to) ? `${esc(from)} → ${esc(to)}` : '';
+  const meta   = [date, ref].filter(Boolean).join(' · ');
+  const summary = [route, meta].filter(Boolean).join(' · ');
+  const li = esc(leg.id);
+  return `
+    <div class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-200 bg-white" data-personal-leg-id="${li}" data-personal-leg-dir="${direction}">
+      <i class="${icon} text-gray-400 flex-shrink-0 w-4 text-center text-xs"></i>
+      <span class="flex-1 min-w-0 text-xs text-gray-700 truncate">${summary || 'New leg — click Edit to add details'}</span>
+      <button type="button" class="personal-leg-edit-btn h-7 px-2.5 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0"
+        data-personal-leg-id="${li}" data-personal-leg-dir="${direction}" aria-label="Edit ${direction} leg${from || to ? ': ' + from + (from && to ? ' to ' + to : '') : ''}">
+        <i class="fas fa-pen-to-square mr-1 text-[0.65rem]" aria-hidden="true"></i>Edit
+      </button>
+      <button type="button" class="personal-leg-remove-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors"
+        data-personal-leg-id="${li}" data-personal-leg-dir="${direction}" aria-label="Remove ${direction} leg${from || to ? ': ' + from + (from && to ? ' to ' + to : '') : ''}">
+        <i class="fas fa-times text-xs" aria-hidden="true"></i>
+      </button>
+    </div>`;
+}
+
 function renderAssignmentLegsInModal(assignment) {
   const empty = '<p class="text-xs text-gray-400 italic py-1">No legs yet. Click Add leg to start.</p>';
   const outEl = document.getElementById('assignmentOutboundLegs');
@@ -587,11 +621,11 @@ function assignmentCardHtml(assignment) {
           ${badges}
         </div>
       </div>
-      <button type="button" class="edit-assignment-btn h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0" data-member-id="${esc(assignment.memberId)}">
-        <i class="fas fa-pen-to-square mr-1.5 text-[0.65rem]"></i>Edit
+      <button type="button" class="edit-assignment-btn h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0" data-member-id="${esc(assignment.memberId)}" aria-label="Edit assignment for ${esc(member.name || 'member')}">
+        <i class="fas fa-pen-to-square mr-1.5 text-[0.65rem]" aria-hidden="true"></i>Edit
       </button>
-      <button type="button" class="remove-assignment-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors" data-member-id="${esc(assignment.memberId)}" aria-label="Remove from event">
-        <i class="fas fa-times text-xs"></i>
+      <button type="button" class="remove-assignment-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors" data-member-id="${esc(assignment.memberId)}" aria-label="Remove ${esc(member.name || 'member')} from event">
+        <i class="fas fa-times text-xs" aria-hidden="true"></i>
       </button>
     </div>`;
 }
@@ -610,11 +644,11 @@ function accommodationCardHtml(acc, colorIdx) {
           ${(acc.budget || acc.budgetActual) ? `<span class="text-[0.65rem] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500"><i class="fas fa-wallet text-[0.55rem] mr-0.5"></i>${acc.budget ? esc(acc.budget) : ''}${acc.budgetActual ? ` / ${esc(acc.budgetActual)}` : ''}${acc.currency ? ` ${esc(acc.currency)}` : ''}</span>` : ''}
         </div>
       </div>
-      <button type="button" class="edit-accommodation-btn h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0" data-accom-id="${esc(acc.id)}">
-        <i class="fas fa-pen-to-square mr-1.5 text-[0.65rem]"></i>Edit
+      <button type="button" class="edit-accommodation-btn h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0" data-accom-id="${esc(acc.id)}" aria-label="Edit ${esc(acc.name || 'accommodation')}">
+        <i class="fas fa-pen-to-square mr-1.5 text-[0.65rem]" aria-hidden="true"></i>Edit
       </button>
-      <button type="button" class="delete-accommodation-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors" data-accom-id="${esc(acc.id)}" aria-label="Remove">
-        <i class="fas fa-times text-xs"></i>
+      <button type="button" class="delete-accommodation-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors" data-accom-id="${esc(acc.id)}" aria-label="Remove ${esc(acc.name || 'accommodation')}">
+        <i class="fas fa-times text-xs" aria-hidden="true"></i>
       </button>
     </div>`;
 }
@@ -768,6 +802,13 @@ function renderOrgTab() {
   if (boothInfo)  boothInfo.value  = org.boothInfo  || '';
   if (boothNotes) boothNotes.value = org.boothNotes || '';
 
+  const sponsorBudgetEl   = document.getElementById('orgSponsorBudget')
+  const sponsorActualEl   = document.getElementById('orgSponsorActual')
+  const sponsorCurrencyEl = document.getElementById('orgSponsorCurrency')
+  if (sponsorBudgetEl)   sponsorBudgetEl.value      = org.sponsorBudget   || ''
+  if (sponsorActualEl)   sponsorActualEl.value       = org.sponsorActual   || ''
+  if (sponsorCurrencyEl) sponsorCurrencyEl.innerHTML = currencyOptions(org.sponsorCurrency || 'AUD')
+
   const teamList  = document.getElementById('orgTeamList');
   const teamEmpty = document.getElementById('orgTeamEmpty');
   if (teamList) {
@@ -786,7 +827,7 @@ function renderOrgTab() {
   const swagList  = document.getElementById('orgSwagList');
   const swagEmpty = document.getElementById('orgSwagEmpty');
   if (swagList) {
-    swagList.innerHTML = (org.swag || []).map((item) => checklistItemHtml(item, 'swag')).join('');
+    swagList.innerHTML = (org.swag || []).map((item) => swagCardHtml(item)).join('');
     swagEmpty?.classList.toggle('hidden', (org.swag || []).length > 0);
   }
 
@@ -798,6 +839,8 @@ function renderOrgTab() {
   }
 
   renderTimeline();
+  renderTrackedSessions('sponsor');
+  renderSponsorBudgetBreakdown();
 }
 
 // ── Assignment modal ──────────────────────────────────────────────────────────
@@ -848,13 +891,6 @@ function openAssignmentModal(memberId) {
   modal.querySelector('input, select')?.focus();
 }
 
-function closeAssignmentModal() {
-  const modal = document.getElementById('assignmentModal');
-  if (!modal) return;
-  modal.classList.add('hidden');
-  document.body.style.overflow = '';
-  renderOrgTab();
-}
 
 // ── Accommodation modal ───────────────────────────────────────────────────────
 
@@ -936,13 +972,6 @@ function openAccommodationModal(id) {
   modal.querySelector('input')?.focus();
 }
 
-function closeAccommodationModal() {
-  const modal = document.getElementById('accommodationModal');
-  if (!modal) return;
-  modal.classList.add('hidden');
-  document.body.style.overflow = '';
-  renderOrgTab();
-}
 
 function checklistItemHtml(item, listType) {
   const hasDate = listType === 'deliverables';
@@ -953,10 +982,31 @@ function checklistItemHtml(item, listType) {
         placeholder="Item…"
         class="flex-1 h-8 border-0 border-b border-transparent hover:border-gray-200 focus:border-gray-300 focus:ring-0 bg-transparent text-sm ${item.done ? 'line-through text-gray-400' : 'text-gray-800'} px-1 transition-colors">
       ${hasDate ? `<input type="date" data-${listType}-id="${esc(item.id)}" data-${listType}-field="dueDate" value="${esc(item.dueDate || '')}" class="h-8 rounded border-gray-200 text-xs bg-white px-2 text-gray-500 w-32">` : ''}
-      <button type="button" class="delete-${listType}-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100" data-${listType}-id="${esc(item.id)}" aria-label="Remove item">
-        <i class="fas fa-times text-xs"></i>
+      <button type="button" class="delete-${listType}-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100" data-${listType}-id="${esc(item.id)}" aria-label="Remove ${esc(item.label || listType + ' item')}">
+        <i class="fas fa-times text-xs" aria-hidden="true"></i>
       </button>
     </div>`;
+}
+
+function swagCardHtml(item) {
+  const fmt = (n) => n ? parseFloat(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : null;
+  const budget = fmt(item.budget);
+  const actual = fmt(item.actual);
+  const cur    = item.currency ? `${item.currency} ` : '';
+  const qty    = parseInt(item.quantity, 10);
+  const hasBudget = budget || actual;
+  const subtitle  = [budget ? `Budget: ${cur}${budget}` : '', actual ? `Actual: ${cur}${actual}` : ''].filter(Boolean).join(' · ');
+  return `<div class="flex items-center gap-2.5 py-2.5 px-3 rounded-lg border border-gray-200 bg-white" data-swag-id="${esc(item.id)}">
+    <input type="checkbox" class="h-4 w-4 rounded flex-shrink-0 swag-done-check" data-swag-id="${esc(item.id)}" ${item.done ? 'checked' : ''} aria-label="Mark ${esc(item.name || 'swag item')} as completed">
+    <div class="flex-1 min-w-0">
+      <p class="text-sm font-medium ${item.done ? 'line-through text-gray-400' : 'text-gray-800'} truncate">${esc(item.name || 'Untitled swag item')}</p>
+      ${hasBudget ? `<p class="text-xs text-gray-400 truncate mt-0.5">${esc(subtitle)}</p>` : ''}
+    </div>
+    ${!isNaN(qty) && qty > 0 ? `<span class="text-[0.65rem] font-semibold bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 flex-shrink-0">×${qty}</span>` : ''}
+    <button type="button" class="edit-swag-btn flex-shrink-0 h-7 w-7 inline-flex items-center justify-center border border-gray-200 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors" data-swag-id="${esc(item.id)}" aria-label="Edit ${esc(item.name || 'swag item')}">
+      <i class="fas fa-pen-to-square text-[0.65rem]" aria-hidden="true"></i>
+    </button>
+  </div>`;
 }
 
 // renderOrgTab is defined above in the Org tab section
@@ -1060,8 +1110,11 @@ function renderItineraryTab() {
 function renderItineraryDayItems(memberId, date) {
   const container = document.getElementById('itineraryDayItems')
   if (!container) return
-  const items = (state.planner.itinerary || [])
-    .filter((i) => i.memberId === memberId && i.date === date)
+  const modal   = document.getElementById('itineraryDayModal')
+  const isPersonal = modal?.dataset.ctx === 'personal'
+  const pool    = isPersonal ? (state.planner.personal?.itinerary || []) : (state.planner.itinerary || [])
+  const items   = pool
+    .filter((i) => isPersonal ? i.date === date : i.memberId === memberId && i.date === date)
     .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
 
   if (!items.length) {
@@ -1070,7 +1123,7 @@ function renderItineraryDayItems(memberId, date) {
   }
   container.innerHTML = items.map((item) => `
     <div class="flex items-start gap-2 p-2 rounded-md border border-gray-200 bg-white" data-itinerary-item-id="${esc(item.id)}">
-      <input type="checkbox" class="mt-0.5 h-4 w-4 rounded flex-shrink-0 itinerary-done-check" data-item-id="${esc(item.id)}" ${item.done ? 'checked' : ''} aria-label="Mark done">
+      <input type="checkbox" class="mt-0.5 h-4 w-4 rounded flex-shrink-0 itinerary-done-check" data-item-id="${esc(item.id)}" ${item.done ? 'checked' : ''} aria-label="Mark '${esc(item.title || 'item')}' as done">
       <div class="flex-1 min-w-0">
         <p class="text-sm ${item.done ? 'line-through text-gray-400' : 'text-gray-800'} font-medium">${esc(item.title)}</p>
         <div class="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -1079,11 +1132,11 @@ function renderItineraryDayItems(memberId, date) {
           ${item.notes ? `<span class="text-xs text-gray-400 truncate">${esc(item.notes)}</span>` : ''}
         </div>
       </div>
-      <button type="button" class="itinerary-edit-btn flex-shrink-0 text-gray-400 hover:text-blue-500 transition-colors" data-item-id="${esc(item.id)}" title="Edit">
-        <i class="fas fa-pen-to-square text-xs"></i>
+      <button type="button" class="itinerary-edit-btn flex-shrink-0 text-gray-400 hover:text-blue-500 transition-colors" data-item-id="${esc(item.id)}" aria-label="Edit '${esc(item.title || 'item')}'">
+        <i class="fas fa-pen-to-square text-xs" aria-hidden="true"></i>
       </button>
-      <button type="button" class="itinerary-delete-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors" data-item-id="${esc(item.id)}" title="Delete">
-        <i class="fas fa-times text-xs"></i>
+      <button type="button" class="itinerary-delete-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors" data-item-id="${esc(item.id)}" aria-label="Delete '${esc(item.title || 'item')}'">
+        <i class="fas fa-times text-xs" aria-hidden="true"></i>
       </button>
     </div>`).join('')
 }
@@ -1138,38 +1191,45 @@ function openItineraryDayModal(memberId, date) {
 }
 
 function closeItineraryDayModal() {
+  const modal   = document.getElementById('itineraryDayModal')
+  if (!modal) return
+  const isPersonal = modal.dataset.ctx === 'personal'
+  modal.classList.add('hidden')
+  modal.dataset.ctx = ''
+  document.body.style.overflow = ''
+  if (isPersonal) renderPersonalItinerary()
+  else renderItineraryTab()
+}
+
+function openPersonalDayModal(date) {
   const modal = document.getElementById('itineraryDayModal')
   if (!modal) return
-  modal.classList.add('hidden')
-  document.body.style.overflow = ''
-  renderItineraryTab()
+  modal.dataset.ctx      = 'personal'
+  modal.dataset.memberId = ''
+  modal.dataset.date     = date || ''
+
+  const titleEl    = document.getElementById('itineraryDayModalTitle')
+  const subtitleEl = document.getElementById('itineraryDayModalSubtitle')
+  if (titleEl)    titleEl.textContent    = 'Itinerary'
+  if (subtitleEl) subtitleEl.textContent = date
+    ? new Date(date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+    : ''
+
+  document.getElementById('itineraryFormMemberRow')?.classList.add('hidden')
+  const addBtn = document.getElementById('addItineraryItemBtn')
+  if (addBtn) addBtn.classList.remove('hidden')
+  const form = document.getElementById('itineraryAddForm')
+  if (form) form.classList.add('hidden')
+  ;['itineraryFormTitle','itineraryFormTime','itineraryFormLocation','itineraryFormNotes','itineraryFormEditId']
+    .forEach((id) => { const el = document.getElementById(id); if (el) el.value = '' })
+
+  renderItineraryDayItems('', date)
+  modal.classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
 }
 
 function wireItineraryPanel() {
-  // Date range inputs
-  document.getElementById('itineraryStartDate')?.addEventListener('change', () => {
-    renderItineraryTab(); scheduleAutoSave();
-  });
-  document.getElementById('itineraryEndDate')?.addEventListener('change', () => {
-    renderItineraryTab(); scheduleAutoSave();
-  });
-
-  // Standalone add button (no grid cell context)
-  document.getElementById('addItineraryItemStandalone')?.addEventListener('click', () => {
-    openItineraryDayModal(null, null)
-  })
-
-  // Grid cell clicks (delegated from panel)
-  const panel = document.getElementById('plannerItineraryPanel')
-  panel?.addEventListener('click', (e) => {
-    const cell = e.target.closest('.itinerary-cell')
-    if (cell) {
-      openItineraryDayModal(cell.dataset.memberId, cell.dataset.date)
-      return
-    }
-  })
-
-  // Modal wiring
+  // Modal wiring (shared by personal tab itinerary)
   const modal = document.getElementById('itineraryDayModal')
   if (!modal) return
 
@@ -1211,9 +1271,11 @@ function wireItineraryPanel() {
       date      = ctx.date
     }
 
-    const editId = document.getElementById('itineraryFormEditId')?.value || ''
+    const isPersonal   = modal.dataset.ctx === 'personal'
+    const targetArr = isPersonal ? (state.planner.personal.itinerary ??= []) : (state.planner.itinerary ??= [])
+    const editId    = document.getElementById('itineraryFormEditId')?.value || ''
     if (editId) {
-      const item = (state.planner.itinerary || []).find((i) => i.id === editId)
+      const item = targetArr.find((i) => i.id === editId)
       if (item) {
         item.title    = title
         item.time     = document.getElementById('itineraryFormTime').value
@@ -1221,18 +1283,18 @@ function wireItineraryPanel() {
         item.notes    = document.getElementById('itineraryFormNotes').value
       }
     } else {
-      const item = makeItineraryItem(memberId, date)
+      const item = makeItineraryItem(isPersonal ? null : memberId, date)
       item.title    = title
       item.time     = document.getElementById('itineraryFormTime').value
       item.location = document.getElementById('itineraryFormLocation').value
       item.notes    = document.getElementById('itineraryFormNotes').value
-      state.planner.itinerary = [...(state.planner.itinerary || []), item]
+      targetArr.push(item)
     }
     document.getElementById('itineraryAddForm')?.classList.add('hidden')
     if (isStandalone) {
       closeItineraryDayModal()
     } else {
-      renderItineraryDayItems(memberId, date)
+      renderItineraryDayItems(isPersonal ? '' : memberId, date)
     }
     scheduleAutoSave()
   })
@@ -1240,9 +1302,11 @@ function wireItineraryPanel() {
   // Item done / edit / delete
   modal.addEventListener('change', (e) => {
     if (e.target.classList.contains('itinerary-done-check')) {
-      const id   = e.target.dataset.itemId
-      const item = (state.planner.itinerary || []).find((i) => i.id === id)
-      if (item) { item.done = e.target.checked; renderItineraryDayItems(modal.dataset.memberId, modal.dataset.date); scheduleAutoSave() }
+      const id      = e.target.dataset.itemId
+      const isPersonal = modal.dataset.ctx === 'personal'
+      const pool    = isPersonal ? (state.planner.personal?.itinerary || []) : (state.planner.itinerary || [])
+      const item    = pool.find((i) => i.id === id)
+      if (item) { item.done = e.target.checked; renderItineraryDayItems(isPersonal ? '' : modal.dataset.memberId, modal.dataset.date); scheduleAutoSave() }
     }
   })
 
@@ -1251,8 +1315,10 @@ function wireItineraryPanel() {
 
     const editBtn = e.target.closest('.itinerary-edit-btn')
     if (editBtn) {
-      const id   = editBtn.dataset.itemId
-      const item = (state.planner.itinerary || []).find((i) => i.id === id)
+      const id      = editBtn.dataset.itemId
+      const isPersonal = modal.dataset.ctx === 'personal'
+      const pool    = isPersonal ? (state.planner.personal?.itinerary || []) : (state.planner.itinerary || [])
+      const item    = pool.find((i) => i.id === id)
       if (!item) return
       const form = document.getElementById('itineraryAddForm')
       if (form) form.classList.remove('hidden')
@@ -1267,9 +1333,14 @@ function wireItineraryPanel() {
 
     const delBtn = e.target.closest('.itinerary-delete-btn')
     if (delBtn) {
-      const id = delBtn.dataset.itemId
-      state.planner.itinerary = (state.planner.itinerary || []).filter((i) => i.id !== id)
-      renderItineraryDayItems(modal.dataset.memberId, modal.dataset.date)
+      const id      = delBtn.dataset.itemId
+      const isPersonal = modal.dataset.ctx === 'personal'
+      if (isPersonal) {
+        state.planner.personal.itinerary = (state.planner.personal.itinerary || []).filter((i) => i.id !== id)
+      } else {
+        state.planner.itinerary = (state.planner.itinerary || []).filter((i) => i.id !== id)
+      }
+      renderItineraryDayItems(isPersonal ? '' : modal.dataset.memberId, modal.dataset.date)
       scheduleAutoSave()
       return
     }
@@ -1286,21 +1357,22 @@ function wireItineraryPanel() {
 // ── Receipts tab ─────────────────────────────────────────────────────────────
 
 function makeReceipt() {
-  return { id: makeItemId('rc'), name: '', date: '', amount: '', currency: 'AUD', filePath: '', notes: '' }
+  return { id: makeItemId('rc'), name: '', date: '', amount: '', currency: 'AUD', category: 'misc', filePath: '', notes: '' }
 }
 
 function receiptCardHtml(receipt) {
+  const catLabel = RECEIPT_CATEGORIES.find((c) => c.value === receipt.category)?.label || 'Misc'
   return `
     <details class="rounded-md border border-gray-200 overflow-hidden" data-receipt-id="${esc(receipt.id)}">
       <summary class="flex items-center gap-3 px-4 py-3 cursor-pointer select-none hover:bg-gray-50 transition-colors list-none">
         <i class="fas fa-chevron-right text-gray-400 text-xs flex-shrink-0 transition-transform receipt-chevron"></i>
         <div class="flex-1 min-w-0">
           <p class="text-sm font-medium text-gray-800">${esc(receipt.name || 'New Receipt')}</p>
-          <p class="text-xs text-gray-500">${receipt.date ? esc(receipt.date) : ''}${receipt.amount ? ` · ${esc(receipt.amount)} ${esc(receipt.currency || '')}` : ''}</p>
+          <p class="text-xs text-gray-500">${receipt.date ? esc(receipt.date) : ''}${receipt.amount ? ` · ${esc(receipt.amount)} ${esc(receipt.currency || '')}` : ''} · <span class="text-gray-400">${esc(catLabel)}</span></p>
         </div>
         ${receipt.filePath ? '<span class="text-xs text-blue-500 flex-shrink-0"><i class="fas fa-paperclip text-[0.65rem]"></i></span>' : ''}
-        <button type="button" class="delete-receipt-btn flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors px-1" data-receipt-id="${esc(receipt.id)}" title="Delete">
-          <i class="fas fa-trash text-xs"></i>
+        <button type="button" class="delete-receipt-btn flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors px-1" data-receipt-id="${esc(receipt.id)}" aria-label="Delete receipt: ${esc(receipt.name || 'receipt')}">
+          <i class="fas fa-trash text-xs" aria-hidden="true"></i>
         </button>
       </summary>
       <div class="px-4 pb-4 pt-3 border-t border-gray-100 bg-white">
@@ -1319,6 +1391,13 @@ function receiptCardHtml(receipt) {
             <span class="editor-field-label">Amount</span>
             <input type="text" data-receipt-id="${esc(receipt.id)}" data-receipt-field="amount" value="${esc(receipt.amount)}"
               class="h-9 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="0.00">
+          </label>
+          <label class="editor-form-field">
+            <span class="editor-field-label">Category</span>
+            <select data-receipt-id="${esc(receipt.id)}" data-receipt-field="category"
+              class="h-9 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3">
+              ${RECEIPT_CATEGORIES.map((c) => `<option value="${c.value}"${receipt.category === c.value ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}
+            </select>
           </label>
           <label class="editor-form-field">
             <span class="editor-field-label">Currency</span>
@@ -1364,6 +1443,7 @@ function wireReceiptsPanel() {
     state.planner.receipts = [...(state.planner.receipts || []), r]
     renderReceiptsTab()
     scheduleAutoSave()
+    renderPersonalBudgetBreakdown(); renderSponsorBudgetBreakdown()
     // Open the new card
     setTimeout(() => {
       const el = document.querySelector(`[data-receipt-id="${r.id}"]`)
@@ -1387,6 +1467,7 @@ function wireReceiptsPanel() {
       if (nameEl)   nameEl.textContent   = receipt.name || 'New Receipt'
       if (detailEl) detailEl.textContent = `${receipt.date || ''}${receipt.amount ? ` · ${receipt.amount} ${receipt.currency || ''}` : ''}`
     }
+    if (field === 'amount') { renderPersonalBudgetBreakdown(); renderSponsorBudgetBreakdown(); }
     scheduleAutoSave()
   })
 
@@ -1397,6 +1478,7 @@ function wireReceiptsPanel() {
     const receipt = (state.planner.receipts || []).find((r) => r.id === id)
     if (!receipt) return
     receipt[field] = e.target.value
+    if (field === 'category' || field === 'amount' || field === 'currency') { renderPersonalBudgetBreakdown(); renderSponsorBudgetBreakdown(); }
     scheduleAutoSave()
   })
 
@@ -1409,6 +1491,7 @@ function wireReceiptsPanel() {
         state.planner.receipts = (state.planner.receipts || []).filter((r) => r.id !== deleteBtn.dataset.receiptId)
         renderReceiptsTab()
         scheduleAutoSave()
+        renderPersonalBudgetBreakdown(); renderSponsorBudgetBreakdown()
       }
       return
     }
@@ -1467,163 +1550,505 @@ function wireReceiptsPanel() {
 
 // ── Summary tab ───────────────────────────────────────────────────────────────
 
-let _budgetChart       = null
-let _globalBudgetChart = null
+let _charts = {}
+
+function destroyCharts(...keys) {
+  keys.forEach((k) => { if (_charts[k]) { _charts[k].destroy(); delete _charts[k] } })
+}
+
+function buildEventBudgetData(planner) {
+  const cats = {
+    travel:        { label: 'Travel',        budget: 0, actual: 0, items: [], receipts: [] },
+    accommodation: { label: 'Accommodation', budget: 0, actual: 0, items: [], receipts: [] },
+    food:          { label: 'Food & Drink',  budget: 0, actual: 0, items: [], receipts: [] },
+    customer:      { label: 'Customer',      budget: 0, actual: 0, items: [], receipts: [] },
+    team:          { label: 'Team',          budget: 0, actual: 0, items: [], receipts: [] },
+    misc:          { label: 'Misc',          budget: 0, actual: 0, items: [], receipts: [] },
+    sponsor:       { label: 'Sponsor',       budget: 0, actual: 0, items: [], receipts: [] },
+    swag:          { label: 'Swag',          budget: 0, actual: 0, items: [], receipts: [] },
+  }
+  const org = planner.org || {}
+
+  // Team assignments → travel
+  ;(org.teamAssignments || []).forEach((a) => {
+    const m = state.global?.teamMembers.find((tm) => tm.id === a.memberId)
+    const b = parseBudget(a.budget); const ac = parseBudget(a.budgetActual)
+    cats.travel.budget += b; cats.travel.actual += ac
+    if (b || ac) cats.travel.items.push({ label: m?.name || 'Unnamed', budget: b, actual: ac })
+  })
+
+  // Accommodation stays → accommodation
+  ;(org.accommodations || []).forEach((acc) => {
+    ;(acc.assignments || []).forEach((stay) => {
+      const m = state.global?.teamMembers.find((tm) => tm.id === stay.memberId)
+      const b = parseBudget(stay.budget); const ac = parseBudget(stay.budgetActual)
+      cats.accommodation.budget += b; cats.accommodation.actual += ac
+      if (b || ac) cats.accommodation.items.push({ label: `${m?.name || 'Unnamed'} @ ${acc.name || 'Accommodation'}`, budget: b, actual: ac })
+    })
+  })
+
+  // Sponsor
+  const sb = parseBudget(org.sponsorBudget); const sa = parseBudget(org.sponsorActual)
+  cats.sponsor.budget += sb; cats.sponsor.actual += sa
+  if (sb || sa) cats.sponsor.items.push({ label: 'Company / Sponsor', budget: sb, actual: sa })
+
+  // Swag items
+  ;(org.swag || []).forEach((item) => {
+    const b = parseBudget(item.budget); const ac = parseBudget(item.actual)
+    cats.swag.budget += b; cats.swag.actual += ac
+    if (b || ac) cats.swag.items.push({ label: item.name || 'Swag item', budget: b, actual: ac })
+  })
+
+  // Receipts by category
+  ;(planner.receipts || []).forEach((r) => {
+    const cat = r.category || 'misc'
+    const amt = parseBudget(r.amount)
+    if (amt && cats[cat]) {
+      cats[cat].actual += amt
+      cats[cat].receipts.push({ label: r.name || 'Receipt', amount: amt, currency: r.currency || '', date: r.date || '' })
+    }
+  })
+
+  return cats
+}
+
+function buildPersonalBudgetData(planner) {
+  const cats = {
+    travel:        { label: 'Travel',        budget: 0, actual: 0, items: [], receipts: [] },
+    accommodation: { label: 'Accommodation', budget: 0, actual: 0, items: [], receipts: [] },
+    food:          { label: 'Food & Drink',  budget: 0, actual: 0, items: [], receipts: [] },
+    customer:      { label: 'Customer',      budget: 0, actual: 0, items: [], receipts: [] },
+    team:          { label: 'Team',          budget: 0, actual: 0, items: [], receipts: [] },
+    misc:          { label: 'Misc',          budget: 0, actual: 0, items: [], receipts: [] },
+  }
+  const personal = planner.personal || {}
+
+  const tb = parseBudget(personal.budget); const ta = parseBudget(personal.budgetActual)
+  cats.travel.budget += tb; cats.travel.actual += ta
+  if (tb || ta) cats.travel.items.push({ label: 'My travel', budget: tb, actual: ta })
+
+  ;(personal.accommodations || []).forEach((acc) => {
+    const ab = parseBudget(acc.budget); const aa = parseBudget(acc.budgetActual)
+    cats.accommodation.budget += ab; cats.accommodation.actual += aa
+    if (ab || aa) cats.accommodation.items.push({ label: acc.name || 'Accommodation', budget: ab, actual: aa })
+  })
+
+  ;(planner.receipts || []).forEach((r) => {
+    const cat = r.category || 'misc'
+    const amt = parseBudget(r.amount)
+    if (amt && cats[cat]) {
+      cats[cat].actual += amt
+      cats[cat].receipts.push({ label: r.name || 'Receipt', amount: amt, currency: r.currency || '', date: r.date || '' })
+    }
+  })
+
+  return cats
+}
+
+function sumEventBudgetTotals(planner) {
+  const cats = buildEventBudgetData(planner)
+  let budget = 0, actual = 0
+  Object.values(cats).forEach((c) => { budget += c.budget; actual += c.actual })
+  return { budget, actual }
+}
 
 function renderSummaryTab() {
+  const activeToggle = document.getElementById('summaryThisEvent')?.classList.contains('hidden') ? 'all' : 'this'
+  if (activeToggle === 'all') {
+    renderSummaryAllEvents()
+  } else {
+    renderSummaryThisEvent()
+  }
+}
+
+function renderSummaryThisEvent() {
   const statsGrid = document.getElementById('summaryStatsGrid')
   if (!statsGrid) return
 
-  const org = state.planner.org
-  const assignments   = org.teamAssignments   || []
-  const accommodations = org.accommodations   || []
-  const tasks         = state.planner.tasks   || []
-  const contacts      = state.planner.contacts || []
-  const notes         = state.planner.sessionNotes || {}
+  const isPersonal = state.planner?.mode === 'personal'
+  document.getElementById('summaryMemberChartSection')?.classList.toggle('hidden', isPersonal)
 
-  // Counts
-  const memberCount = assignments.length
-  const totalLegs   = assignments.reduce((sum, a) => sum + (a.outboundLegs?.length || 0) + (a.returnLegs?.length || 0), 0)
-  const totalNights = accommodations.reduce((sum, acc) => {
-    return sum + (acc.assignments || []).reduce((s2, a) => {
-      if (!a.checkIn || !a.checkOut) return s2
-      const nights = Math.round((new Date(a.checkOut) - new Date(a.checkIn)) / 86400000)
-      return s2 + (nights > 0 ? nights : 0)
-    }, 0)
-  }, 0)
-  const tasksDone  = tasks.filter((t) => t.done).length
-  const tasksOpen  = tasks.filter((t) => !t.done).length
+  const tasks    = state.planner.tasks || []
+  const contacts = state.planner.contacts || []
+  const notes    = state.planner.sessionNotes || {}
+  const receipts = state.planner.receipts || []
+
+  const tasksDone    = tasks.filter((t) => t.done).length
+  const tasksOpen    = tasks.filter((t) => !t.done).length
   const contactCount = contacts.length
   const notedCount   = Object.values(notes).filter((n) => n.notes || n.rating || n.attended).length
+  const receiptCount = receipts.length
+  const receiptTotal = receipts.reduce((s, r) => s + parseBudget(r.amount), 0)
 
-  // Budget totals per member
-  const memberLabels   = []
-  const memberBudgets  = []
-  const memberActuals  = []
-  let totalBudget = 0; let totalActual = 0
-
-  assignments.forEach((a) => {
-    const member = state.global?.teamMembers.find((m) => m.id === a.memberId)
-    const b = parseBudget(a.budget)
-    const ac = parseBudget(a.budgetActual)
-    totalBudget += b; totalActual += ac
-    memberLabels.push(member?.name || 'Unnamed')
-    memberBudgets.push(b)
-    memberActuals.push(ac)
-  })
-  // Add accommodation budgets to totals
-  accommodations.forEach((acc) => {
-    totalBudget += parseBudget(acc.budget)
-    totalActual += parseBudget(acc.budgetActual)
-  })
-
-  // Stat cards
-  function statCard(icon, label, value) {
-    return `<div class="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center">
-      <p class="text-[0.65rem] text-gray-400 uppercase tracking-widest mb-1">${esc(label)}</p>
-      <p class="text-xl font-semibold text-gray-800">${esc(String(value))}</p>
-      <i class="${icon} text-gray-300 text-xs mt-0.5 block"></i>
+  function statCard(icon, label, value, sub) {
+    return `<div class="rounded-lg border border-gray-200 bg-gray-50 p-2 text-center">
+      <p class="text-[0.6rem] text-gray-400 uppercase tracking-widest mb-0.5">${esc(label)}</p>
+      <p class="text-base font-semibold text-gray-800">${esc(String(value))}</p>
+      ${sub ? `<p class="text-[0.6rem] text-gray-400">${esc(sub)}</p>` : ''}
+      <i class="${icon} text-gray-300 text-xs block"></i>
     </div>`
   }
-  statsGrid.innerHTML = [
-    statCard('fas fa-users',        'Members',    memberCount),
-    statCard('fas fa-plane',        'Legs',       totalLegs),
-    statCard('fas fa-bed',          'Nights',     totalNights),
-    statCard('fas fa-list-check',   'Tasks open', tasksOpen),
-    statCard('fas fa-check-circle', 'Tasks done', tasksDone),
-    statCard('fas fa-address-book', 'Contacts',   contactCount),
-    statCard('fas fa-file-lines',   'Sessions noted', notedCount),
-    (totalBudget || totalActual) ? statCard('fas fa-wallet', 'Budget', totalBudget.toLocaleString()) : '',
-    (totalBudget || totalActual) ? statCard('fas fa-receipt', 'Actual', totalActual.toLocaleString()) : '',
-  ].filter(Boolean).join('')
 
-  // Budget chart — per-member horizontal bar
-  const budgetCanvas = document.getElementById('budgetChart')
-  if (budgetCanvas) {
-    if (_budgetChart) { _budgetChart.destroy(); _budgetChart = null }
-    if (memberLabels.length) {
-      _budgetChart = new Chart(budgetCanvas, {
+  function renderCategoryChart(cats) {
+    destroyCharts('category')
+    const catCanvas = document.getElementById('budgetCategoryChart')
+    const activeCats = Object.entries(cats).filter(([, c]) => c.budget > 0 || c.actual > 0)
+    if (catCanvas && activeCats.length) {
+      _charts.category = new Chart(catCanvas, {
         type: 'bar',
         data: {
-          labels: memberLabels,
+          labels: activeCats.map(([, c]) => c.label),
           datasets: [
-            { label: 'Budget',  data: memberBudgets, backgroundColor: 'rgba(59,130,246,0.5)', borderColor: '#3b82f6', borderWidth: 1 },
-            { label: 'Actual',  data: memberActuals, backgroundColor: 'rgba(16,185,129,0.5)', borderColor: '#10b981', borderWidth: 1 },
+            { label: 'Budget', data: activeCats.map(([, c]) => c.budget), backgroundColor: 'rgba(59,130,246,0.55)', borderColor: '#3b82f6', borderWidth: 1 },
+            { label: 'Actual', data: activeCats.map(([, c]) => c.actual), backgroundColor: 'rgba(16,185,129,0.55)', borderColor: '#10b981', borderWidth: 1 },
           ],
         },
         options: {
           indexAxis: 'y',
           responsive: true,
-          plugins: { legend: { position: 'top' } },
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: { callbacks: { footer: () => 'Click to drill down' } },
+          },
+          aspectRatio: 3,
           scales: { x: { beginAtZero: true } },
+          onClick(_, elements) {
+            if (!elements.length) return
+            const [key] = activeCats[elements[0].index]
+            openDrilldown(key, cats[key])
+          },
         },
       })
-    } else {
-      const ctx = budgetCanvas.getContext('2d')
-      ctx.clearRect(0, 0, budgetCanvas.width, budgetCanvas.height)
+    } else if (catCanvas) {
+      catCanvas.getContext('2d').clearRect(0, 0, catCanvas.width, catCanvas.height)
     }
   }
 
-  // Global: scan localStorage for other planners
-  const globalLabels  = []
-  const globalBudgets = []
-  const globalActuals = []
-  let globalTotalBudget = 0; let globalTotalActual = 0
+  if (isPersonal) {
+    const personal = state.planner.personal || {}
+    const totalLegs = (personal.outboundLegs?.length || 0) + (personal.returnLegs?.length || 0)
+    let accomNights = 0
+    ;(personal.accommodations || []).forEach((acc) => {
+      if (acc.checkIn && acc.checkOut) {
+        const n = Math.round((new Date(acc.checkOut) - new Date(acc.checkIn)) / 86400000)
+        if (n > 0) accomNights += n
+      }
+    })
+    const personalItinerary = personal.itinerary || []
+    const itinDone = personalItinerary.filter((i) => i.done).length
+    const itinOpen = personalItinerary.filter((i) => !i.done).length
 
+    const cats = buildPersonalBudgetData(state.planner)
+    let totalBudget = 0, totalActual = 0
+    Object.values(cats).forEach((c) => { totalBudget += c.budget; totalActual += c.actual })
+
+    statsGrid.innerHTML = [
+      statCard('fas fa-plane',        'Travel legs',    totalLegs),
+      statCard('fas fa-bed',          'Nights',         accomNights),
+      statCard('fas fa-list-check',   'Tasks',          tasksDone + ' / ' + (tasksDone + tasksOpen), `${tasksOpen} open`),
+      statCard('fas fa-map-pin',      'Itinerary',      itinDone + ' / ' + (itinDone + itinOpen),    `${itinOpen} open`),
+      statCard('fas fa-address-book', 'Contacts',       contactCount),
+      statCard('fas fa-file-lines',   'Sessions noted', notedCount),
+      statCard('fas fa-receipt',      'Receipts',       receiptCount, receiptTotal ? receiptTotal.toLocaleString() : ''),
+      (totalBudget || totalActual) ? statCard('fas fa-wallet', 'My budget', totalBudget.toLocaleString()) : '',
+      (totalBudget || totalActual) ? statCard('fas fa-coins',  'My actual', totalActual.toLocaleString()) : '',
+    ].filter(Boolean).join('')
+
+    renderCategoryChart(cats)
+    destroyCharts('member')
+    return
+  }
+
+  // ── Sponsor mode ─────────────────────────────────────────────────────────────
+  const org          = state.planner.org
+  const assignments  = org.teamAssignments || []
+  const accommodations = org.accommodations || []
+
+  const memberCount  = assignments.length
+  const totalLegs    = assignments.reduce((s, a) => s + (a.outboundLegs?.length || 0) + (a.returnLegs?.length || 0), 0)
+  const totalNights  = accommodations.reduce((sum, acc) =>
+    sum + (acc.assignments || []).reduce((s2, a) => {
+      if (!a.checkIn || !a.checkOut) return s2
+      const n = Math.round((new Date(a.checkOut) - new Date(a.checkIn)) / 86400000)
+      return s2 + (n > 0 ? n : 0)
+    }, 0), 0)
+  const itinerary = state.planner.itinerary || []
+  const itinDone  = itinerary.filter((i) => i.done).length
+  const itinOpen  = itinerary.filter((i) => !i.done).length
+
+  const cats = buildEventBudgetData(state.planner)
+  let totalBudget = 0, totalActual = 0
+  Object.values(cats).forEach((c) => { totalBudget += c.budget; totalActual += c.actual })
+
+  statsGrid.innerHTML = [
+    statCard('fas fa-users',        'Members',        memberCount),
+    statCard('fas fa-plane',        'Travel legs',    totalLegs),
+    statCard('fas fa-bed',          'Nights',         totalNights),
+    statCard('fas fa-list-check',   'Tasks',          tasksDone + ' / ' + (tasksDone + tasksOpen), `${tasksOpen} open`),
+    statCard('fas fa-map-pin',      'Itinerary',      itinDone + ' / ' + (itinDone + itinOpen),    `${itinOpen} open`),
+    statCard('fas fa-address-book', 'Contacts',       contactCount),
+    statCard('fas fa-file-lines',   'Sessions noted', notedCount),
+    statCard('fas fa-receipt',      'Receipts',       receiptCount, receiptTotal ? receiptTotal.toLocaleString() : ''),
+    (totalBudget || totalActual) ? statCard('fas fa-wallet', 'Total budget', totalBudget.toLocaleString()) : '',
+    (totalBudget || totalActual) ? statCard('fas fa-coins',  'Total actual', totalActual.toLocaleString()) : '',
+  ].filter(Boolean).join('')
+
+  renderCategoryChart(cats)
+
+  // ── Per-member chart ─────────────────────────────────────────────────────────
+  destroyCharts('member')
+  const memberCanvas = document.getElementById('budgetMemberChart')
+  const memberData = assignments.map((a) => {
+    const m    = state.global?.teamMembers.find((tm) => tm.id === a.memberId)
+    const b    = parseBudget(a.budget)
+    const ac   = parseBudget(a.budgetActual)
+    let accomB = 0, accomAc = 0
+    ;(org.accommodations || []).forEach((acc) => {
+      const stay = (acc.assignments || []).find((s) => s.memberId === a.memberId)
+      if (stay) { accomB += parseBudget(stay.budget); accomAc += parseBudget(stay.budgetActual) }
+    })
+    return { name: m?.name || 'Unnamed', budget: b + accomB, actual: ac + accomAc, memberId: a.memberId, memberBudget: b, memberActual: ac, accomBudget: accomB, accomActual: accomAc }
+  }).filter((d) => d.budget || d.actual)
+
+  if (memberCanvas && memberData.length) {
+    _charts.member = new Chart(memberCanvas, {
+      type: 'bar',
+      data: {
+        labels: memberData.map((d) => d.name),
+        datasets: [
+          { label: 'Budget', data: memberData.map((d) => d.budget), backgroundColor: 'rgba(99,102,241,0.55)', borderColor: '#6366f1', borderWidth: 1 },
+          { label: 'Actual', data: memberData.map((d) => d.actual), backgroundColor: 'rgba(245,158,11,0.55)', borderColor: '#f59e0b', borderWidth: 1 },
+        ],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: { callbacks: { footer: () => 'Click to drill down' } },
+        },
+        aspectRatio: 3,
+        scales: { x: { beginAtZero: true } },
+        onClick(_, elements) {
+          if (!elements.length) return
+          const d = memberData[elements[0].index]
+          openMemberDrilldown(d, state.planner)
+        },
+      },
+    })
+  } else if (memberCanvas) {
+    memberCanvas.getContext('2d').clearRect(0, 0, memberCanvas.width, memberCanvas.height)
+  }
+}
+
+function renderSummaryAllEvents() {
+  const statsRow = document.getElementById('globalSummaryStatsRow')
+  if (!statsRow) return
+
+  // Scan localStorage for all planner keys
+  const events = []
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i)
     if (!key?.startsWith('drupalconPlanner_') || key === 'drupalconPlanner_global') continue
     try {
       const data = JSON.parse(localStorage.getItem(key) || '{}')
-      const eventLabel = data._eventFile?.replace('.json', '') || key.replace('drupalconPlanner_', '')
-      let eb = 0; let ea = 0
-      ;(data.org?.teamAssignments || []).forEach((a) => { eb += parseBudget(a.budget); ea += parseBudget(a.budgetActual) })
-      ;(data.org?.accommodations  || []).forEach((a) => { eb += parseBudget(a.budget); ea += parseBudget(a.budgetActual) })
-      globalTotalBudget += eb; globalTotalActual += ea
-      globalLabels.push(eventLabel)
-      globalBudgets.push(eb)
-      globalActuals.push(ea)
+      const { budget, actual } = sumEventBudgetTotals(data)
+      const rawDate = data._lastModified || ''
+      const label   = (data._eventFile || key.replace('drupalconPlanner_', '')).replace('.json', '')
+      events.push({ label, budget, actual, date: rawDate })
     } catch { /* skip corrupt */ }
   }
+  events.sort((a, b) => a.date.localeCompare(b.date))
 
-  const globalStatsRow = document.getElementById('globalSummaryStatsRow')
-  if (globalStatsRow) {
-    globalStatsRow.innerHTML = [
-      statCard('fas fa-calendar-check', 'Events tracked', globalLabels.length),
-      statCard('fas fa-wallet',  'Total budget', globalTotalBudget.toLocaleString()),
-      statCard('fas fa-receipt', 'Total actual', globalTotalActual.toLocaleString()),
-    ].join('')
+  const totalBudget = events.reduce((s, e) => s + e.budget, 0)
+  const totalActual = events.reduce((s, e) => s + e.actual, 0)
+
+  function statCard(icon, label, value) {
+    return `<div class="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center min-w-[100px]">
+      <p class="text-[0.65rem] text-gray-400 uppercase tracking-widest mb-1">${esc(label)}</p>
+      <p class="text-xl font-semibold text-gray-800">${esc(String(value))}</p>
+      <i class="${icon} text-gray-300 text-xs mt-0.5 block"></i>
+    </div>`
   }
+  statsRow.innerHTML = [
+    statCard('fas fa-calendar-check', 'Events tracked', events.length),
+    statCard('fas fa-wallet',  'Total budget', totalBudget.toLocaleString()),
+    statCard('fas fa-coins',   'Total actual', totalActual.toLocaleString()),
+  ].join('')
 
-  const globalCanvas = document.getElementById('globalBudgetChart')
-  if (globalCanvas) {
-    if (_globalBudgetChart) { _globalBudgetChart.destroy(); _globalBudgetChart = null }
-    if (globalLabels.length) {
-      _globalBudgetChart = new Chart(globalCanvas, {
-        type: 'bar',
-        data: {
-          labels: globalLabels,
-          datasets: [
-            { label: 'Budget', data: globalBudgets, backgroundColor: 'rgba(59,130,246,0.5)', borderColor: '#3b82f6', borderWidth: 1 },
-            { label: 'Actual', data: globalActuals, backgroundColor: 'rgba(16,185,129,0.5)', borderColor: '#10b981', borderWidth: 1 },
-          ],
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          plugins: { legend: { position: 'top' } },
-          scales: { x: { beginAtZero: true } },
-        },
-      })
-    } else {
-      const ctx = globalCanvas.getContext('2d')
-      ctx.clearRect(0, 0, globalCanvas.width, globalCanvas.height)
-    }
+  destroyCharts('global')
+  const canvas = document.getElementById('globalBudgetChart')
+  if (!canvas) return
+
+  if (events.length) {
+    _charts.global = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: events.map((e) => e.label),
+        datasets: [
+          { label: 'Budget', data: events.map((e) => e.budget), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.3, fill: true, pointRadius: 5, pointHoverRadius: 7 },
+          { label: 'Actual', data: events.map((e) => e.actual), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.3, fill: true, pointRadius: 5, pointHoverRadius: 7 },
+        ],
+      },
+      options: {
+        responsive: true,
+        aspectRatio: 3,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true } },
+      },
+    })
+  } else {
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
   }
 }
 
+function openDrilldown(catKey, catData) {
+  const modal   = document.getElementById('summaryDrilldownModal')
+  const title   = document.getElementById('drilldownTitle')
+  const content = document.getElementById('drilldownContent')
+  if (!modal || !content) return
+
+  if (title) title.textContent = catData.label
+
+  let html = ''
+
+  // Line items
+  if (catData.items.length) {
+    html += `<div class="mb-4">
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Line Items</p>
+      <table class="w-full text-sm">
+        <thead><tr class="text-xs text-gray-400 border-b border-gray-100">
+          <th class="text-left py-1 pr-3 font-medium">Item</th>
+          <th class="text-right py-1 pr-3 font-medium">Budget</th>
+          <th class="text-right py-1 font-medium">Actual</th>
+        </tr></thead>
+        <tbody>${catData.items.map((item) => `
+          <tr class="border-b border-gray-50">
+            <td class="py-1.5 pr-3 text-gray-700">${esc(item.label)}</td>
+            <td class="py-1.5 pr-3 text-right text-gray-600">${item.budget ? item.budget.toLocaleString() : '—'}</td>
+            <td class="py-1.5 text-right ${item.actual > item.budget && item.budget ? 'text-red-500' : 'text-gray-600'}">${item.actual ? item.actual.toLocaleString() : '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+        <tfoot><tr class="font-semibold text-gray-800 border-t border-gray-200">
+          <td class="pt-2 pr-3">Total</td>
+          <td class="pt-2 pr-3 text-right">${catData.budget ? catData.budget.toLocaleString() : '—'}</td>
+          <td class="pt-2 text-right ${catData.actual > catData.budget && catData.budget ? 'text-red-500' : ''}">${catData.actual ? catData.actual.toLocaleString() : '—'}</td>
+        </tr></tfoot>
+      </table>
+    </div>`
+  }
+
+  // Receipts
+  if (catData.receipts.length) {
+    html += `<div>
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Receipts</p>
+      <table class="w-full text-sm">
+        <thead><tr class="text-xs text-gray-400 border-b border-gray-100">
+          <th class="text-left py-1 pr-3 font-medium">Description</th>
+          <th class="text-left py-1 pr-3 font-medium">Date</th>
+          <th class="text-right py-1 font-medium">Amount</th>
+        </tr></thead>
+        <tbody>${catData.receipts.map((r) => `
+          <tr class="border-b border-gray-50">
+            <td class="py-1.5 pr-3 text-gray-700">${esc(r.label)}</td>
+            <td class="py-1.5 pr-3 text-gray-500 text-xs">${esc(r.date)}</td>
+            <td class="py-1.5 text-right text-gray-600">${r.amount.toLocaleString()} ${esc(r.currency)}</td>
+          </tr>`).join('')}
+        </tbody>
+        <tfoot><tr class="font-semibold text-gray-800 border-t border-gray-200">
+          <td class="pt-2 pr-3" colspan="2">Total receipts</td>
+          <td class="pt-2 text-right">${catData.receipts.reduce((s, r) => s + r.amount, 0).toLocaleString()}</td>
+        </tr></tfoot>
+      </table>
+    </div>`
+  }
+
+  if (!html) html = '<p class="text-sm text-gray-400 italic">No data recorded for this category.</p>'
+
+  content.innerHTML = html
+  modal.classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
+}
+
+function openMemberDrilldown(memberData, planner) {
+  const modal   = document.getElementById('summaryDrilldownModal')
+  const title   = document.getElementById('drilldownTitle')
+  const content = document.getElementById('drilldownContent')
+  if (!modal || !content) return
+
+  if (title) title.textContent = memberData.name
+
+  const org = planner.org || {}
+
+  // Accommodation stays for this member
+  const stays = []
+  ;(org.accommodations || []).forEach((acc) => {
+    const stay = (acc.assignments || []).find((s) => s.memberId === memberData.memberId)
+    if (stay) stays.push({ property: acc.name || 'Accommodation', budget: parseBudget(stay.budget), actual: parseBudget(stay.budgetActual) })
+  })
+
+  // Receipts (not per-member currently, so omit)
+  const rows = [
+    { label: 'Travel allocation', budget: memberData.memberBudget, actual: memberData.memberActual },
+    ...stays.map((s) => ({ label: `Accommodation: ${s.property}`, budget: s.budget, actual: s.actual })),
+  ].filter((r) => r.budget || r.actual)
+
+  let html = `<table class="w-full text-sm">
+    <thead><tr class="text-xs text-gray-400 border-b border-gray-100">
+      <th class="text-left py-1 pr-3 font-medium">Category</th>
+      <th class="text-right py-1 pr-3 font-medium">Budget</th>
+      <th class="text-right py-1 font-medium">Actual</th>
+    </tr></thead>
+    <tbody>${rows.map((r) => `
+      <tr class="border-b border-gray-50">
+        <td class="py-1.5 pr-3 text-gray-700">${esc(r.label)}</td>
+        <td class="py-1.5 pr-3 text-right text-gray-600">${r.budget ? r.budget.toLocaleString() : '—'}</td>
+        <td class="py-1.5 text-right ${r.actual > r.budget && r.budget ? 'text-red-500' : 'text-gray-600'}">${r.actual ? r.actual.toLocaleString() : '—'}</td>
+      </tr>`).join('')}
+    </tbody>
+    <tfoot><tr class="font-semibold text-gray-800 border-t border-gray-200">
+      <td class="pt-2 pr-3">Total</td>
+      <td class="pt-2 pr-3 text-right">${memberData.budget ? memberData.budget.toLocaleString() : '—'}</td>
+      <td class="pt-2 text-right ${memberData.actual > memberData.budget && memberData.budget ? 'text-red-500' : ''}">${memberData.actual ? memberData.actual.toLocaleString() : '—'}</td>
+    </tr></tfoot>
+  </table>`
+
+  if (!rows.length) html = '<p class="text-sm text-gray-400 italic">No budget data for this member.</p>'
+
+  content.innerHTML = html
+  modal.classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
+}
+
 function wireSummaryPanel() {
-  // Nothing to wire — renderSummaryTab is called on tab switch and renderAll
+  // This/All toggle
+  document.getElementById('summaryToggleThis')?.addEventListener('click', () => {
+    document.getElementById('summaryThisEvent')?.classList.remove('hidden')
+    document.getElementById('summaryAllEvents')?.classList.add('hidden')
+    document.getElementById('summaryToggleThis')?.classList.add('is-active')
+    document.getElementById('summaryToggleAll')?.classList.remove('is-active')
+    renderSummaryThisEvent()
+  })
+  document.getElementById('summaryToggleAll')?.addEventListener('click', () => {
+    document.getElementById('summaryAllEvents')?.classList.remove('hidden')
+    document.getElementById('summaryThisEvent')?.classList.add('hidden')
+    document.getElementById('summaryToggleAll')?.classList.add('is-active')
+    document.getElementById('summaryToggleThis')?.classList.remove('is-active')
+    renderSummaryAllEvents()
+  })
+
+  // Drilldown modal close
+  const drillModal = document.getElementById('summaryDrilldownModal')
+  document.getElementById('drilldownModalClose')?.addEventListener('click', closeDrilldown)
+  drillModal?.addEventListener('click', (e) => { if (e.target === drillModal) closeDrilldown() })
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drillModal && !drillModal.classList.contains('hidden')) closeDrilldown()
+  })
+}
+
+function closeDrilldown() {
+  document.getElementById('summaryDrilldownModal')?.classList.add('hidden')
+  document.body.style.overflow = ''
 }
 
 // ── Export / Import ──────────────────────────────────────────────────────────
@@ -1667,15 +2092,850 @@ async function handleSaveToFile() {
   }
 }
 
+// ── Tracked Sessions ─────────────────────────────────────────────────────────
+
+const TRACKED_REASONS = [
+  { value: 'presenting', label: 'Presenting / speaking', icon: 'fa-microphone' },
+  { value: 'followup',   label: 'Follow up',             icon: 'fa-bookmark' },
+  { value: 'other',      label: 'Other',                 icon: 'fa-tag' },
+];
+
+let _trackedSessionCtx = null; // 'sponsor' | 'personal'
+let _trackedSessionId  = null; // string ID when editing, null when adding
+
+function syncSponsoredSessions() {
+  const sponsorId = state.planner?.org?.sponsorId;
+  if (!sponsorId) return;
+  const tracked    = (state.planner.org.trackedSessions    ??= []);
+  const autoAdded  = (state.planner.org.autoAddedSponsoredSessions ??= []);
+  const trackedIds = new Set(tracked.map((t) => t.sessionId));
+  const autoSet    = new Set(autoAdded);
+  let changed = false;
+  for (const session of state.allSessions) {
+    if (!parseSponsorIds(session.sponsorIds).includes(sponsorId)) continue;
+    if (trackedIds.has(session.id)) continue;
+    if (autoSet.has(session.id)) continue; // user removed it — don't re-add
+    tracked.push({
+      id: makeItemId('ts'),
+      sessionId: session.id,
+      sessionTitle: session.title || '',
+      sessionTime: session.startTime || '',
+      reason: 'presenting',
+      customReason: '',
+      notes: '',
+    });
+    autoAdded.push(session.id);
+    trackedIds.add(session.id);
+    autoSet.add(session.id);
+    changed = true;
+  }
+  if (changed) {
+    scheduleAutoSave();
+    renderTrackedSessions('sponsor');
+  }
+}
+
+function getTrackedList(ctx) {
+  if (ctx === 'sponsor')    return (state.planner.org.trackedSessions    ??= []);
+  if (ctx === 'personal') return (state.planner.personal.trackedSessions ??= []);
+  return [];
+}
+
+function trackedSessionCardHtml(ts, ctx) {
+  const reasonObj   = TRACKED_REASONS.find((r) => r.value === ts.reason);
+  const reasonLabel = ts.reason === 'other' ? (ts.customReason || 'Other') : (reasonObj?.label || '');
+  const icon        = reasonObj?.icon || 'fa-tag';
+  const badgeClass  = ts.reason === 'presenting' ? 'bg-blue-50 text-blue-600'
+    : ts.reason === 'followup' ? 'bg-amber-50 text-amber-600'
+    : 'bg-gray-100 text-gray-500';
+  const subtitle = [
+    ts.sessionTime ? fmtTime(ts.sessionTime) : '',
+    ts.notes       ? ts.notes               : '',
+  ].filter(Boolean).join(' · ');
+  return `<div class="flex items-center gap-2 py-2 px-3 rounded-lg border border-gray-200 bg-white" data-ts-id="${esc(ts.id)}">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 flex-wrap min-w-0">
+        <p class="text-sm font-medium text-gray-800 truncate">${esc(ts.sessionTitle || 'Untitled session')}</p>
+        ${reasonLabel ? `<span class="inline-flex items-center gap-1 px-1.5 py-px rounded text-[0.65rem] font-medium flex-shrink-0 ${badgeClass}"><i class="fas ${esc(icon)} text-[0.55rem]"></i>${esc(reasonLabel)}</span>` : ''}
+      </div>
+      ${subtitle ? `<p class="text-xs text-gray-400 truncate mt-0.5">${esc(subtitle)}</p>` : ''}
+    </div>
+    <button type="button" class="edit-tracked-session-btn flex-shrink-0 h-7 w-7 inline-flex items-center justify-center border border-gray-200 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+      data-ts-ctx="${esc(ctx)}" data-ts-id="${esc(ts.id)}" aria-label="Edit tracked session: ${esc(ts.sessionTitle || 'session')}">
+      <i class="fas fa-pen-to-square text-[0.65rem]" aria-hidden="true"></i>
+    </button>
+  </div>`;
+}
+
+function renderTrackedSessions(ctx) {
+  const listId  = ctx === 'sponsor' ? 'sponsorTrackedSessionsList'  : 'personalTrackedSessionsList';
+  const emptyId = ctx === 'sponsor' ? 'sponsorTrackedSessionsEmpty' : 'personalTrackedSessionsEmpty';
+  const countId = ctx === 'sponsor' ? 'sponsorTrackedCount'         : 'personalTrackedCount';
+  const listEl  = document.getElementById(listId);
+  const emptyEl = document.getElementById(emptyId);
+  const countEl = document.getElementById(countId);
+  if (!listEl) return;
+  const list = getTrackedList(ctx);
+  listEl.innerHTML = list.map((ts) => trackedSessionCardHtml(ts, ctx)).join('');
+  emptyEl?.classList.toggle('hidden', list.length > 0);
+  if (countEl) { countEl.textContent = list.length; countEl.classList.toggle('hidden', list.length === 0); }
+}
+
+function openTrackedSessionModal(ctx, tsId, sessionOverride) {
+  _trackedSessionCtx = ctx;
+  _trackedSessionId  = tsId || null;
+
+  const modal = document.getElementById('trackedSessionModal');
+  if (!modal) return;
+
+  const list     = getTrackedList(ctx);
+  const existing = tsId ? list.find((ts) => ts.id === tsId) : null;
+  const session  = sessionOverride || (existing ? state.allSessions.find((s) => s.id === existing.sessionId) : null);
+
+  const infoTitleEl = document.getElementById('trackedSessionInfoTitle');
+  const infoTimeEl  = document.getElementById('trackedSessionInfoTime');
+  if (infoTitleEl) infoTitleEl.textContent = existing?.sessionTitle || session?.title || '';
+  if (infoTimeEl)  infoTimeEl.textContent  = existing?.sessionTime ? fmtTime(existing.sessionTime) : (session ? fmtTime(session.startTime) : '');
+
+  modal.dataset.sessionId    = existing?.sessionId    || session?.id    || '';
+  modal.dataset.sessionTitle = existing?.sessionTitle || session?.title || '';
+  modal.dataset.sessionTime  = existing?.sessionTime  || session?.startTime || '';
+
+  const reason = existing?.reason || 'followup';
+  modal.querySelectorAll('input[name="trackedSessionReason"]').forEach((r) => { r.checked = r.value === reason; });
+
+  const customEl = document.getElementById('trackedSessionCustomReason');
+  if (customEl) {
+    customEl.value = existing?.customReason || '';
+    customEl.classList.toggle('hidden', reason !== 'other');
+  }
+
+  const notesEl = document.getElementById('trackedSessionNotes');
+  if (notesEl) notesEl.value = existing?.notes || '';
+
+  const delBtn = document.getElementById('trackedSessionDeleteBtn');
+  if (delBtn) delBtn.classList.toggle('invisible', !existing);
+
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTrackedSessionModal() { _trackedModal.close(); }
+
+function saveTrackedSession() {
+  const ctx   = _trackedSessionCtx;
+  const tsId  = _trackedSessionId;
+  const modal = document.getElementById('trackedSessionModal');
+  if (!modal || !ctx) return;
+
+  const list         = getTrackedList(ctx);
+  const reason       = modal.querySelector('input[name="trackedSessionReason"]:checked')?.value || 'other';
+  const customReason = document.getElementById('trackedSessionCustomReason')?.value.trim() || '';
+  const notes        = document.getElementById('trackedSessionNotes')?.value.trim() || '';
+
+  if (tsId) {
+    const existing = list.find((ts) => ts.id === tsId);
+    if (existing) Object.assign(existing, { reason, customReason, notes });
+  } else {
+    list.push({
+      id:           makeItemId('ts'),
+      sessionId:    modal.dataset.sessionId,
+      sessionTitle: modal.dataset.sessionTitle,
+      sessionTime:  modal.dataset.sessionTime,
+      reason,
+      customReason,
+      notes,
+    });
+  }
+
+  renderTrackedSessions(ctx);
+  scheduleAutoSave();
+  closeTrackedSessionModal();
+}
+
+function wireTrackedSessionModal() {
+  const modal = document.getElementById('trackedSessionModal');
+  if (!modal) return;
+
+  _trackedModal.wire();
+
+  document.getElementById('trackedSessionSaveBtn')?.addEventListener('click', saveTrackedSession);
+
+  document.getElementById('trackedSessionDeleteBtn')?.addEventListener('click', () => {
+    const ctx  = _trackedSessionCtx;
+    const tsId = _trackedSessionId;
+    if (!ctx || !tsId) return;
+    const list = getTrackedList(ctx);
+    const idx  = list.findIndex((ts) => ts.id === tsId);
+    if (idx !== -1) list.splice(idx, 1);
+    renderTrackedSessions(ctx);
+    scheduleAutoSave();
+    closeTrackedSessionModal();
+  });
+
+  modal.addEventListener('change', (e) => {
+    if (e.target.name === 'trackedSessionReason') {
+      const customEl = document.getElementById('trackedSessionCustomReason');
+      if (customEl) customEl.classList.toggle('hidden', e.target.value !== 'other');
+    }
+  });
+}
+
+function wireTrackedSessionSearch(ctx) {
+  const searchInputId   = ctx === 'sponsor' ? 'sponsorSessionSearchInput'   : 'personalSessionSearchInput';
+  const searchResultsId = ctx === 'sponsor' ? 'sponsorSessionSearchResults' : 'personalSessionSearchResults';
+  const listId          = ctx === 'sponsor' ? 'sponsorTrackedSessionsList'  : 'personalTrackedSessionsList';
+
+  const searchInput   = document.getElementById(searchInputId);
+  const searchResults = document.getElementById(searchResultsId);
+  const listEl        = document.getElementById(listId);
+
+  searchInput?.addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    if (!q || !searchResults) { searchResults?.classList.add('hidden'); return; }
+
+    const tracked = new Set(getTrackedList(ctx).map((ts) => ts.sessionId));
+    const matches = state.allSessions.filter((s) =>
+      s.title?.toLowerCase().includes(q) || s.location?.toLowerCase().includes(q)
+    ).slice(0, 25);
+
+    if (!matches.length) {
+      searchResults.innerHTML = '<p class="text-xs text-gray-400 px-3 py-2">No sessions found.</p>';
+    } else {
+      searchResults.innerHTML = matches.map((s) => {
+        const already = tracked.has(s.id);
+        return `<button type="button" class="tracked-session-result w-full text-left px-3 py-2 transition-colors text-sm ${already ? 'opacity-50 cursor-default' : 'hover:bg-gray-50'}" data-session-id="${esc(s.id)}" ${already ? 'disabled' : ''}>
+          <p class="text-gray-800 truncate">${esc(s.title)}</p>
+          <p class="text-xs text-gray-400">${esc(fmtTime(s.startTime))}${s.location ? ` · ${esc(s.location)}` : ''}${already ? ' · Already tracked' : ''}</p>
+        </button>`;
+      }).join('');
+    }
+    searchResults.classList.remove('hidden');
+  });
+
+  searchResults?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.tracked-session-result');
+    if (!btn || btn.disabled) return;
+    const session = state.allSessions.find((s) => s.id === btn.dataset.sessionId);
+    if (!session) return;
+    searchResults.innerHTML = '';
+    searchResults.classList.add('hidden');
+    if (searchInput) searchInput.value = '';
+    openTrackedSessionModal(ctx, null, session);
+  });
+
+  listEl?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.edit-tracked-session-btn');
+    if (btn) openTrackedSessionModal(btn.dataset.tsCtx, btn.dataset.tsId);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest(`#${searchInputId}`) && !e.target.closest(`#${searchResultsId}`)) {
+      searchResults?.classList.add('hidden');
+    }
+  });
+}
+
+// ── Personal tab ───────────────────────────────────────────────────────────
+
+function renderPersonalItinerary() {
+  renderPersonalTimeline()
+}
+
+function renderPersonalTimeline() {
+  const container = document.getElementById('personalTimeline')
+  if (!container) return
+  const personal = state.planner.personal
+  if (!personal) return
+
+  const outLegs = personal.outboundLegs  || []
+  const retLegs = personal.returnLegs    || []
+  const accoms  = personal.accommodations || []
+  const items   = personal.itinerary     || []
+
+  // Derive date range from inputs, falling back to leg/accom/event/item dates
+  const si = document.getElementById('personalTimelineStart')
+  const ei = document.getElementById('personalTimelineEnd')
+  let startStr = si?.value || ''
+  let endStr   = ei?.value || ''
+
+  if (!startStr || !endStr) {
+    const all = [
+      ...outLegs.map((l) => l.date), ...retLegs.map((l) => l.date),
+      ...accoms.flatMap((a) => [a.checkIn, a.checkOut]),
+      ...state.allSessions.map((s) => s.startTime.slice(0, 10)),
+      ...items.map((i) => i.date),
+    ].filter(Boolean).sort()
+    if (!all.length) {
+      container.innerHTML = '<p class="text-xs text-gray-400 py-2">Add travel legs or accommodation dates to see the timeline.</p>'
+      return
+    }
+    const first = new Date(all[0] + 'T00:00:00'); first.setDate(first.getDate() - 1)
+    const last  = new Date(all[all.length - 1] + 'T00:00:00'); last.setDate(last.getDate() + 1)
+    if (!startStr) { startStr = localDateStr(first); if (si && !si.value) si.value = startStr }
+    if (!endStr)   { endStr   = localDateStr(last);  if (ei && !ei.value) ei.value = endStr }
+  }
+
+  const days = []
+  let cur = new Date(startStr + 'T00:00:00')
+  const end = new Date(endStr + 'T00:00:00')
+  if (cur > end || (end - cur) / 86400000 > 90) {
+    container.innerHTML = '<p class="text-xs text-gray-400 py-2">Date range is invalid or exceeds 90 days.</p>'
+    return
+  }
+  while (cur <= end) { days.push(localDateStr(cur)); cur.setDate(cur.getDate() + 1) }
+
+  // Append any itinerary item dates that fall outside the range
+  const daySet = new Set(days)
+  const extraDays = [...new Set(items.map((i) => i.date).filter(Boolean))].filter((d) => !daySet.has(d)).sort()
+  const allDays = [...days, ...extraDays]
+
+  const eventDaySet = new Set(state.allSessions.map((s) =>
+    new Date(s.startTime).toLocaleDateString('en-CA', { timeZone: getTimezone() })
+  ))
+  const todayStr = localDateStr(new Date())
+
+  // Day → travel mode
+  const outDayMode = {}
+  const retDayMode = {}
+  outLegs.filter((l) => l.date).forEach((l) => { if (!outDayMode[l.date]) outDayMode[l.date] = l.mode || 'other' })
+  retLegs.filter((l) => l.date).forEach((l) => { if (!retDayMode[l.date]) retDayMode[l.date] = l.mode || 'other' })
+
+  // Per-accommodation day sets and color mapping
+  const accomDaySets = accoms.map((acc) => {
+    const s = new Set()
+    if (acc.checkIn && acc.checkOut) {
+      let d = new Date(acc.checkIn + 'T00:00:00')
+      const e = new Date(acc.checkOut + 'T00:00:00')
+      while (d <= e) { s.add(localDateStr(d)); d.setDate(d.getDate() + 1) }
+    }
+    return s
+  })
+
+  function accomForDay(day) {
+    for (let i = 0; i < accoms.length; i++) {
+      if (accomDaySets[i].has(day)) return { acc: accoms[i], color: TIMELINE_COLORS[i % TIMELINE_COLORS.length] }
+    }
+    return null
+  }
+
+  // Itinerary items by date
+  const byDate = {}
+  items.forEach((item) => { (byDate[item.date] ??= []).push(item) })
+
+  const headerCells = allDays.map((day) => {
+    const isToday = day === todayStr
+    const isEvent = eventDaySet.has(day)
+    const cls     = isToday ? 'tl-head-today' : isEvent ? 'tl-head-event' : 'tl-head-normal'
+    const label   = new Date(day + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    return `<th style="min-width:80px" class="${cls} text-center text-[0.65rem] px-1 py-2 whitespace-nowrap border-l border-gray-100">${label}${isToday ? '<br><span style="font-size:0.5rem">●</span>' : ''}</th>`
+  }).join('')
+
+  // Row 1: travel + accommodation
+  const travelCells = allDays.map((day) => {
+    const match   = accomForDay(day)
+    const outMode = outDayMode[day]
+    const retMode = retDayMode[day]
+    const isToday = day === todayStr
+    const isEvent = eventDaySet.has(day)
+    const cellCls = match ? '' : isToday ? 'tl-cell-today' : isEvent ? 'tl-cell-event' : ''
+    const bgStyle = match ? `background:color-mix(in srgb,${match.color.bg} 55%,var(--surface-0))` : ''
+    let content = ''
+    if (outMode && retMode) {
+      content = `<i class="${travelIcon(outMode, false)}" style="color:#7c3aed;font-size:0.6rem" title="Outbound + return"></i><i class="${travelIcon(retMode, true)}" style="color:#7c3aed;font-size:0.6rem;margin-left:2px"></i>`
+    } else if (outMode) {
+      content = `<i class="${travelIcon(outMode, false)}" style="color:#2563eb;font-size:0.7rem" title="Outbound"></i>`
+    } else if (retMode) {
+      content = `<i class="${travelIcon(retMode, true)}" style="color:#059669;font-size:0.7rem" title="Return"></i>`
+    }
+    return `<td style="${bgStyle}" class="${cellCls} text-center px-1 py-1.5 border-l border-gray-100">${content}</td>`
+  }).join('')
+
+  // Row 2: itinerary items
+  const itinCells = allDays.map((day) => {
+    const dayItems = (byDate[day] || []).sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+    const isToday  = day === todayStr
+    const isEvent  = eventDaySet.has(day)
+    const cellCls  = isToday ? 'tl-cell-today' : isEvent ? 'tl-cell-event' : ''
+    const pills    = dayItems.map((item) =>
+      `<span class="block text-[0.6rem] px-1 py-0.5 rounded ${item.done ? 'line-through text-gray-400 bg-gray-100' : 'bg-blue-50 text-blue-700'} truncate cursor-pointer" title="${esc(item.title)}">${esc(item.title.slice(0, 15))}${item.title.length > 15 ? '…' : ''}</span>`
+    ).join('')
+    return `<td class="${cellCls} px-1 py-1 border-l border-gray-100 align-top cursor-pointer personal-itinerary-cell" data-date="${esc(day)}" style="min-width:80px">${pills || '<span class="block text-[0.55rem] text-gray-300 text-center py-1">+</span>'}</td>`
+  }).join('')
+
+  const legend = accoms.length
+    ? `<div class="flex flex-wrap gap-2 mt-2">${accoms.map((acc, i) => {
+        const c = TIMELINE_COLORS[i % TIMELINE_COLORS.length]
+        return `<span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium" style="background:${c.bg};color:${c.text};border:1px solid ${c.border}"><i class="fas fa-bed text-[0.6rem] mr-0.5"></i>${esc(acc.name || 'Accommodation')}</span>`
+      }).join('')}</div>`
+    : ''
+
+  container.innerHTML = `<div class="overflow-x-auto rounded-lg border border-gray-200"><table class="w-full text-sm" style="border-collapse:collapse"><thead class="bg-gray-50"><tr>${headerCells}</tr></thead><tbody><tr class="border-t border-gray-200">${travelCells}</tr><tr class="border-t border-gray-100">${itinCells}</tr></tbody></table></div>${legend}`
+}
+
+function personalAccomCardHtml(accom) {
+  const checkIn  = accom.checkIn  ? new Date(accom.checkIn  + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const checkOut = accom.checkOut ? new Date(accom.checkOut + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const dates = (checkIn && checkOut) ? `${checkIn} → ${checkOut}` : checkIn || checkOut || '';
+  const meta  = [dates, accom.confirmation ? `#${accom.confirmation}` : ''].filter(Boolean).join(' · ');
+  const ai    = esc(accom.id);
+  return `<div class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-200 bg-white">
+    <i class="fas fa-bed text-gray-400 flex-shrink-0 w-4 text-center text-xs"></i>
+    <div class="flex-1 min-w-0">
+      <p class="text-sm font-medium text-gray-800 truncate">${esc(accom.name || 'Unnamed accommodation')}</p>
+      ${meta ? `<p class="text-xs text-gray-400 mt-0.5 truncate">${esc(meta)}</p>` : ''}
+    </div>
+    <button type="button" class="personal-accom-edit-btn h-7 px-2.5 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0" data-personal-accom-id="${ai}" aria-label="Edit ${esc(accom.name || 'accommodation')}">
+      <i class="fas fa-pen-to-square mr-1 text-[0.65rem]" aria-hidden="true"></i>Edit
+    </button>
+    <button type="button" class="personal-accom-remove-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors" data-personal-accom-id="${ai}" aria-label="Remove ${esc(accom.name || 'accommodation')}">
+      <i class="fas fa-times text-xs" aria-hidden="true"></i>
+    </button>
+  </div>`;
+}
+
+function renderPersonalAccomList() {
+  const list  = document.getElementById('personalAccomList');
+  const empty = document.getElementById('personalAccomEmpty');
+  if (!list) return;
+  const accoms = state.planner?.personal?.accommodations || [];
+  list.innerHTML = accoms.map(personalAccomCardHtml).join('');
+  empty?.classList.toggle('hidden', accoms.length > 0);
+}
+
+function renderBudgetBreakdownInto(containerId, cats, currency) {
+  const container  = document.getElementById(containerId)
+  if (!container) return
+  const activeCats = Object.entries(cats).filter(([, c]) => c.budget > 0 || c.actual > 0)
+  if (!activeCats.length) { container.classList.add('hidden'); return }
+
+  const totalB    = activeCats.reduce((s, [, c]) => s + c.budget, 0)
+  const totalA    = activeCats.reduce((s, [, c]) => s + c.actual, 0)
+  const remaining = totalB - totalA
+  const over      = remaining < 0
+  const showTotal = activeCats.length > 1
+  const fmt = (n) => n ? n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'
+
+  container.classList.remove('hidden')
+  container.innerHTML = `
+    <div class="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1">
+      <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-300 pb-0.5">Category</span>
+      <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-300 text-right pb-0.5">Budget</span>
+      <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-300 text-right pb-0.5">Actual</span>
+      ${activeCats.map(([, c]) => `
+        <span class="text-gray-500 truncate">${esc(c.label)}</span>
+        <span class="text-gray-400 tabular-nums text-right">${fmt(c.budget)}</span>
+        <span class="text-gray-600 tabular-nums text-right">${fmt(c.actual)}</span>
+      `).join('')}
+      ${showTotal ? `
+        <div class="col-span-3 h-px bg-gray-200 my-0.5"></div>
+        <span class="text-gray-700 font-medium">Total</span>
+        <span class="text-gray-500 font-medium tabular-nums text-right">${fmt(totalB)}</span>
+        <span class="text-gray-700 font-medium tabular-nums text-right">${fmt(totalA)}</span>
+      ` : ''}
+    </div>
+    ${totalB > 0 ? `
+      <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-gray-200 font-medium ${over ? 'text-red-500' : 'text-emerald-600'}">
+        <span>${over ? 'Over budget' : 'Remaining'}</span>
+        <span class="tabular-nums">${currency} ${fmt(Math.abs(remaining))}</span>
+      </div>
+    ` : ''}
+  `
+}
+
+function renderPersonalBudgetBreakdown() {
+  renderBudgetBreakdownInto(
+    'personalBudgetBreakdown',
+    buildPersonalBudgetData(state.planner),
+    state.planner?.personal?.currency || 'AUD'
+  )
+}
+
+function renderSponsorBudgetBreakdown() {
+  renderBudgetBreakdownInto(
+    'sponsorBudgetBreakdown',
+    buildEventBudgetData(state.planner),
+    state.planner?.org?.sponsorCurrency || 'AUD'
+  )
+}
+
+function renderPersonalTab() {
+  const personal = state.planner.personal
+  if (!personal) return
+
+  // Budget fields
+  const budgetEl   = document.getElementById('personalBudget')
+  const actualEl   = document.getElementById('personalActual')
+  const currencyEl = document.getElementById('personalCurrency')
+  const notesEl    = document.getElementById('personalNotes')
+  if (budgetEl)   budgetEl.value       = personal.budget       || ''
+  if (actualEl)   actualEl.value       = personal.budgetActual || ''
+  if (currencyEl) currencyEl.innerHTML = currencyOptions(personal.currency || 'AUD')
+  if (notesEl)    notesEl.value        = personal.notes        || ''
+
+  // Legs
+  const outContainer = document.getElementById('personalOutboundLegs')
+  const retContainer = document.getElementById('personalReturnLegs')
+  const outEmpty     = document.getElementById('personalOutboundEmpty')
+  const retEmpty     = document.getElementById('personalReturnEmpty')
+
+  const outLegs = personal.outboundLegs || []
+  const retLegs = personal.returnLegs   || []
+
+  if (outContainer) outContainer.innerHTML = outLegs.map((l) => personalLegRowHtml(l, 'outbound')).join('')
+  if (retContainer) retContainer.innerHTML = retLegs.map((l) => personalLegRowHtml(l, 'return')).join('')
+  if (outEmpty) outEmpty.classList.toggle('hidden', outLegs.length > 0)
+  if (retEmpty) retEmpty.classList.toggle('hidden', retLegs.length > 0)
+
+  renderPersonalTimeline()
+  renderPersonalItinerary()
+  renderTrackedSessions('personal')
+  renderPersonalAccomList()
+  renderPersonalBudgetBreakdown()
+}
+
+// ── Shared modal lifecycle helper ────────────────────────────────────────────
+
+function createModal(modalId, { onSave, onDone, onDelete, onClose } = {}) {
+  const getEl  = () => document.getElementById(modalId);
+  const isOpen = () => !getEl()?.classList.contains('hidden');
+
+  function open(focusId) {
+    const modal = getEl();
+    if (!modal) return;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = scrollbarWidth ? `${scrollbarWidth}px` : '';
+    modal.classList.remove('hidden');
+    (focusId ? document.getElementById(focusId) : modal.querySelector('input:not([type=hidden]),select,textarea'))?.focus();
+  }
+
+  function close() {
+    const modal = getEl();
+    if (!modal) return;
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    onClose?.();
+  }
+
+  function wire() {
+    const modal = getEl();
+    if (!modal) return;
+    document.getElementById(`${modalId}Close`)?.addEventListener('click', close);
+    document.getElementById(`${modalId}Done`)?.addEventListener('click', () => { onDone?.(); close(); });
+    if (onDelete) {
+      document.getElementById(`${modalId}Delete`)?.addEventListener('click', () => { onDelete(); close(); });
+    }
+    if (onSave) {
+      modal.addEventListener('input',  onSave);
+      modal.addEventListener('change', onSave);
+    }
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) close(); });
+  }
+
+  return { open, close, wire };
+}
+
+const _trackedModal = createModal('trackedSessionModal', {
+  onClose: () => { _trackedSessionCtx = null; _trackedSessionId = null; },
+});
+
+// ── Personal leg modal ───────────────────────────────────────────────────────
+
+let _personalLeg = { direction: null, id: null };
+
+function savePersonalLeg() {
+  const { direction, id } = _personalLeg;
+  if (!direction || !id) return;
+  const personal = state.planner.personal;
+  if (!personal) return;
+  const legs = direction === 'outbound' ? (personal.outboundLegs || []) : (personal.returnLegs || []);
+  const leg  = legs.find((l) => l.id === id);
+  if (!leg) return;
+  leg.mode         = document.getElementById('personalLegModalMode')?.value         || 'flight';
+  leg.date         = document.getElementById('personalLegModalDate')?.value         || '';
+  leg.ref          = document.getElementById('personalLegModalRef')?.value          || '';
+  leg.from         = document.getElementById('personalLegModalFrom')?.value         || '';
+  leg.to           = document.getElementById('personalLegModalTo')?.value           || '';
+  leg.departTime   = document.getElementById('personalLegModalDepartTime')?.value   || '';
+  leg.arriveTime   = document.getElementById('personalLegModalArriveTime')?.value   || '';
+  leg.departTz     = document.getElementById('personalLegModalDepartTz')?.value     || '';
+  leg.arriveTz     = document.getElementById('personalLegModalArriveTz')?.value     || '';
+  leg.confirmation = document.getElementById('personalLegModalConfirmation')?.value || '';
+  scheduleAutoSave();
+}
+
+const _personalLegModal = createModal('personalLegModal', {
+  onSave: savePersonalLeg,
+  onDelete: () => {
+    const { direction, id } = _personalLeg;
+    if (!direction || !id) return;
+    const personal = state.planner.personal;
+    if (!personal) return;
+    if (direction === 'outbound') personal.outboundLegs = (personal.outboundLegs || []).filter((l) => l.id !== id);
+    else                          personal.returnLegs   = (personal.returnLegs   || []).filter((l) => l.id !== id);
+    scheduleAutoSave();
+  },
+  onClose: () => {
+    _personalLeg = { direction: null, id: null };
+    renderPersonalTab();
+  },
+});
+
+function openPersonalLegModal(direction, legId) {
+  const legs = direction === 'outbound'
+    ? (state.planner.personal?.outboundLegs || [])
+    : (state.planner.personal?.returnLegs   || []);
+  const leg = legs.find((l) => l.id === legId);
+  if (!leg) return;
+  _personalLeg = { direction, id: legId };
+  document.getElementById('personalLegModalTitle').textContent = direction === 'outbound' ? 'Outbound Leg' : 'Return Leg';
+  const modeSelect = document.getElementById('personalLegModalMode');
+  if (modeSelect) {
+    modeSelect.innerHTML = Object.entries(TRAVEL_MODES)
+      .map(([val, { label }]) => `<option value="${val}"${leg.mode === val ? ' selected' : ''}>${label}</option>`)
+      .join('');
+  }
+  document.getElementById('personalLegModalDate').value         = leg.date         || '';
+  document.getElementById('personalLegModalRef').value          = leg.ref          || '';
+  document.getElementById('personalLegModalFrom').value         = leg.from         || '';
+  document.getElementById('personalLegModalTo').value           = leg.to           || '';
+  document.getElementById('personalLegModalDepartTime').value   = leg.departTime   || '';
+  document.getElementById('personalLegModalArriveTime').value   = leg.arriveTime   || '';
+  document.getElementById('personalLegModalDepartTz').value     = leg.departTz     || '';
+  document.getElementById('personalLegModalArriveTz').value     = leg.arriveTz     || '';
+  document.getElementById('personalLegModalConfirmation').value = leg.confirmation || '';
+  _personalLegModal.open('personalLegModalFrom');
+}
+
+function wirePersonalLegModal() { _personalLegModal.wire(); }
+
+// ── Swag modal ────────────────────────────────────────────────────────────────
+
+let _swagId = null;
+
+function saveSwag() {
+  if (!_swagId) return;
+  const item = (state.planner.org.swag || []).find((x) => x.id === _swagId);
+  if (!item) return;
+  item.name     = document.getElementById('swagModalName')?.value     || '';
+  item.quantity = parseInt(document.getElementById('swagModalQuantity')?.value, 10) || 1;
+  item.budget   = document.getElementById('swagModalBudget')?.value   || '';
+  item.actual   = document.getElementById('swagModalActual')?.value   || '';
+  item.notes    = document.getElementById('swagModalNotes')?.value    || '';
+  item.currency = document.getElementById('swagModalCurrency')?.value || 'AUD';
+  item.done     = document.getElementById('swagModalDoneCheck')?.checked ?? false;
+  scheduleAutoSave();
+}
+
+const _swagModal = createModal('swagModal', {
+  onSave: saveSwag,
+  onDelete: () => {
+    state.planner.org.swag = (state.planner.org.swag || []).filter((x) => x.id !== _swagId);
+    scheduleAutoSave();
+  },
+  onClose: () => {
+    _swagId = null;
+    renderOrgTab();
+    renderSponsorBudgetBreakdown();
+  },
+});
+
+function openSwagModal(id) {
+  const item = (state.planner.org.swag || []).find((x) => x.id === id);
+  if (!item) return;
+  _swagId = item.id;
+  document.getElementById('swagModalName').value        = item.name     || '';
+  document.getElementById('swagModalQuantity').value    = item.quantity ?? 1;
+  document.getElementById('swagModalBudget').value      = item.budget   || '';
+  document.getElementById('swagModalActual').value      = item.actual   || '';
+  document.getElementById('swagModalNotes').value       = item.notes    || '';
+  document.getElementById('swagModalDoneCheck').checked = !!item.done;
+  const currEl = document.getElementById('swagModalCurrency');
+  if (currEl) { currEl.innerHTML = currencyOptions(); currEl.value = item.currency || 'AUD'; }
+  _swagModal.open('swagModalName');
+}
+
+function wireSwagModal() { _swagModal.wire(); }
+
+// ── Personal accommodation modal ─────────────────────────────────────────────
+
+let _personalAccomId = null;
+
+function savePersonalAccom() {
+  if (!_personalAccomId) return;
+  const accom = (state.planner.personal?.accommodations || []).find((a) => a.id === _personalAccomId);
+  if (!accom) return;
+  accom.name         = document.getElementById('personalAccomModalName')?.value         || '';
+  accom.address      = document.getElementById('personalAccomModalAddress')?.value      || '';
+  accom.confirmation = document.getElementById('personalAccomModalConfirmation')?.value || '';
+  accom.checkIn      = document.getElementById('personalAccomModalCheckIn')?.value      || '';
+  accom.checkOut     = document.getElementById('personalAccomModalCheckOut')?.value     || '';
+  accom.notes        = document.getElementById('personalAccomModalNotes')?.value        || '';
+  accom.budget       = document.getElementById('personalAccomModalBudget')?.value       || '';
+  accom.budgetActual = document.getElementById('personalAccomModalActual')?.value       || '';
+  accom.currency     = document.getElementById('personalAccomModalCurrency')?.value     || 'AUD';
+  scheduleAutoSave();
+  renderPersonalTimeline();
+  renderPersonalBudgetBreakdown();
+}
+
+const _personalAccomModal = createModal('personalAccomModal', {
+  onSave: savePersonalAccom,
+  onDelete: () => {
+    const personal = state.planner.personal;
+    personal.accommodations = (personal.accommodations || []).filter((a) => a.id !== _personalAccomId);
+    scheduleAutoSave();
+  },
+  onClose: () => {
+    _personalAccomId = null;
+    renderPersonalAccomList();
+    renderPersonalTimeline();
+    renderPersonalBudgetBreakdown();
+  },
+});
+
+function openPersonalAccomModal(id) {
+  const accom = (state.planner.personal?.accommodations || []).find((a) => a.id === id);
+  if (!accom) return;
+  _personalAccomId = id;
+  document.getElementById('personalAccomModalName').value         = accom.name         || '';
+  document.getElementById('personalAccomModalAddress').value      = accom.address      || '';
+  document.getElementById('personalAccomModalConfirmation').value = accom.confirmation || '';
+  document.getElementById('personalAccomModalCheckIn').value      = accom.checkIn      || '';
+  document.getElementById('personalAccomModalCheckOut').value     = accom.checkOut     || '';
+  document.getElementById('personalAccomModalNotes').value        = accom.notes        || '';
+  document.getElementById('personalAccomModalBudget').value       = accom.budget       || '';
+  document.getElementById('personalAccomModalActual').value       = accom.budgetActual || '';
+  const currEl = document.getElementById('personalAccomModalCurrency');
+  if (currEl) { currEl.innerHTML = currencyOptions(); currEl.value = accom.currency || 'AUD'; }
+  _personalAccomModal.open('personalAccomModalName');
+}
+
+function wirePersonalAccomModal() { _personalAccomModal.wire(); }
+
+function wirePersonalPanel() {
+  const panel = document.getElementById('plannerPersonalPanel')
+  if (!panel) return
+
+  function ensurePersonal() {
+    if (!state.planner.personal) state.planner.personal = {
+      outboundLegs: [], returnLegs: [], accommodations: [],
+      budget: '', budgetActual: '', currency: 'AUD', notes: ''
+    }
+    return state.planner.personal
+  }
+
+  document.getElementById('addPersonalOutboundLegBtn')?.addEventListener('click', () => {
+    const personal  = ensurePersonal()
+    const newLeg = makeLeg()
+    personal.outboundLegs = [...(personal.outboundLegs || []), newLeg]
+    renderPersonalTab()
+    scheduleAutoSave()
+    openPersonalLegModal('outbound', newLeg.id)
+  })
+
+  document.getElementById('addPersonalReturnLegBtn')?.addEventListener('click', () => {
+    const personal  = ensurePersonal()
+    const newLeg = makeLeg()
+    personal.returnLegs = [...(personal.returnLegs || []), newLeg]
+    renderPersonalTab()
+    scheduleAutoSave()
+    openPersonalLegModal('return', newLeg.id)
+  })
+
+  // Add accommodation
+  document.getElementById('addPersonalAccomBtn')?.addEventListener('click', () => {
+    const personal   = ensurePersonal()
+    const newAccom = { id: makeItemId('ia'), name: '', address: '', checkIn: '', checkOut: '', confirmation: '', budget: '', budgetActual: '', currency: 'AUD', notes: '' }
+    personal.accommodations = [...(personal.accommodations || []), newAccom]
+    scheduleAutoSave()
+    renderPersonalAccomList()
+    openPersonalAccomModal(newAccom.id)
+  })
+
+  // Budget + notes field delegation
+  panel.addEventListener('input',  handlePersonalField)
+  panel.addEventListener('change', handlePersonalField)
+
+  // Timeline date range inputs — override the auto-derived range
+  document.getElementById('personalTimelineStart')?.addEventListener('change', () => { renderPersonalTimeline(); renderPersonalItinerary() })
+  document.getElementById('personalTimelineEnd')?.addEventListener('change',   () => { renderPersonalTimeline(); renderPersonalItinerary() })
+
+  function handlePersonalField(e) {
+    const personal = ensurePersonal()
+    // Budget / notes
+    if (e.target.id === 'personalBudget')   { personal.budget       = e.target.value; scheduleAutoSave(); renderPersonalBudgetBreakdown(); return }
+    if (e.target.id === 'personalActual')   { personal.budgetActual = e.target.value; scheduleAutoSave(); renderPersonalBudgetBreakdown(); return }
+    if (e.target.id === 'personalCurrency') { personal.currency     = e.target.value; scheduleAutoSave(); renderPersonalBudgetBreakdown(); return }
+    if (e.target.id === 'personalNotes')    { personal.notes        = e.target.value; scheduleAutoSave(); return }
+
+    // Leg fields (data-leg-id / data-direction / data-leg-field)
+    const { legId, direction, legField } = e.target.dataset
+    if (legId && direction && legField) {
+      const legs = direction === 'outbound' ? personal.outboundLegs : personal.returnLegs
+      const leg  = (legs || []).find((l) => l.id === legId)
+      if (leg) {
+        leg[legField] = e.target.value
+        scheduleAutoSave()
+        if (legField === 'date' || legField === 'mode') { renderPersonalTimeline(); renderPersonalItinerary() }
+      }
+    }
+  }
+
+  panel.addEventListener('click', (e) => {
+    // Accommodation edit → open modal
+    const accomEditBtn = e.target.closest('.personal-accom-edit-btn')
+    if (accomEditBtn) { openPersonalAccomModal(accomEditBtn.dataset.personalAccomId); return }
+
+    // Accommodation remove (× button)
+    const accomRemoveBtn = e.target.closest('.personal-accom-remove-btn')
+    if (accomRemoveBtn) {
+      const personal = ensurePersonal()
+      personal.accommodations = (personal.accommodations || []).filter((a) => a.id !== accomRemoveBtn.dataset.personalAccomId)
+      scheduleAutoSave()
+      renderPersonalAccomList()
+      renderPersonalTimeline()
+      renderPersonalBudgetBreakdown()
+      return
+    }
+
+    // Edit travel leg → open modal
+    const editLegBtn = e.target.closest('.personal-leg-edit-btn')
+    if (editLegBtn) {
+      openPersonalLegModal(editLegBtn.dataset.personalLegDir, editLegBtn.dataset.personalLegId)
+      return
+    }
+    // Remove travel leg (compact row ×)
+    const removeLegBtn = e.target.closest('.personal-leg-remove-btn')
+    if (removeLegBtn) {
+      const personal = ensurePersonal()
+      const { personalLegId, personalLegDir } = removeLegBtn.dataset
+      if (personalLegDir === 'outbound') personal.outboundLegs = (personal.outboundLegs || []).filter((l) => l.id !== personalLegId)
+      else                               personal.returnLegs   = (personal.returnLegs   || []).filter((l) => l.id !== personalLegId)
+      renderPersonalTab()
+      scheduleAutoSave()
+      return
+    }
+
+    // Personal itinerary — cell click opens day modal
+    const personalCell = e.target.closest('.personal-itinerary-cell')
+    if (personalCell) { openPersonalDayModal(personalCell.dataset.date); return }
+  })
+
+  wireTrackedSessionSearch('personal')
+}
+
 // ── Render all tabs ──────────────────────────────────────────────────────────
 
 function renderAll() {
-  renderNotesTab();
   renderContactsTab();
   renderTasksTab();
   renderOrgTab();
+  renderPersonalTab();
   renderTeamTab();
-  renderItineraryTab();
   renderReceiptsTab();
   renderSummaryTab();
 }
@@ -1894,21 +3154,16 @@ function wireTasksPanel() {
 
 
 function wireOrgPanel() {
-  const panel = document.getElementById('plannerOrgPanel');
+  const panel = document.getElementById('plannerSponsorPanel');
   if (!panel) return;
 
   // ── Booth fields ────────────────────────────────────────────────────────────
   panel.addEventListener('input', (e) => {
-    if (e.target.id === 'orgBoothInfo')  { state.planner.org.boothInfo  = e.target.value; scheduleAutoSave(); return; }
-    if (e.target.id === 'orgBoothNotes') { state.planner.org.boothNotes = e.target.value; scheduleAutoSave(); return; }
+    if (e.target.id === 'orgBoothInfo')       { state.planner.org.boothInfo       = e.target.value; scheduleAutoSave(); return; }
+    if (e.target.id === 'orgBoothNotes')      { state.planner.org.boothNotes      = e.target.value; scheduleAutoSave(); return; }
+    if (e.target.id === 'orgSponsorBudget')   { state.planner.org.sponsorBudget   = e.target.value; scheduleAutoSave(); renderSponsorBudgetBreakdown(); return; }
+    if (e.target.id === 'orgSponsorActual')   { state.planner.org.sponsorActual   = e.target.value; scheduleAutoSave(); renderSponsorBudgetBreakdown(); return; }
 
-    const swagId    = e.target.dataset.swagId;
-    const swagField = e.target.dataset.swagField;
-    if (swagId && swagField && swagField !== 'done') {
-      const item = state.planner.org.swag.find((x) => x.id === swagId);
-      if (item) { item[swagField] = e.target.value; scheduleAutoSave(); }
-      return;
-    }
     const delivId    = e.target.dataset.deliverablesId;
     const delivField = e.target.dataset.deliverablesField;
     if (delivId && delivField && delivField !== 'done') {
@@ -1918,6 +3173,8 @@ function wireOrgPanel() {
   });
 
   panel.addEventListener('change', (e) => {
+    if (e.target.id === 'orgSponsorCurrency') { state.planner.org.sponsorCurrency = e.target.value; scheduleAutoSave(); renderSponsorBudgetBreakdown(); return; }
+
     // Timeline date range
     if (e.target.id === 'timelineStartDate') {
       state.planner.org.timeline = { ...state.planner.org.timeline, startDate: e.target.value };
@@ -1946,17 +3203,10 @@ function wireOrgPanel() {
       return;
     }
 
-    const swagId    = e.target.dataset.swagId;
-    const swagField = e.target.dataset.swagField;
-    if (swagId && swagField === 'done') {
-      const item = state.planner.org.swag.find((x) => x.id === swagId);
-      if (item) {
-        item.done = e.target.checked;
-        const row = e.target.closest(`[data-swag-id="${swagId}"]`);
-        row?.querySelector('[data-swag-field="label"]')?.classList.toggle('line-through', item.done);
-        row?.querySelector('[data-swag-field="label"]')?.classList.toggle('text-gray-400', item.done);
-        scheduleAutoSave();
-      }
+    if (e.target.classList.contains('swag-done-check')) {
+      const id   = e.target.dataset.swagId;
+      const item = state.planner.org.swag.find((x) => x.id === id);
+      if (item) { item.done = e.target.checked; scheduleAutoSave(); renderOrgTab(); }
       return;
     }
     const delivId    = e.target.dataset.deliverablesId;
@@ -1999,11 +3249,8 @@ function wireOrgPanel() {
       renderOrgTab(); scheduleAutoSave(); return;
     }
 
-    if (e.target.closest('.delete-swag-btn')) {
-      const id = e.target.closest('.delete-swag-btn').dataset.swagId;
-      state.planner.org.swag = state.planner.org.swag.filter((x) => x.id !== id);
-      renderOrgTab(); scheduleAutoSave(); return;
-    }
+    const editSwag = e.target.closest('.edit-swag-btn');
+    if (editSwag) { openSwagModal(editSwag.dataset.swagId); return; }
     if (e.target.closest('.delete-deliverables-btn')) {
       const id = e.target.closest('.delete-deliverables-btn').dataset.deliverablesId;
       state.planner.org.deliverables = state.planner.org.deliverables.filter((x) => x.id !== id);
@@ -2020,8 +3267,11 @@ function wireOrgPanel() {
   });
 
   document.getElementById('addSwagBtn')?.addEventListener('click', () => {
-    state.planner.org.swag.push({ id: makeItemId('sw'), label: '', done: false });
-    renderOrgTab(); scheduleAutoSave();
+    const item = { id: makeItemId('sw'), name: '', quantity: 1, budget: '', actual: '', currency: 'AUD', done: false, notes: '' };
+    state.planner.org.swag.push(item);
+    renderOrgTab();
+    scheduleAutoSave();
+    openSwagModal(item.id);
   });
 
   document.getElementById('addDeliverableBtn')?.addEventListener('click', () => {
@@ -2053,9 +3303,6 @@ function wireOrgPanel() {
       }
     }
 
-    assignModal.addEventListener('input',  handleAssignField);
-    assignModal.addEventListener('change', handleAssignField);
-
     document.getElementById('addOutboundLegBtn')?.addEventListener('click', () => {
       const assignment = getAssignment();
       if (!assignment) return;
@@ -2073,7 +3320,6 @@ function wireOrgPanel() {
     });
 
     assignModal.addEventListener('click', (e) => {
-      if (e.target === assignModal) { closeAssignmentModal(); return; }
       const removeBtn = e.target.closest('.remove-leg-btn');
       if (removeBtn) {
         const { legId, direction } = removeBtn.dataset;
@@ -2086,8 +3332,7 @@ function wireOrgPanel() {
       }
     });
 
-    document.getElementById('assignmentModalClose')?.addEventListener('click', closeAssignmentModal);
-    document.getElementById('assignmentModalDone')?.addEventListener('click',  closeAssignmentModal);
+    createModal('assignmentModal', { onSave: handleAssignField, onClose: () => renderOrgTab() }).wire();
   }
 
   // ── Accommodation modal ─────────────────────────────────────────────────────
@@ -2131,18 +3376,15 @@ function wireOrgPanel() {
       scheduleAutoSave();
     }
 
-    accomModal.addEventListener('input',  handleAccomField);
-    accomModal.addEventListener('change', handleAccomField);
-
-    document.getElementById('accommodationModalClose')?.addEventListener('click', closeAccommodationModal);
-    document.getElementById('accommodationModalDone')?.addEventListener('click',  closeAccommodationModal);
-
-    document.getElementById('accommodationModalDelete')?.addEventListener('click', () => {
-      const id = accomModal.dataset.accomId;
-      state.planner.org.accommodations = (state.planner.org.accommodations || []).filter((a) => a.id !== id);
-      scheduleAutoSave();
-      closeAccommodationModal();
-    });
+    createModal('accommodationModal', {
+      onSave: handleAccomField,
+      onDelete: () => {
+        const id = accomModal.dataset.accomId;
+        state.planner.org.accommodations = (state.planner.org.accommodations || []).filter((a) => a.id !== id);
+        scheduleAutoSave();
+      },
+      onClose: () => renderOrgTab(),
+    }).wire();
 
     document.getElementById('accomMemberSelect')?.addEventListener('change', (e) => {
       const acc = getAccom();
@@ -2178,16 +3420,86 @@ function wireOrgPanel() {
       if (removeBtn) removeBtn.classList.add('opacity-0', 'pointer-events-none');
       scheduleAutoSave();
     });
-
-    accomModal.addEventListener('click', (e) => { if (e.target === accomModal) closeAccommodationModal(); });
   }
 
-  // Global Escape key handler for org modals
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    if (assignModal && !assignModal.classList.contains('hidden')) { closeAssignmentModal(); return; }
-    if (accomModal  && !accomModal.classList.contains('hidden'))  { closeAccommodationModal(); }
-  });
+  // ── Sponsor search ────────────────────────────────────────────────────────
+  function renderSponsorLinked() {
+    const sponsorId    = state.planner.org.sponsorId || ''
+    const sponsors     = state.eventMeta?.sponsors   || []
+    const linked       = sponsors.find((s) => s.id === sponsorId)
+    const searchRow    = document.getElementById('sponsorSearchRow')
+    const resultsEl    = document.getElementById('sponsorSearchResults')
+    const linkedCard   = document.getElementById('sponsorLinkedCard')
+    const unlinkBtn    = document.getElementById('unlinkSponsorBtn')
+
+    if (linked) {
+      searchRow?.classList.add('hidden')
+      resultsEl?.classList.add('hidden')
+      linkedCard?.classList.remove('hidden')
+      unlinkBtn?.classList.remove('hidden')
+      const nameEl = document.getElementById('sponsorLinkedName')
+      const tierEl = document.getElementById('sponsorLinkedTier')
+      const urlEl  = document.getElementById('sponsorLinkedUrl')
+      if (nameEl) nameEl.textContent = linked.title || ''
+      if (tierEl) tierEl.textContent = linked.tier  || ''
+      if (urlEl) {
+        if (linked.link) { urlEl.href = linked.link; urlEl.classList.remove('hidden') }
+        else             { urlEl.classList.add('hidden') }
+      }
+    } else {
+      searchRow?.classList.remove('hidden')
+      linkedCard?.classList.add('hidden')
+      unlinkBtn?.classList.add('hidden')
+    }
+  }
+
+  renderSponsorLinked()
+
+  document.getElementById('sponsorSearchInput')?.addEventListener('input', (e) => {
+    const query   = e.target.value.trim().toLowerCase()
+    const results = document.getElementById('sponsorSearchResults')
+    if (!results) return
+    if (!query) { results.classList.add('hidden'); results.innerHTML = ''; return }
+    const sponsors = state.eventMeta?.sponsors || []
+    const matches  = sponsors.filter((s) => s.title?.toLowerCase().includes(query))
+    if (!matches.length) {
+      results.innerHTML = '<li class="px-4 py-2 text-xs text-gray-400 italic">No sponsors found</li>'
+    } else {
+      results.innerHTML = matches.map((s) =>
+        `<li class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer flex items-center justify-between gap-2 sponsor-result-item" data-sponsor-id="${esc(s.id)}">
+          <span>${esc(s.title || '')}</span>
+          <span class="text-xs text-gray-400 flex-shrink-0">${esc(s.tier || '')}</span>
+        </li>`
+      ).join('')
+    }
+    results.classList.remove('hidden')
+  })
+
+  document.getElementById('sponsorSearchResults')?.addEventListener('click', (e) => {
+    const item = e.target.closest('.sponsor-result-item')
+    if (!item) return
+    state.planner.org.sponsorId = item.dataset.sponsorId
+    document.getElementById('sponsorSearchInput').value = ''
+    document.getElementById('sponsorSearchResults').classList.add('hidden')
+    renderSponsorLinked()
+    syncSponsoredSessions()
+    scheduleAutoSave()
+  })
+
+  document.getElementById('unlinkSponsorBtn')?.addEventListener('click', () => {
+    state.planner.org.sponsorId = ''
+    renderSponsorLinked()
+    scheduleAutoSave()
+  })
+
+  // Close results on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#sponsorSearchRow') && !e.target.closest('#sponsorSearchResults')) {
+      document.getElementById('sponsorSearchResults')?.classList.add('hidden')
+    }
+  }, { capture: false })
+
+  wireTrackedSessionSearch('sponsor')
 }
 
 // ── Team tab (global team members) ───────────────────────────────────────────
@@ -2232,14 +3544,6 @@ function openTeamMemberModal(id) {
   document.getElementById('tmName').focus();
 }
 
-function closeTeamMemberModal() {
-  const modal = document.getElementById('teamMemberModal');
-  if (!modal) return;
-  modal.classList.add('hidden');
-  document.body.style.overflow = '';
-  renderTeamTab();
-  refreshAssignMemberSelect();
-}
 
 function wireTeamPanel() {
   const panel = document.getElementById('plannerTeamPanel');
@@ -2264,56 +3568,83 @@ function wireTeamPanel() {
     };
   }
 
-  // Live-save on input
-  modal.addEventListener('input', () => {
-    const id = modal.dataset.memberId;
-    if (!id) return; // new member — save on Done
-    const member = (state.global?.teamMembers || []).find((m) => m.id === id);
-    if (!member) return;
-    Object.assign(member, readModalFields());
-    saveGlobal(state.global);
-  });
-
-  document.getElementById('teamMemberModalDone')?.addEventListener('click', () => {
-    const id     = modal.dataset.memberId;
-    const fields = readModalFields();
-    if (!id) {
-      // New member
-      const member = { id: makeItemId('tm'), ...fields };
-      state.global.teamMembers = [...(state.global?.teamMembers || []), member];
-    } else {
+  createModal('teamMemberModal', {
+    onSave: () => {
+      const id = modal.dataset.memberId;
+      if (!id) return;
       const member = (state.global?.teamMembers || []).find((m) => m.id === id);
-      if (member) Object.assign(member, fields);
-    }
-    saveGlobal(state.global);
-    closeTeamMemberModal();
+      if (!member) return;
+      Object.assign(member, readModalFields());
+      saveGlobal(state.global);
+    },
+    onDone: () => {
+      const id     = modal.dataset.memberId;
+      const fields = readModalFields();
+      if (!id) {
+        state.global.teamMembers = [...(state.global?.teamMembers || []), { id: makeItemId('tm'), ...fields }];
+      } else {
+        const member = (state.global?.teamMembers || []).find((m) => m.id === id);
+        if (member) Object.assign(member, fields);
+      }
+      saveGlobal(state.global);
+    },
+    onDelete: () => {
+      const id = modal.dataset.memberId;
+      if (!id) return;
+      state.global.teamMembers = (state.global?.teamMembers || []).filter((m) => m.id !== id);
+      saveGlobal(state.global);
+    },
+    onClose: () => { renderTeamTab(); refreshAssignMemberSelect(); },
+  }).wire();
+}
+
+// ── Mode toggle (sponsor / personal) ─────────────────────────────────────────
+
+// Tabs visible in each mode
+const SPONSOR_TABS  = new Set(['contacts', 'tasks', 'sponsor', 'team', 'summary']);
+const PERSONAL_TABS = new Set(['personal', 'receipts', 'summary']);
+
+function applyMode(mode) {
+  state.planner.mode = mode;
+  savePlanner(state.eventFile, state.planner);
+
+  const isSponsor  = mode === 'sponsor';
+  const visibleTabs = isSponsor ? SPONSOR_TABS : PERSONAL_TABS;
+
+  // Show/hide tab buttons based on the active mode
+  TABS.forEach((tab) => {
+    document.getElementById(TAB_BTN_IDS[tab])?.classList.toggle('hidden', !visibleTabs.has(tab));
   });
 
-  document.getElementById('teamMemberModalDelete')?.addEventListener('click', () => {
-    const id = modal.dataset.memberId;
-    if (!id) return;
-    state.global.teamMembers = (state.global?.teamMembers || []).filter((m) => m.id !== id);
-    saveGlobal(state.global);
-    closeTeamMemberModal();
-  });
+  // Mark the active mode button
+  document.getElementById('modeToggleSponsor')?.classList.toggle('is-active', isSponsor);
+  document.getElementById('modeToggleSponsor')?.setAttribute('aria-pressed', String(isSponsor));
+  document.getElementById('modeTogglePersonal')?.classList.toggle('is-active', !isSponsor);
+  document.getElementById('modeTogglePersonal')?.setAttribute('aria-pressed', String(!isSponsor));
 
-  document.getElementById('teamMemberModalClose')?.addEventListener('click', closeTeamMemberModal);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeTeamMemberModal(); });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeTeamMemberModal();
-  });
+  // Navigate away from the current tab if it isn't available in this mode
+  const cur = state.activeTab;
+  if (!visibleTabs.has(cur)) {
+    setActiveTab(isSponsor ? 'contacts' : 'personal');
+  }
+
+  // Re-render summary if it's visible (stats differ by mode)
+  if (state.activeTab === 'summary') renderSummaryTab();
 }
 
 function wireToolbar() {
   // Tab buttons
-  document.getElementById('showNotesTab')?.addEventListener('click', () => setActiveTab('notes'));
   document.getElementById('showContactsTab')?.addEventListener('click', () => setActiveTab('contacts'));
   document.getElementById('showTasksTab')?.addEventListener('click', () => setActiveTab('tasks'));
-  document.getElementById('showOrgTab')?.addEventListener('click', () => setActiveTab('org'));
+  document.getElementById('showSponsorTab')?.addEventListener('click', () => { setActiveTab('sponsor'); renderSponsorBudgetBreakdown(); });
+  document.getElementById('showPersonalTab')?.addEventListener('click', () => { setActiveTab('personal'); renderPersonalBudgetBreakdown(); });
   document.getElementById('showTeamTab')?.addEventListener('click', () => setActiveTab('team'));
-  document.getElementById('showItineraryTab')?.addEventListener('click', () => setActiveTab('itinerary'));
   document.getElementById('showReceiptsTab')?.addEventListener('click', () => setActiveTab('receipts'));
   document.getElementById('showSummaryTab')?.addEventListener('click', () => { setActiveTab('summary'); renderSummaryTab(); });
+
+  // Mode toggle
+  document.getElementById('modeToggleSponsor')?.addEventListener('click', () => applyMode('sponsor'));
+  document.getElementById('modeTogglePersonal')?.addEventListener('click', () => applyMode('personal'));
 
   // Export / import / save-to-file
   document.getElementById('plannerExportBtn')?.addEventListener('click', handleExport);
@@ -2386,14 +3717,21 @@ async function init() {
   state.global  = loadGlobal();
   state.planner = loadPlanner(eventFile);
 
+  syncSponsoredSessions();
+
   updateHeader();
   renderAll();
+  applyMode(state.planner.mode || 'personal');
 
   wireToolbar();
-  wireNotesPanel();
   wireContactsPanel();
   wireTasksPanel();
   wireOrgPanel();
+  wirePersonalPanel();
+  wireTrackedSessionModal();
+  wireSwagModal();
+  wirePersonalLegModal();
+  wirePersonalAccomModal();
   wireTeamPanel();
   wireItineraryPanel();
   wireReceiptsPanel();
