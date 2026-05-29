@@ -147,6 +147,38 @@ function tzDatalist() {
   return tzs.map((tz) => `<option value="${tz}">`).join('')
 }
 
+// Upload file to API server (saves to receipts/<event-slug>/ on disk) or,
+// when no server is configured, encode as a base64 data URL stored in localStorage
+// via the planner JSON. Files > 1.5 MB are rejected in the no-API path to stay
+// within localStorage's ~5 MB quota.
+async function uploadOrReadFile(file) {
+  const apiEndpoint = localStorage.getItem('editorApiEndpoint') || '';
+  if (apiEndpoint) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('eventFile', state.eventFile);
+    const res  = await fetch(`${apiEndpoint.replace(/\/$/, '')}/api/receipts`, { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return { path: data.path, label: file.name };
+  }
+  const MAX_BYTES = 1_500_000;
+  if (file.size > MAX_BYTES) {
+    throw new Error(`File too large to store locally (${(file.size / 1_048_576).toFixed(1)} MB). Connect the API server to upload larger files.`);
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve({ path: reader.result, label: file.name });
+    reader.onerror = () => reject(new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function fileDisplayName(filePath, fileLabel) {
+  if (!filePath) return '';
+  return fileLabel || (filePath.startsWith('data:') ? 'Attached file' : filePath.split('/').pop());
+}
+
 function parseBudget(str) {
   const n = parseFloat(String(str || '').replace(/[^0-9.]/g, ''))
   return isNaN(n) ? 0 : n
@@ -154,26 +186,28 @@ function parseBudget(str) {
 
 // ── Tab system ───────────────────────────────────────────────────────────────
 
-const TABS = ['contacts', 'tasks', 'sponsor', 'personal', 'team', 'receipts', 'summary'];
+const TABS = ['contacts', 'tasks', 'sponsor', 'personal', 'team', 'documents', 'receipts', 'summary'];
 
 const PANEL_IDS = {
-  contacts:   'plannerContactsPanel',
-  tasks:      'plannerTasksPanel',
-  sponsor:    'plannerSponsorPanel',
-  personal: 'plannerPersonalPanel',
-  team:       'plannerTeamPanel',
-  receipts:   'plannerReceiptsPanel',
-  summary:    'plannerSummaryPanel',
+  contacts:  'plannerContactsPanel',
+  tasks:     'plannerTasksPanel',
+  sponsor:   'plannerSponsorPanel',
+  personal:  'plannerPersonalPanel',
+  team:      'plannerTeamPanel',
+  documents: 'plannerDocumentsPanel',
+  receipts:  'plannerReceiptsPanel',
+  summary:   'plannerSummaryPanel',
 };
 
 const TAB_BTN_IDS = {
-  contacts:   'showContactsTab',
-  tasks:      'showTasksTab',
-  sponsor:    'showSponsorTab',
-  personal: 'showPersonalTab',
-  team:       'showTeamTab',
-  receipts:   'showReceiptsTab',
-  summary:    'showSummaryTab',
+  contacts:  'showContactsTab',
+  tasks:     'showTasksTab',
+  sponsor:   'showSponsorTab',
+  personal:  'showPersonalTab',
+  team:      'showTeamTab',
+  documents: 'showDocumentsTab',
+  receipts:  'showReceiptsTab',
+  summary:   'showSummaryTab',
 };
 
 function setActiveTab(tab) {
@@ -487,12 +521,14 @@ function handleTaskChange(id, field, value) {
 // ── Org tab ──────────────────────────────────────────────────────────────────
 
 const TRAVEL_MODES = {
-  flight:   { label: '✈ Flight',    icon: 'fas fa-plane-departure', returnIcon: 'fas fa-plane-arrival' },
-  train:    { label: '🚂 Train',    icon: 'fas fa-train' },
-  bus:      { label: '🚌 Bus',      icon: 'fas fa-bus' },
-  ferry:    { label: '⛴ Ferry',    icon: 'fas fa-ship' },
-  car:      { label: '🚗 Transfer', icon: 'fas fa-car' },
-  other:    { label: '↔ Other',    icon: 'fas fa-route' },
+  flight:    { label: '✈ Flight',    icon: 'fas fa-plane-departure', returnIcon: 'fas fa-plane-arrival' },
+  train:     { label: '🚂 Train',    icon: 'fas fa-train' },
+  bus:       { label: '🚌 Bus',      icon: 'fas fa-bus' },
+  ferry:     { label: '⛴ Ferry',    icon: 'fas fa-ship' },
+  car:       { label: '🚗 Transfer', icon: 'fas fa-car' },
+  taxi:      { label: '🚕 Taxi',     icon: 'fas fa-taxi' },
+  rideshare: { label: '📱 Rideshare', icon: 'fas fa-car-side' },
+  other:     { label: '↔ Other',    icon: 'fas fa-route' },
 };
 
 function travelIcon(mode, isReturn) {
@@ -500,8 +536,16 @@ function travelIcon(mode, isReturn) {
   return isReturn && m.returnIcon ? m.returnIcon : m.icon;
 }
 
+function sortLegs(legs) {
+  return [...legs].sort((a, b) => {
+    const ka = `${a.date || '9999-99-99'}${a.departTime || ''}`;
+    const kb = `${b.date || '9999-99-99'}${b.departTime || ''}`;
+    return ka.localeCompare(kb);
+  });
+}
+
 function makeLeg() {
-  return { id: makeItemId('leg'), mode: 'flight', date: '', ref: '', from: '', to: '', departTime: '', arriveTime: '', departTz: '', arriveTz: '', confirmation: '', notes: '' };
+  return { id: makeItemId('leg'), mode: 'flight', date: '', ref: '', from: '', to: '', departTime: '', arriveTime: '', departTz: '', arriveTz: '', confirmation: '', notes: '', filePath: '', fileLabel: '', receiptId: '' };
 }
 
 function legCardHtml(leg, direction) {
@@ -546,6 +590,17 @@ function legCardHtml(leg, direction) {
         <input type="text" list="tzList" data-leg-id="${li}" data-direction="${d}" data-leg-field="departTz" value="${esc(leg.departTz || '')}" placeholder="Dep timezone" class="h-8 w-full rounded border-gray-300 text-xs bg-white px-2 drupal-blue-focus">
         <input type="text" list="tzList" data-leg-id="${li}" data-direction="${d}" data-leg-field="arriveTz" value="${esc(leg.arriveTz || '')}" placeholder="Arr timezone" class="h-8 w-full rounded border-gray-300 text-xs bg-white px-2 drupal-blue-focus">
       </div>
+      <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
+        <span class="text-[0.7rem] font-medium text-gray-400 uppercase tracking-wide flex-shrink-0">Receipt</span>
+        ${leg.filePath
+          ? `<a href="${esc(leg.filePath)}" target="_blank" class="text-xs text-blue-600 hover:underline truncate flex-1">${esc(fileDisplayName(leg.filePath, leg.fileLabel))}</a>`
+          : '<span class="text-xs text-gray-400 flex-1 italic">No file attached</span>'
+        }
+        <button type="button" class="leg-attach-btn h-7 px-2 border border-gray-300 rounded text-xs text-gray-600 hover:bg-gray-50 flex-shrink-0"
+          data-leg-id="${li}" data-direction="${d}" aria-label="Attach receipt file for this leg">
+          <i class="fas fa-paperclip mr-1 text-[0.65rem]" aria-hidden="true"></i>${leg.filePath ? 'Replace' : 'Attach'}
+        </button>
+      </div>
     </div>`;
 }
 
@@ -580,12 +635,10 @@ function renderAssignmentLegsInModal(assignment) {
   const empty = '<p class="text-xs text-gray-400 italic py-1">No legs yet. Click Add leg to start.</p>';
   const outEl = document.getElementById('assignmentOutboundLegs');
   const retEl = document.getElementById('assignmentReturnLegs');
-  if (outEl) outEl.innerHTML = (assignment.outboundLegs || []).length
-    ? assignment.outboundLegs.map((l) => legCardHtml(l, 'outbound')).join('')
-    : empty;
-  if (retEl) retEl.innerHTML = (assignment.returnLegs || []).length
-    ? assignment.returnLegs.map((l) => legCardHtml(l, 'return')).join('')
-    : empty;
+  const sortedOut = sortLegs(assignment.outboundLegs || []);
+  const sortedRet = sortLegs(assignment.returnLegs   || []);
+  if (outEl) outEl.innerHTML = sortedOut.length ? sortedOut.map((l) => legCardHtml(l, 'outbound')).join('') : empty;
+  if (retEl) retEl.innerHTML = sortedRet.length ? sortedRet.map((l) => legCardHtml(l, 'return')).join('') : empty;
 }
 
 const TIMELINE_COLORS = [
@@ -965,6 +1018,7 @@ function openAccommodationModal(id) {
   document.getElementById('accomConfirmation').value = acc.confirmation || '';
   document.getElementById('accomNotes').value        = acc.notes        || '';
 
+  renderAccomDocStatus(acc, 'accomDocStatus', 'accomAttachDocBtn');
   renderAccomMembersSection(acc);
 
   modal.classList.remove('hidden');
@@ -1357,7 +1411,7 @@ function wireItineraryPanel() {
 // ── Receipts tab ─────────────────────────────────────────────────────────────
 
 function makeReceipt() {
-  return { id: makeItemId('rc'), name: '', date: '', amount: '', currency: 'AUD', category: 'misc', filePath: '', notes: '' }
+  return { id: makeItemId('rc'), name: '', date: '', amount: '', currency: 'AUD', category: 'misc', filePath: '', fileLabel: '', notes: '' }
 }
 
 function receiptCardHtml(receipt) {
@@ -1409,7 +1463,7 @@ function receiptCardHtml(receipt) {
           <label class="editor-form-field">
             <span class="editor-field-label">File attachment</span>
             <div class="flex items-center gap-2">
-              ${receipt.filePath ? `<a href="${esc(receipt.filePath)}" target="_blank" class="text-xs drupal-blue-text truncate flex-1">${esc(receipt.filePath.split('/').pop())}</a>` : '<span class="text-xs text-gray-400 flex-1">No file attached</span>'}
+              ${receipt.filePath ? `<a href="${esc(receipt.filePath)}" target="_blank" class="text-xs drupal-blue-text truncate flex-1">${esc(fileDisplayName(receipt.filePath, receipt.fileLabel))}</a>` : '<span class="text-xs text-gray-400 flex-1">No file attached</span>'}
               <button type="button" class="receipt-attach-btn h-8 px-2 border border-gray-300 rounded text-xs text-gray-600 hover:bg-gray-50 flex-shrink-0" data-receipt-id="${esc(receipt.id)}">
                 <i class="fas fa-paperclip text-[0.65rem]"></i>
               </button>
@@ -1514,35 +1568,21 @@ function wireReceiptsPanel() {
     if (chevron) chevron.classList.toggle('rotate-90', e.target.open)
   }, true)
 
-  // File input change — upload to API or store locally
   document.getElementById('receiptFileInput')?.addEventListener('change', async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     const rid     = e.target.dataset.receiptId
     const receipt = (state.planner.receipts || []).find((r) => r.id === rid)
-    if (!receipt) return
+    if (!receipt) { e.target.value = ''; return }
 
-    const apiEndpoint = localStorage.getItem('editorApiEndpoint') || ''
-    if (apiEndpoint) {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('eventFile', state.eventFile)
-      try {
-        const res  = await fetch(`${apiEndpoint.replace(/\/$/, '')}/api/receipts`, { method: 'POST', body: formData })
-        const data = await res.json()
-        if (data.ok) {
-          receipt.filePath = data.path
-        } else {
-          window.alert(`Upload failed: ${data.error}`)
-        }
-      } catch (err) {
-        window.alert(`Upload failed: ${err.message}`)
-      }
-    } else {
-      // No API — store the filename only
-      receipt.filePath = file.name
-    }
+    try {
+      const { path, label } = await uploadOrReadFile(file)
+      receipt.filePath  = path
+      receipt.fileLabel = label
+    } catch (err) { window.alert(err.message); e.target.value = ''; return }
+
     renderReceiptsTab()
+    renderDocumentsTab()
     scheduleAutoSave()
     e.target.value = ''
   })
@@ -2579,8 +2619,8 @@ function renderPersonalTab() {
   const outEmpty     = document.getElementById('personalOutboundEmpty')
   const retEmpty     = document.getElementById('personalReturnEmpty')
 
-  const outLegs = personal.outboundLegs || []
-  const retLegs = personal.returnLegs   || []
+  const outLegs = sortLegs(personal.outboundLegs || [])
+  const retLegs = sortLegs(personal.returnLegs   || [])
 
   if (outContainer) outContainer.innerHTML = outLegs.map((l) => personalLegRowHtml(l, 'outbound')).join('')
   if (retContainer) retContainer.innerHTML = retLegs.map((l) => personalLegRowHtml(l, 'return')).join('')
@@ -2707,10 +2747,143 @@ function openPersonalLegModal(direction, legId) {
   document.getElementById('personalLegModalDepartTz').value     = leg.departTz     || '';
   document.getElementById('personalLegModalArriveTz').value     = leg.arriveTz     || '';
   document.getElementById('personalLegModalConfirmation').value = leg.confirmation || '';
+  renderPersonalLegReceiptStatus(leg);
   _personalLegModal.open('personalLegModalFrom');
 }
 
-function wirePersonalLegModal() { _personalLegModal.wire(); }
+function renderPersonalLegReceiptStatus(leg) {
+  const container = document.getElementById('personalLegReceiptStatus');
+  if (!container) return;
+  const receipt = leg?.receiptId ? (state.planner.receipts || []).find((r) => r.id === leg.receiptId) : null;
+  if (receipt) {
+    container.innerHTML = `
+      <i class="fas fa-link text-[0.65rem] text-blue-400 flex-shrink-0" aria-hidden="true"></i>
+      <span class="text-xs text-gray-700 truncate flex-1">${esc(receipt.name || 'Receipt entry')}</span>
+      <button type="button" id="personalLegViewReceiptBtn"
+        class="h-8 px-3 border border-blue-200 rounded-md text-xs text-blue-600 hover:bg-blue-50 transition-colors flex-shrink-0">
+        <i class="fas fa-arrow-right mr-1 text-[0.65rem]" aria-hidden="true"></i>View in Receipts
+      </button>
+      <button type="button" id="personalLegUnlinkReceiptBtn"
+        class="h-8 px-2 border border-gray-300 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
+        aria-label="Unlink receipt">
+        <i class="fas fa-unlink text-[0.65rem]" aria-hidden="true"></i>
+      </button>`;
+  } else if (leg?.filePath) {
+    container.innerHTML = `
+      <i class="fas fa-paperclip text-[0.65rem] text-gray-400 flex-shrink-0" aria-hidden="true"></i>
+      <span class="text-xs text-gray-600 truncate flex-1">${esc(fileDisplayName(leg.filePath, leg.fileLabel))}</span>
+      <button type="button" id="personalLegAttachBtn"
+        class="h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0">
+        <i class="fas fa-paperclip mr-1 text-[0.65rem]" aria-hidden="true"></i>Replace
+      </button>
+      <button type="button" id="personalLegCreateReceiptBtn"
+        class="h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0">
+        <i class="fas fa-receipt mr-1 text-[0.65rem]" aria-hidden="true"></i>Create receipt
+      </button>`;
+  } else {
+    container.innerHTML = `
+      <span class="text-xs text-gray-400 flex-1 italic">No receipt attached</span>
+      <button type="button" id="personalLegAttachBtn"
+        class="h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0">
+        <i class="fas fa-paperclip mr-1 text-[0.65rem]" aria-hidden="true"></i>Attach file
+      </button>
+      <button type="button" id="personalLegCreateReceiptBtn"
+        class="h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0">
+        <i class="fas fa-receipt mr-1 text-[0.65rem]" aria-hidden="true"></i>Create receipt
+      </button>`;
+  }
+}
+
+function createReceiptForPersonalLeg() {
+  const { direction, id } = _personalLeg;
+  if (!direction || !id) return;
+  const legs = direction === 'outbound' ? state.planner.personal?.outboundLegs : state.planner.personal?.returnLegs;
+  const leg  = legs?.find((l) => l.id === id);
+  if (!leg) return;
+
+  const modeLabel = TRAVEL_MODES[leg.mode]?.label.replace(/^\S+\s/, '') || leg.mode;
+  const route     = [leg.from, leg.to].filter(Boolean).join(' → ');
+  const name      = [modeLabel, route].filter(Boolean).join(route ? ': ' : '') || 'Travel receipt';
+
+  const receipt    = makeReceipt();
+  receipt.name     = name;
+  receipt.date     = leg.date     || '';
+  receipt.category = 'travel';
+  if (leg.filePath) receipt.filePath = leg.filePath;
+
+  state.planner.receipts = [...(state.planner.receipts || []), receipt];
+  leg.receiptId = receipt.id;
+
+  scheduleAutoSave();
+  renderPersonalLegReceiptStatus(leg);
+  renderReceiptsTab();
+}
+
+function wirePersonalLegModal() {
+  _personalLegModal.wire();
+
+  const modal = document.getElementById('personalLegModal');
+  if (!modal) return;
+
+  modal.addEventListener('click', (e) => {
+    if (e.target.closest('#personalLegAttachBtn')) {
+      document.getElementById('personalLegFileInput')?.click();
+      return;
+    }
+    if (e.target.closest('#personalLegCreateReceiptBtn')) {
+      createReceiptForPersonalLeg();
+      return;
+    }
+    if (e.target.closest('#personalLegViewReceiptBtn')) {
+      const { direction, id } = _personalLeg;
+      if (!direction || !id) return;
+      const legs = direction === 'outbound' ? state.planner.personal?.outboundLegs : state.planner.personal?.returnLegs;
+      const leg  = legs?.find((l) => l.id === id);
+      _personalLegModal.close();
+      setActiveTab('receipts');
+      setTimeout(() => {
+        const el = leg?.receiptId ? document.querySelector(`details[data-receipt-id="${leg.receiptId}"]`) : null;
+        el?.setAttribute('open', '');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
+      return;
+    }
+    if (e.target.closest('#personalLegUnlinkReceiptBtn')) {
+      const { direction, id } = _personalLeg;
+      if (!direction || !id) return;
+      const legs = direction === 'outbound' ? state.planner.personal?.outboundLegs : state.planner.personal?.returnLegs;
+      const leg  = legs?.find((l) => l.id === id);
+      if (leg) { leg.receiptId = ''; scheduleAutoSave(); renderPersonalLegReceiptStatus(leg); }
+      return;
+    }
+  });
+
+  document.getElementById('personalLegFileInput')?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const { direction, id } = _personalLeg;
+    if (!direction || !id) return;
+    const legs = direction === 'outbound' ? state.planner.personal?.outboundLegs : state.planner.personal?.returnLegs;
+    const leg  = legs?.find((l) => l.id === id);
+    if (!leg) { e.target.value = ''; return; }
+
+    try {
+      const { path, label } = await uploadOrReadFile(file);
+      leg.filePath  = path;
+      leg.fileLabel = label;
+    } catch (err) { window.alert(err.message); e.target.value = ''; return; }
+
+    if (leg.receiptId) {
+      const receipt = (state.planner.receipts || []).find((r) => r.id === leg.receiptId);
+      if (receipt) { receipt.filePath = leg.filePath; renderReceiptsTab(); }
+    }
+
+    scheduleAutoSave();
+    renderPersonalLegReceiptStatus(leg);
+    renderDocumentsTab();
+    e.target.value = '';
+  });
+}
 
 // ── Swag modal ────────────────────────────────────────────────────────────────
 
@@ -2811,10 +2984,63 @@ function openPersonalAccomModal(id) {
   document.getElementById('personalAccomModalActual').value       = accom.budgetActual || '';
   const currEl = document.getElementById('personalAccomModalCurrency');
   if (currEl) { currEl.innerHTML = currencyOptions(); currEl.value = accom.currency || 'AUD'; }
+  renderAccomDocStatus(accom, 'personalAccomDocStatus', 'personalAccomAttachDocBtn');
   _personalAccomModal.open('personalAccomModalName');
 }
 
-function wirePersonalAccomModal() { _personalAccomModal.wire(); }
+function renderAccomDocStatus(accom, statusId, attachBtnId) {
+  const container = document.getElementById(statusId);
+  if (!container) return;
+  if (accom?.filePath) {
+    container.innerHTML = `
+      <i class="fas fa-paperclip text-[0.65rem] text-gray-400 flex-shrink-0" aria-hidden="true"></i>
+      <a href="${esc(accom.filePath)}" target="_blank"
+        class="text-xs text-blue-600 hover:underline truncate flex-1">
+        ${esc(fileDisplayName(accom.filePath, accom.fileLabel))}
+      </a>
+      <button type="button" id="${attachBtnId}"
+        class="h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0">
+        <i class="fas fa-paperclip mr-1 text-[0.65rem]" aria-hidden="true"></i>Replace
+      </button>`;
+  } else {
+    container.innerHTML = `
+      <span class="text-xs text-gray-400 flex-1 italic">No document attached</span>
+      <button type="button" id="${attachBtnId}"
+        class="h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0">
+        <i class="fas fa-paperclip mr-1 text-[0.65rem]" aria-hidden="true"></i>Attach
+      </button>`;
+  }
+}
+
+function wirePersonalAccomModal() {
+  _personalAccomModal.wire();
+
+  const modal = document.getElementById('personalAccomModal');
+  if (!modal) return;
+
+  modal.addEventListener('click', (e) => {
+    if (e.target.closest('#personalAccomAttachDocBtn')) {
+      document.getElementById('personalAccomFileInput')?.click();
+    }
+  });
+
+  document.getElementById('personalAccomFileInput')?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const accom = (state.planner.personal?.accommodations || []).find((a) => a.id === _personalAccomId);
+    if (!accom) { e.target.value = ''; return; }
+    try {
+      const { path, label } = await uploadOrReadFile(file);
+      accom.filePath  = path;
+      accom.fileLabel = label;
+    } catch (err) { window.alert(err.message); e.target.value = ''; return; }
+    scheduleAutoSave();
+    renderAccomDocStatus(accom, 'personalAccomDocStatus', 'personalAccomAttachDocBtn');
+    renderPersonalAccomList();
+    renderDocumentsTab();
+    e.target.value = '';
+  });
+}
 
 function wirePersonalPanel() {
   const panel = document.getElementById('plannerPersonalPanel')
@@ -2936,6 +3162,7 @@ function renderAll() {
   renderOrgTab();
   renderPersonalTab();
   renderTeamTab();
+  renderDocumentsTab();
   renderReceiptsTab();
   renderSummaryTab();
 }
@@ -3329,7 +3556,45 @@ function wireOrgPanel() {
         else assignment.returnLegs = assignment.returnLegs.filter((l) => l.id !== legId);
         renderAssignmentLegsInModal(assignment);
         scheduleAutoSave();
+        return;
       }
+
+      const attachBtn = e.target.closest('.leg-attach-btn');
+      if (attachBtn) {
+        const legFileInput = document.getElementById('legFileInput');
+        if (!legFileInput) return;
+        legFileInput.dataset.legId  = attachBtn.dataset.legId;
+        legFileInput.dataset.legDir = attachBtn.dataset.direction;
+        legFileInput.click();
+      }
+    });
+
+    document.getElementById('legFileInput')?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const legId  = e.target.dataset.legId;
+      const legDir = e.target.dataset.legDir;
+      if (!legId) { e.target.value = ''; return; }
+
+      let foundLeg = null;
+      let foundAssignment = null;
+      for (const a of (state.planner.org?.teamAssignments || [])) {
+        const legs = legDir === 'outbound' ? a.outboundLegs : a.returnLegs;
+        const leg  = (legs || []).find((l) => l.id === legId);
+        if (leg) { foundLeg = leg; foundAssignment = a; break; }
+      }
+      if (!foundLeg) { e.target.value = ''; return; }
+
+      try {
+        const { path, label } = await uploadOrReadFile(file);
+        foundLeg.filePath  = path;
+        foundLeg.fileLabel = label;
+      } catch (err) { window.alert(err.message); e.target.value = ''; return; }
+
+      scheduleAutoSave();
+      if (foundAssignment) renderAssignmentLegsInModal(foundAssignment);
+      renderDocumentsTab();
+      e.target.value = '';
     });
 
     createModal('assignmentModal', { onSave: handleAssignField, onClose: () => renderOrgTab() }).wire();
@@ -3385,6 +3650,29 @@ function wireOrgPanel() {
       },
       onClose: () => renderOrgTab(),
     }).wire();
+
+    accomModal.addEventListener('click', (e) => {
+      if (e.target.closest('#accomAttachDocBtn')) {
+        document.getElementById('accomFileInput')?.click();
+      }
+    });
+
+    document.getElementById('accomFileInput')?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const acc = getAccom();
+      if (!acc) { e.target.value = ''; return; }
+      try {
+        const { path, label } = await uploadOrReadFile(file);
+        acc.filePath  = path;
+        acc.fileLabel = label;
+      } catch (err) { window.alert(err.message); e.target.value = ''; return; }
+      scheduleAutoSave();
+      renderAccomDocStatus(acc, 'accomDocStatus', 'accomAttachDocBtn');
+      renderOrgTab();
+      renderDocumentsTab();
+      e.target.value = '';
+    });
 
     document.getElementById('accomMemberSelect')?.addEventListener('change', (e) => {
       const acc = getAccom();
@@ -3601,8 +3889,8 @@ function wireTeamPanel() {
 // ── Mode toggle (sponsor / personal) ─────────────────────────────────────────
 
 // Tabs visible in each mode
-const SPONSOR_TABS  = new Set(['contacts', 'tasks', 'sponsor', 'team', 'summary']);
-const PERSONAL_TABS = new Set(['personal', 'receipts', 'summary']);
+const SPONSOR_TABS  = new Set(['contacts', 'tasks', 'sponsor', 'team', 'documents', 'summary']);
+const PERSONAL_TABS = new Set(['personal', 'receipts', 'documents', 'summary']);
 
 function applyMode(mode) {
   state.planner.mode = mode;
@@ -3632,6 +3920,239 @@ function applyMode(mode) {
   if (state.activeTab === 'summary') renderSummaryTab();
 }
 
+// ── Documents tab ─────────────────────────────────────────────────────────────
+
+function collectDocuments() {
+  const mode = state.planner.mode || 'personal';
+  const docs = [];
+
+  if (mode === 'personal') {
+    (state.planner.personal?.documents || []).forEach((d) => {
+      docs.push({ ...d, isDirect: true, sourceLabel: 'Personal document', sourceIcon: 'fas fa-file-alt' });
+    });
+
+    sortLegs(state.planner.personal?.outboundLegs || []).forEach((leg) => {
+      if (!leg.filePath) return;
+      const route = [leg.from, leg.to].filter(Boolean).join(' → ');
+      const modeInfo = TRAVEL_MODES[leg.mode] || TRAVEL_MODES.other;
+      docs.push({
+        id: `leg-out-${leg.id}`,
+        name: fileDisplayName(leg.filePath, leg.fileLabel),
+        filePath: leg.filePath,
+        isDirect: false,
+        sourceLabel: `Outbound travel${route ? ` · ${route}` : ''}`,
+        sourceIcon: modeInfo.icon || 'fas fa-route',
+      });
+    });
+
+    sortLegs(state.planner.personal?.returnLegs || []).forEach((leg) => {
+      if (!leg.filePath) return;
+      const route = [leg.from, leg.to].filter(Boolean).join(' → ');
+      const modeInfo = TRAVEL_MODES[leg.mode] || TRAVEL_MODES.other;
+      docs.push({
+        id: `leg-ret-${leg.id}`,
+        name: fileDisplayName(leg.filePath, leg.fileLabel),
+        filePath: leg.filePath,
+        isDirect: false,
+        sourceLabel: `Return travel${route ? ` · ${route}` : ''}`,
+        sourceIcon: modeInfo.returnIcon || modeInfo.icon || 'fas fa-route',
+      });
+    });
+
+    (state.planner.personal?.accommodations || []).forEach((accom) => {
+      if (!accom.filePath) return;
+      docs.push({
+        id: `paccom-${accom.id}`,
+        name: fileDisplayName(accom.filePath, accom.fileLabel),
+        filePath: accom.filePath,
+        isDirect: false,
+        sourceLabel: `Accommodation${accom.name ? ` · ${accom.name}` : ''}`,
+        sourceIcon: 'fas fa-bed',
+      });
+    });
+
+    (state.planner.receipts || []).forEach((r) => {
+      if (!r.filePath) return;
+      docs.push({
+        id: `receipt-${r.id}`,
+        name: fileDisplayName(r.filePath, r.fileLabel),
+        filePath: r.filePath,
+        isDirect: false,
+        sourceLabel: `Receipt${r.merchant ? ` · ${r.merchant}` : ''}`,
+        sourceIcon: 'fas fa-receipt',
+      });
+    });
+  } else {
+    (state.planner.org?.documents || []).forEach((d) => {
+      docs.push({ ...d, isDirect: true, sourceLabel: 'Document', sourceIcon: 'fas fa-file-alt' });
+    });
+
+    (state.planner.org?.teamAssignments || []).forEach((a) => {
+      const member = (state.global?.teamMembers || []).find((m) => m.id === a.memberId);
+      const memberName = member?.name || 'Team member';
+
+      sortLegs(a.outboundLegs || []).forEach((leg) => {
+        if (!leg.filePath) return;
+        const route = [leg.from, leg.to].filter(Boolean).join(' → ');
+        const modeInfo = TRAVEL_MODES[leg.mode] || TRAVEL_MODES.other;
+        docs.push({
+          id: `tleg-out-${leg.id}`,
+          name: fileDisplayName(leg.filePath, leg.fileLabel),
+          filePath: leg.filePath,
+          isDirect: false,
+          sourceLabel: `${memberName} · Outbound${route ? ` · ${route}` : ''}`,
+          sourceIcon: modeInfo.icon || 'fas fa-route',
+        });
+      });
+
+      sortLegs(a.returnLegs || []).forEach((leg) => {
+        if (!leg.filePath) return;
+        const route = [leg.from, leg.to].filter(Boolean).join(' → ');
+        const modeInfo = TRAVEL_MODES[leg.mode] || TRAVEL_MODES.other;
+        docs.push({
+          id: `tleg-ret-${leg.id}`,
+          name: fileDisplayName(leg.filePath, leg.fileLabel),
+          filePath: leg.filePath,
+          isDirect: false,
+          sourceLabel: `${memberName} · Return${route ? ` · ${route}` : ''}`,
+          sourceIcon: modeInfo.returnIcon || modeInfo.icon || 'fas fa-route',
+        });
+      });
+    });
+
+    (state.planner.org?.accommodations || []).forEach((accom) => {
+      if (!accom.filePath) return;
+      docs.push({
+        id: `oaccom-${accom.id}`,
+        name: fileDisplayName(accom.filePath, accom.fileLabel),
+        filePath: accom.filePath,
+        isDirect: false,
+        sourceLabel: `Team accommodation${accom.name ? ` · ${accom.name}` : ''}`,
+        sourceIcon: 'fas fa-building',
+      });
+    });
+  }
+
+  return docs;
+}
+
+function documentCardHtml(doc) {
+  const date = doc.updatedAt
+    ? new Date(doc.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+    : '';
+
+  if (doc.isDirect) {
+    return `
+      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white group" data-doc-id="${esc(doc.id)}">
+        <i class="fas fa-file-alt text-gray-400 flex-shrink-0 text-sm" aria-hidden="true"></i>
+        <div class="flex-1 min-w-0">
+          <input type="text" class="doc-name-input w-full border-0 border-b border-transparent hover:border-gray-200 focus:border-gray-300 focus:ring-0 bg-transparent text-sm text-gray-800 px-0 py-0.5 transition-colors"
+            data-doc-id="${esc(doc.id)}" value="${esc(doc.name)}" placeholder="Document name"
+            aria-label="Document name for ${esc(doc.name || 'this file')}">
+          ${date ? `<p class="text-xs text-gray-400 mt-0.5">Updated ${esc(date)}</p>` : ''}
+        </div>
+        ${doc.filePath
+          ? `<a href="${esc(doc.filePath)}" target="_blank"
+               class="flex-shrink-0 h-8 px-3 border border-gray-300 rounded-md text-xs text-blue-600 hover:bg-blue-50 transition-colors inline-flex items-center"
+               aria-label="View ${esc(doc.name || 'document')}">
+               <i class="fas fa-external-link-alt mr-1 text-[0.65rem]" aria-hidden="true"></i>View
+             </a>`
+          : '<span class="text-xs text-gray-400 flex-shrink-0 italic">No file</span>'
+        }
+        <button type="button" class="delete-doc-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+          data-doc-id="${esc(doc.id)}" aria-label="Delete ${esc(doc.name || 'document')}">
+          <i class="fas fa-times text-xs" aria-hidden="true"></i>
+        </button>
+      </div>`;
+  }
+
+  return `
+    <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-100 bg-gray-50">
+      <i class="${esc(doc.sourceIcon)} text-gray-400 flex-shrink-0 text-sm" aria-hidden="true"></i>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm text-gray-800 truncate">${esc(doc.name || 'Attached file')}</p>
+        <p class="text-xs text-gray-400 mt-0.5">${esc(doc.sourceLabel)}</p>
+      </div>
+      ${doc.filePath
+        ? `<a href="${esc(doc.filePath)}" target="_blank"
+             class="flex-shrink-0 h-8 px-3 border border-gray-300 rounded-md text-xs text-blue-600 hover:bg-blue-50 transition-colors inline-flex items-center"
+             aria-label="View ${esc(doc.name || 'document')}">
+             <i class="fas fa-external-link-alt mr-1 text-[0.65rem]" aria-hidden="true"></i>View
+           </a>`
+        : ''
+      }
+    </div>`;
+}
+
+function renderDocumentsTab() {
+  const list  = document.getElementById('documentsList');
+  const empty = document.getElementById('documentsEmptyState');
+  if (!list) return;
+  const docs = collectDocuments();
+  empty?.classList.toggle('hidden', docs.length > 0);
+  list.innerHTML = docs.map(documentCardHtml).join('');
+}
+
+function wireDocumentsPanel() {
+  const panel = document.getElementById('plannerDocumentsPanel');
+  if (!panel) return;
+
+  document.getElementById('uploadDocBtn')?.addEventListener('click', () => {
+    document.getElementById('docFileInput')?.click();
+  });
+
+  document.getElementById('docFileInput')?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { path, label } = await uploadOrReadFile(file);
+      const doc = {
+        id: makeItemId('doc'),
+        name: label,
+        filePath: path,
+        fileLabel: label,
+        updatedAt: new Date().toISOString(),
+      };
+      const mode = state.planner.mode || 'personal';
+      if (mode === 'sponsor') {
+        state.planner.org.documents = [...(state.planner.org.documents || []), doc];
+      } else {
+        if (!state.planner.personal) state.planner.personal = {};
+        state.planner.personal.documents = [...(state.planner.personal.documents || []), doc];
+      }
+      scheduleAutoSave();
+      renderDocumentsTab();
+    } catch (err) { window.alert(err.message); }
+    e.target.value = '';
+  });
+
+  panel.addEventListener('input', (e) => {
+    const input = e.target.closest('.doc-name-input');
+    if (!input) return;
+    const id   = input.dataset.docId;
+    const mode = state.planner.mode || 'personal';
+    const arr  = mode === 'sponsor' ? (state.planner.org.documents || []) : (state.planner.personal.documents || []);
+    const doc  = arr.find((d) => d.id === id);
+    if (doc) { doc.name = input.value; doc.updatedAt = new Date().toISOString(); scheduleAutoSave(); }
+  });
+
+  panel.addEventListener('click', (e) => {
+    const deleteBtn = e.target.closest('.delete-doc-btn');
+    if (!deleteBtn) return;
+    const id = deleteBtn.dataset.docId;
+    if (window.confirm('Delete this document?')) {
+      const mode = state.planner.mode || 'personal';
+      if (mode === 'sponsor') {
+        state.planner.org.documents = (state.planner.org.documents || []).filter((d) => d.id !== id);
+      } else {
+        state.planner.personal.documents = (state.planner.personal.documents || []).filter((d) => d.id !== id);
+      }
+      scheduleAutoSave();
+      renderDocumentsTab();
+    }
+  });
+}
+
 function wireToolbar() {
   // Tab buttons
   document.getElementById('showContactsTab')?.addEventListener('click', () => setActiveTab('contacts'));
@@ -3639,6 +4160,7 @@ function wireToolbar() {
   document.getElementById('showSponsorTab')?.addEventListener('click', () => { setActiveTab('sponsor'); renderSponsorBudgetBreakdown(); });
   document.getElementById('showPersonalTab')?.addEventListener('click', () => { setActiveTab('personal'); renderPersonalBudgetBreakdown(); });
   document.getElementById('showTeamTab')?.addEventListener('click', () => setActiveTab('team'));
+  document.getElementById('showDocumentsTab')?.addEventListener('click', () => setActiveTab('documents'));
   document.getElementById('showReceiptsTab')?.addEventListener('click', () => setActiveTab('receipts'));
   document.getElementById('showSummaryTab')?.addEventListener('click', () => { setActiveTab('summary'); renderSummaryTab(); });
 
@@ -3734,6 +4256,7 @@ async function init() {
   wirePersonalAccomModal();
   wireTeamPanel();
   wireItineraryPanel();
+  wireDocumentsPanel();
   wireReceiptsPanel();
   wireSummaryPanel();
 

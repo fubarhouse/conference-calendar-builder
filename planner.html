@@ -117,6 +117,9 @@
             <button id="showTeamTab" type="button" class="editor-tab-button hidden" role="tab" aria-selected="false" aria-controls="plannerTeamPanel">
               <i class="fas fa-users mr-2 text-[0.72rem]"></i>Team
             </button>
+            <button id="showDocumentsTab" type="button" class="editor-tab-button hidden" role="tab" aria-selected="false" aria-controls="plannerDocumentsPanel">
+              <i class="fas fa-folder-open mr-2 text-[0.72rem]"></i>Documents
+            </button>
             <button id="showReceiptsTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="plannerReceiptsPanel">
               <i class="fas fa-receipt mr-2 text-[0.72rem]"></i>Receipts
             </button>
@@ -470,6 +473,24 @@
           </section>
         </div>
 
+        <!-- Documents panel -->
+        <div id="plannerDocumentsPanel" class="hidden" role="tabpanel" aria-labelledby="showDocumentsTab">
+          <section class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+              <div>
+                <h2 class="text-lg font-semibold text-gray-800">Documents</h2>
+                <p class="text-sm text-gray-500">Uploaded files from across the planner, plus any documents you add directly.</p>
+              </div>
+              <button id="uploadDocBtn" type="button"
+                class="h-9 inline-flex items-center justify-center px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                <i class="fas fa-upload mr-2 text-xs" aria-hidden="true"></i>Upload document
+              </button>
+            </div>
+            <div id="documentsList" class="space-y-2"></div>
+            <p id="documentsEmptyState" class="text-sm text-gray-400 text-center py-8">No documents uploaded yet.</p>
+          </section>
+        </div>
+
         <!-- Itinerary panel -->
         <!-- Receipts panel -->
         <div id="plannerReceiptsPanel" class="hidden" role="tabpanel" aria-labelledby="showReceiptsTab">
@@ -486,6 +507,11 @@
             <div id="receiptsList" class="space-y-2"></div>
             <p id="receiptsEmptyState" class="hidden text-sm text-gray-400 text-center py-8">No receipts yet — add your first one above.</p>
             <input id="receiptFileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="sr-only">
+            <input id="personalLegFileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="sr-only">
+            <input id="legFileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="sr-only">
+            <input id="personalAccomFileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="sr-only">
+            <input id="accomFileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="sr-only">
+            <input id="docFileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx" class="sr-only">
           </section>
         </div>
 
@@ -689,6 +715,18 @@
             </label>
           </div>
         </section>
+        <!-- Booking document -->
+        <section class="border-t border-gray-100 pt-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Booking Document</p>
+          <div id="accomDocStatus" class="flex items-center gap-2">
+            <span class="text-xs text-gray-400 flex-1 italic">No document attached</span>
+            <button type="button" id="accomAttachDocBtn"
+              class="h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0">
+              <i class="fas fa-paperclip mr-1 text-[0.65rem]" aria-hidden="true"></i>Attach
+            </button>
+          </div>
+        </section>
+
         <!-- Member assignments -->
         <section>
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Member Stays</p>
@@ -948,6 +986,12 @@
           <span class="editor-field-label">Confirmation #</span>
           <input type="text" id="personalLegModalConfirmation" placeholder="ABC123" class="h-9 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3">
         </label>
+        <div class="border-t border-gray-100 pt-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Receipt</p>
+          <div id="personalLegReceiptStatus" class="flex items-center gap-2 flex-wrap">
+            <!-- populated by renderPersonalLegReceiptStatus() -->
+          </div>
+        </div>
       </div>
       <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200">
         <button type="button" id="personalLegModalDelete"
@@ -1022,6 +1066,16 @@
           <textarea id="personalAccomModalNotes" rows="2" placeholder="Room type, check-in instructions…"
             class="w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white p-2 resize-y"></textarea>
         </label>
+        <div class="border-t border-gray-100 pt-3">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Booking Document</p>
+          <div id="personalAccomDocStatus" class="flex items-center gap-2">
+            <span class="text-xs text-gray-400 flex-1 italic">No document attached</span>
+            <button type="button" id="personalAccomAttachDocBtn"
+              class="h-8 px-3 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0">
+              <i class="fas fa-paperclip mr-1 text-[0.65rem]" aria-hidden="true"></i>Attach
+            </button>
+          </div>
+        </div>
       </div>
       <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200">
         <button type="button" id="personalAccomModalDelete"

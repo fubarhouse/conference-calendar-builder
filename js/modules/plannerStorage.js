@@ -65,6 +65,7 @@ export function makeEmptyPlanner(eventFile) {
       sponsorId: '',
       trackedSessions: [],
       autoAddedSponsoredSessions: [],
+      documents: [],
     },
     itinerary: [],
     receipts: [],
@@ -78,6 +79,7 @@ export function makeEmptyPlanner(eventFile) {
       notes:          '',
       trackedSessions: [],
       itinerary:      [],
+      documents:      [],
     },
   };
 }
