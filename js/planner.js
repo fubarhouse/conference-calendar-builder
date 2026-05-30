@@ -15,8 +15,10 @@ import {
   exportPlannerJson,
   parsePlannerImport,
   savePlannerViaApi,
+  listPlannerFiles,
   loadGlobal,
   saveGlobal,
+  STORAGE_PREFIX,
 } from './modules/plannerStorage.js';
 
 import { escapeHtml, parseSponsorIds } from './modules/utils.js';
@@ -24,7 +26,8 @@ import { escapeHtml, parseSponsorIds } from './modules/utils.js';
 // ── State ────────────────────────────────────────────────────────────────────
 
 const state = {
-  eventFile: null,
+  plannerKey: null,  // storage key (may differ from eventFile for custom planners)
+  eventFile: null,   // schedule association (.json file), null when unassociated
   eventMeta: null,
   allSessions: [],
   planner: null,
@@ -103,7 +106,7 @@ function scheduleAutoSave() {
   markDirty(true);
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(() => {
-    savePlanner(state.eventFile, state.planner);
+    savePlanner(state.plannerKey, state.planner);
     markDirty(false);
     showToast();
   }, 600);
@@ -126,6 +129,26 @@ function applyTheme() {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const CURRENCIES = ['AUD', 'USD', 'EUR', 'GBP', 'NZD', 'CHF', 'CAD', 'JPY', 'SGD']
+
+const BUDGET_ITEM_CATS_PERSONAL = [
+  { value: 'travel',        label: 'Travel / Transport' },
+  { value: 'accommodation', label: 'Accommodation' },
+  { value: 'food',          label: 'Food & Drink' },
+  { value: 'customer',      label: 'Customer' },
+  { value: 'team',          label: 'Team' },
+  { value: 'misc',          label: 'Misc' },
+]
+
+const BUDGET_ITEM_CATS_SPONSOR = [
+  { value: 'travel',        label: 'Travel' },
+  { value: 'accommodation', label: 'Accommodation' },
+  { value: 'food',          label: 'Food & Drink' },
+  { value: 'customer',      label: 'Customer' },
+  { value: 'team',          label: 'Team' },
+  { value: 'misc',          label: 'Misc' },
+  { value: 'sponsor',       label: 'Sponsor' },
+  { value: 'swag',          label: 'Swag' },
+]
 
 const RECEIPT_CATEGORIES = [
   { value: 'food',          label: 'Food & Drink' },
@@ -156,7 +179,7 @@ async function uploadOrReadFile(file) {
   if (apiEndpoint) {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('eventFile', state.eventFile);
+    formData.append('eventFile', state.plannerKey);
     const res  = await fetch(`${apiEndpoint.replace(/\/$/, '')}/api/receipts`, { method: 'POST', body: formData });
     const data = await res.json();
     if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -184,9 +207,22 @@ function parseBudget(str) {
   return isNaN(n) ? 0 : n
 }
 
+function slugify(text) {
+  return String(text).toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    || 'planner'
+}
+
+function plannerDisplayName(planner, plannerKey) {
+  if (planner?._displayName) return planner._displayName;
+  if (planner?._eventFile)   return (planner._eventFile || '').replace('.json', '');
+  return (plannerKey || '').replace(/^planner-/, '').replace(/-/g, ' ');
+}
+
 // ── Tab system ───────────────────────────────────────────────────────────────
 
-const TABS = ['contacts', 'tasks', 'sponsor', 'personal', 'team', 'documents', 'receipts', 'summary'];
+const TABS = ['sponsor', 'team', 'documents', 'tasks', 'contacts', 'personal', 'receipts', 'summary'];
 
 const PANEL_IDS = {
   contacts:  'plannerContactsPanel',
@@ -587,8 +623,8 @@ function legCardHtml(leg, direction) {
           <input type="time" data-leg-id="${li}" data-direction="${d}" data-leg-field="arriveTime" value="${esc(leg.arriveTime || '')}" class="h-8 w-full rounded border-gray-300 text-xs bg-white pl-7 pr-2 drupal-blue-focus">
         </div>
         <div></div>
-        <input type="text" list="tzList" data-leg-id="${li}" data-direction="${d}" data-leg-field="departTz" value="${esc(leg.departTz || '')}" placeholder="Dep timezone" class="h-8 w-full rounded border-gray-300 text-xs bg-white px-2 drupal-blue-focus">
-        <input type="text" list="tzList" data-leg-id="${li}" data-direction="${d}" data-leg-field="arriveTz" value="${esc(leg.arriveTz || '')}" placeholder="Arr timezone" class="h-8 w-full rounded border-gray-300 text-xs bg-white px-2 drupal-blue-focus">
+        <input type="text" list="tzList" data-leg-id="${li}" data-direction="${d}" data-leg-field="departTz" value="${esc(leg.departTz || '')}" placeholder="${d === 'return' ? (getTimezone() || 'Departure timezone') : 'Departure timezone'}" class="h-8 w-full rounded border-gray-300 text-xs bg-white px-2 drupal-blue-focus">
+        <input type="text" list="tzList" data-leg-id="${li}" data-direction="${d}" data-leg-field="arriveTz" value="${esc(leg.arriveTz || '')}" placeholder="${d === 'outbound' ? (getTimezone() || 'Arrival timezone') : 'Arrival timezone'}" class="h-8 w-full rounded border-gray-300 text-xs bg-white px-2 drupal-blue-focus">
       </div>
       <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
         <span class="text-[0.7rem] font-medium text-gray-400 uppercase tracking-wide flex-shrink-0">Receipt</span>
@@ -893,6 +929,7 @@ function renderOrgTab() {
 
   renderTimeline();
   renderTrackedSessions('sponsor');
+  renderBudgetItems('sponsor');
   renderSponsorBudgetBreakdown();
 }
 
@@ -1639,6 +1676,16 @@ function buildEventBudgetData(planner) {
     if (b || ac) cats.swag.items.push({ label: item.name || 'Swag item', budget: b, actual: ac })
   })
 
+  // Manual budget items (sponsor)
+  ;(org.budgetItems || []).forEach((item) => {
+    const cat = item.category || 'misc'
+    const b = parseBudget(item.budget); const ac = parseBudget(item.actual)
+    if (cats[cat]) {
+      cats[cat].budget += b; cats[cat].actual += ac
+      if (b || ac) cats[cat].items.push({ label: item.name || 'Budget item', budget: b, actual: ac, isManual: true })
+    }
+  })
+
   // Receipts by category
   ;(planner.receipts || []).forEach((r) => {
     const cat = r.category || 'misc'
@@ -1671,6 +1718,16 @@ function buildPersonalBudgetData(planner) {
     const ab = parseBudget(acc.budget); const aa = parseBudget(acc.budgetActual)
     cats.accommodation.budget += ab; cats.accommodation.actual += aa
     if (ab || aa) cats.accommodation.items.push({ label: acc.name || 'Accommodation', budget: ab, actual: aa })
+  })
+
+  // Manual budget items (personal)
+  ;(personal.budgetItems || []).forEach((item) => {
+    const cat = item.category || 'misc'
+    const b = parseBudget(item.budget); const ac = parseBudget(item.actual)
+    if (cats[cat]) {
+      cats[cat].budget += b; cats[cat].actual += ac
+      if (b || ac) cats[cat].items.push({ label: item.name || 'Budget item', budget: b, actual: ac, isManual: true })
+    }
   })
 
   ;(planner.receipts || []).forEach((r) => {
@@ -1882,26 +1939,44 @@ function renderSummaryThisEvent() {
 }
 
 function renderSummaryAllEvents() {
-  const statsRow = document.getElementById('globalSummaryStatsRow')
-  if (!statsRow) return
+  const container = document.getElementById('summaryAllEvents')
+  if (!container) return
 
-  // Scan localStorage for all planner keys
+  const currentMode = state.planner?.mode || 'personal'
+  const isSponsor   = currentMode === 'sponsor'
+
+  // Gather all planner entries from localStorage
   const events = []
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i)
-    if (!key?.startsWith('drupalconPlanner_') || key === 'drupalconPlanner_global') continue
+    if (!key?.startsWith(STORAGE_PREFIX) || key === `${STORAGE_PREFIX}global`) continue
     try {
       const data = JSON.parse(localStorage.getItem(key) || '{}')
-      const { budget, actual } = sumEventBudgetTotals(data)
+      const slug = key.slice(STORAGE_PREFIX.length)
+      const label = data._displayName || (data._eventFile || slug).replace('.json', '')
       const rawDate = data._lastModified || ''
-      const label   = (data._eventFile || key.replace('drupalconPlanner_', '')).replace('.json', '')
-      events.push({ label, budget, actual, date: rawDate })
+      const plannerMode = data.mode === 'individual' ? 'personal' : (data.mode || 'personal')
+
+      let budget = 0, actual = 0, catData = {}
+      if (isSponsor) {
+        const cats = buildEventBudgetData(data)
+        Object.values(cats).forEach((c) => { budget += c.budget; actual += c.actual })
+        catData = cats
+      } else {
+        const cats = buildPersonalBudgetData(data)
+        Object.values(cats).forEach((c) => { budget += c.budget; actual += c.actual })
+        catData = cats
+      }
+
+      events.push({ label, slug, date: rawDate, mode: plannerMode, budget, actual, catData, eventFile: data._eventFile || '' })
     } catch { /* skip corrupt */ }
   }
   events.sort((a, b) => a.date.localeCompare(b.date))
 
   const totalBudget = events.reduce((s, e) => s + e.budget, 0)
   const totalActual = events.reduce((s, e) => s + e.actual, 0)
+  const variance    = totalBudget - totalActual
+  const over        = variance < 0
 
   function statCard(icon, label, value) {
     return `<div class="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center min-w-[100px]">
@@ -1910,12 +1985,104 @@ function renderSummaryAllEvents() {
       <i class="${icon} text-gray-300 text-xs mt-0.5 block"></i>
     </div>`
   }
-  statsRow.innerHTML = [
-    statCard('fas fa-calendar-check', 'Events tracked', events.length),
-    statCard('fas fa-wallet',  'Total budget', totalBudget.toLocaleString()),
-    statCard('fas fa-coins',   'Total actual', totalActual.toLocaleString()),
-  ].join('')
 
+  const statsRow = document.getElementById('globalSummaryStatsRow')
+  if (statsRow) {
+    statsRow.innerHTML = [
+      statCard('fas fa-calendar-check', 'Events tracked', events.length),
+      statCard('fas fa-wallet',  'Total budget', totalBudget ? totalBudget.toLocaleString() : '—'),
+      statCard('fas fa-coins',   'Total actual', totalActual ? totalActual.toLocaleString() : '—'),
+      totalBudget
+        ? `<div class="rounded-lg border ${over ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50'} p-3 text-center min-w-[100px]">
+            <p class="text-[0.65rem] ${over ? 'text-red-400' : 'text-emerald-600'} uppercase tracking-widest mb-1">${over ? 'Over budget' : 'Remaining'}</p>
+            <p class="text-xl font-semibold ${over ? 'text-red-600' : 'text-emerald-700'}">${Math.abs(variance).toLocaleString()}</p>
+            <i class="fas ${over ? 'fa-triangle-exclamation text-red-300' : 'fa-circle-check text-emerald-300'} text-xs mt-0.5 block"></i>
+          </div>`
+        : '',
+    ].filter(Boolean).join('')
+  }
+
+  // Per-event breakdown table
+  const tableEl = document.getElementById('globalEventTable')
+  if (tableEl) {
+    if (!events.length) {
+      tableEl.innerHTML = '<p class="text-sm text-gray-400 text-center py-4 italic">No planner data found.</p>'
+    } else {
+      const fmt = (n) => n ? n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'
+      tableEl.innerHTML = `
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-[0.65rem] text-gray-400 uppercase tracking-widest border-b border-gray-100">
+              <th class="text-left py-2 pr-3 font-medium">Event</th>
+              <th class="text-left py-2 pr-3 font-medium hidden sm:table-cell">Mode</th>
+              <th class="text-right py-2 pr-3 font-medium">Budget</th>
+              <th class="text-right py-2 pr-3 font-medium">Actual</th>
+              <th class="text-right py-2 font-medium hidden md:table-cell">Variance</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${events.map((e) => {
+              const v = e.budget - e.actual
+              const isThis = e.slug === state.plannerKey
+              return `<tr class="border-b border-gray-50 ${isThis ? 'bg-blue-50/40' : ''}">
+                <td class="py-2 pr-3 text-gray-700">
+                  ${isThis ? '<i class="fas fa-circle text-[0.4rem] text-blue-400 mr-1.5 align-middle"></i>' : ''}${esc(e.label)}
+                  ${e.eventFile ? `<span class="text-[0.6rem] text-gray-300 ml-1">${esc(e.eventFile.replace('.json',''))}</span>` : '<span class="text-[0.6rem] text-gray-300 ml-1 italic">no schedule</span>'}
+                </td>
+                <td class="py-2 pr-3 hidden sm:table-cell">
+                  <span class="text-[0.6rem] px-1.5 py-px rounded ${e.mode === 'sponsor' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}">${e.mode}</span>
+                </td>
+                <td class="py-2 pr-3 text-right tabular-nums text-gray-600">${fmt(e.budget)}</td>
+                <td class="py-2 pr-3 text-right tabular-nums ${e.actual > e.budget && e.budget ? 'text-red-500' : 'text-gray-600'}">${fmt(e.actual)}</td>
+                <td class="py-2 text-right tabular-nums hidden md:table-cell ${v < 0 ? 'text-red-400' : 'text-gray-400'}">${fmt(Math.abs(v))}${v < 0 ? ' ↑' : v > 0 ? ' ↓' : ''}</td>
+              </tr>`
+            }).join('')}
+          </tbody>
+          ${events.length > 1 ? `
+          <tfoot>
+            <tr class="font-semibold text-gray-800 border-t border-gray-200">
+              <td class="pt-2 pr-3">Total</td>
+              <td class="hidden sm:table-cell"></td>
+              <td class="pt-2 pr-3 text-right tabular-nums">${fmt(totalBudget)}</td>
+              <td class="pt-2 pr-3 text-right tabular-nums ${totalActual > totalBudget && totalBudget ? 'text-red-500' : ''}">${fmt(totalActual)}</td>
+              <td class="pt-2 text-right tabular-nums hidden md:table-cell ${over ? 'text-red-400' : 'text-gray-500'}">${fmt(Math.abs(variance))}${over ? ' ↑' : ' ↓'}</td>
+            </tr>
+          </tfoot>` : ''}
+        </table>`
+    }
+  }
+
+  // Aggregated category totals
+  const catTotals = {}
+  events.forEach((e) => {
+    Object.entries(e.catData).forEach(([k, c]) => {
+      if (!catTotals[k]) catTotals[k] = { label: c.label, budget: 0, actual: 0 }
+      catTotals[k].budget += c.budget
+      catTotals[k].actual += c.actual
+    })
+  })
+  const activeCats = Object.entries(catTotals).filter(([, c]) => c.budget > 0 || c.actual > 0)
+  const catEl = document.getElementById('globalCategoryBreakdown')
+  if (catEl) {
+    if (activeCats.length) {
+      const fmt = (n) => n ? n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'
+      catEl.innerHTML = `
+        <div class="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1 text-sm">
+          <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 pb-0.5">Category</span>
+          <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 text-right pb-0.5">Budget</span>
+          <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 text-right pb-0.5">Actual</span>
+          ${activeCats.map(([, c]) => `
+            <span class="text-gray-600 truncate">${esc(c.label)}</span>
+            <span class="tabular-nums text-right text-gray-500">${fmt(c.budget)}</span>
+            <span class="tabular-nums text-right ${c.actual > c.budget && c.budget ? 'text-red-500' : 'text-gray-700'}">${fmt(c.actual)}</span>
+          `).join('')}
+        </div>`
+    } else {
+      catEl.innerHTML = ''
+    }
+  }
+
+  // Line chart — lower aspectRatio to reduce height
   destroyCharts('global')
   const canvas = document.getElementById('globalBudgetChart')
   if (!canvas) return
@@ -1932,7 +2099,7 @@ function renderSummaryAllEvents() {
       },
       options: {
         responsive: true,
-        aspectRatio: 3,
+        aspectRatio: 4,
         plugins: { legend: { position: 'top' } },
         scales: { y: { beginAtZero: true } },
       },
@@ -2060,6 +2227,266 @@ function openMemberDrilldown(memberData, planner) {
   document.body.style.overflow = 'hidden'
 }
 
+// ── Create Planner modal ──────────────────────────────────────────────────────
+
+function wireCreatePlannerModal() {
+  const modal    = document.getElementById('createPlannerModal');
+  const nameInput = document.getElementById('createPlannerName');
+  const createBtn = document.getElementById('createPlannerConfirmBtn');
+  const closeBtn  = document.getElementById('createPlannerModalClose');
+
+  function openCreateModal() {
+    if (!modal) return;
+    if (nameInput) nameInput.value = '';
+    document.body.style.overflow = 'hidden';
+    modal.classList.remove('hidden');
+    nameInput?.focus();
+  }
+
+  function closeCreateModal() {
+    modal?.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('newPlannerBtn')?.addEventListener('click', openCreateModal);
+  document.getElementById('newPlannerBtnNoEvent')?.addEventListener('click', openCreateModal);
+  closeBtn?.addEventListener('click', closeCreateModal);
+  document.getElementById('createPlannerModalClose2')?.addEventListener('click', closeCreateModal);
+  modal?.addEventListener('click', (e) => { if (e.target === modal) closeCreateModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeCreateModal();
+  });
+
+  createBtn?.addEventListener('click', () => {
+    const name = nameInput?.value.trim();
+    if (!name) { nameInput?.focus(); return; }
+    const slug = `planner-${slugify(name)}`;
+    // Persist display name and save empty planner to localStorage so it shows up
+    const newPlanner = loadPlanner(slug);
+    newPlanner._displayName = name;
+    savePlanner(slug, newPlanner);
+    closeCreateModal();
+    location.href = `planner.html?id=${encodeURIComponent(slug)}`;
+  });
+
+  nameInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') createBtn?.click();
+  });
+}
+
+// ── Event Association modal ───────────────────────────────────────────────────
+
+let _assocModalResults = [];
+
+async function gatherAssocSources() {
+  const results = new Map(); // key → { label, eventFile, plannerKey, hasDiskFile, plannerData }
+  const apiEndpoint = localStorage.getItem('editorApiEndpoint') || '';
+  const currentSponsorId = state.planner?.org?.sponsorId || '';
+
+  // 1. Server schedule files
+  try {
+    const res = await fetch('./api/meta');
+    if (res.ok) {
+      const metas = await res.json();
+      metas.forEach((m) => {
+        if (!m.file || !m.enabled) return;
+        const label = [m.designation, m.location, m.year].filter(Boolean).join(' ');
+        results.set(m.file, { label, eventFile: m.file, plannerKey: null, hasDiskFile: false, plannerData: null, meta: m });
+      });
+    }
+  } catch { /* offline / no data dir */ }
+
+  // 2. localStorage planners
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k?.startsWith(STORAGE_PREFIX) || k === 'drupalconPlanner_global') continue;
+    const slug = k.slice(STORAGE_PREFIX.length);
+    try {
+      const data = JSON.parse(localStorage.getItem(k) || '{}');
+      const ef = data._eventFile || '';
+      const lbl = data._displayName || ef.replace('.json', '') || slug;
+      const existing = ef ? results.get(ef) : null;
+      if (existing) {
+        existing.plannerKey = slug;
+        existing.plannerData = data;
+      } else {
+        results.set(slug, { label: lbl, eventFile: ef, plannerKey: slug, hasDiskFile: false, plannerData: data, meta: null });
+      }
+    } catch { /* corrupt */ }
+  }
+
+  // 3. Disk planner files (if API configured)
+  if (apiEndpoint) {
+    try {
+      const diskFiles = await listPlannerFiles(apiEndpoint);
+      for (const f of diskFiles) {
+        const slug = f.endsWith('.json') ? f.slice(0, -5) : f;
+        if ([...results.values()].some((r) => r.plannerKey === slug)) continue;
+        results.set(slug, { label: slug, eventFile: '', plannerKey: slug, hasDiskFile: true, plannerData: null, meta: null });
+      }
+    } catch { /* offline */ }
+  }
+
+  // Compute sponsor match and sort: sponsor matches first, then alphabetical
+  const currentKey = state.plannerKey;
+  const arr = [...results.values()].filter((r) => {
+    // Don't show the current planner as a switch target
+    return r.plannerKey !== currentKey && r.eventFile !== currentKey;
+  });
+
+  arr.forEach((r) => {
+    const sid = r.plannerData?.org?.sponsorId || '';
+    r.sponsorMatch = currentSponsorId && sid && sid === currentSponsorId;
+    r.sponsorName  = r.sponsorMatch ? (r.plannerData?.org?.sponsorName || '') : '';
+  });
+  arr.sort((a, b) => {
+    if (a.sponsorMatch && !b.sponsorMatch) return -1;
+    if (!a.sponsorMatch && b.sponsorMatch)  return 1;
+    return a.label.localeCompare(b.label);
+  });
+
+  return arr;
+}
+
+function renderAssocResults(items, query) {
+  const list = document.getElementById('assocModalResults');
+  if (!list) return;
+  const q = query.toLowerCase();
+  const filtered = q ? items.filter((r) => r.label.toLowerCase().includes(q) || (r.eventFile || '').toLowerCase().includes(q)) : items;
+
+  if (!filtered.length) {
+    list.innerHTML = '<p class="text-sm text-gray-400 px-4 py-6 text-center">No events found.</p>';
+    return;
+  }
+
+  const currentEventFile = state.eventFile;
+  const currentPlannerKey = state.plannerKey;
+  const isSponsor = state.planner?.mode === 'sponsor';
+
+  list.innerHTML = filtered.map((r) => {
+    const isCurrentSchedule = r.eventFile && r.eventFile === currentEventFile;
+    const hasPlannerData = !!r.plannerData;
+    const modeBadge = r.plannerData?.mode === 'sponsor'
+      ? '<span class="ml-1 text-[0.6rem] px-1.5 py-px rounded bg-blue-50 text-blue-600">Sponsor</span>'
+      : r.plannerData?.mode === 'personal'
+        ? '<span class="ml-1 text-[0.6rem] px-1.5 py-px rounded bg-gray-100 text-gray-500">Personal</span>'
+        : '';
+    const sponsorBadge = r.sponsorMatch
+      ? `<span class="ml-1 text-[0.6rem] px-1.5 py-px rounded bg-amber-50 text-amber-600"><i class="fas fa-handshake mr-0.5 text-[0.55rem]"></i>Sponsoring</span>`
+      : '';
+    const diskBadge = r.hasDiskFile
+      ? '<span class="ml-1 text-[0.6rem] px-1.5 py-px rounded bg-green-50 text-green-600"><i class="fas fa-server mr-0.5 text-[0.55rem]"></i>Disk</span>'
+      : '';
+
+    const actions = [];
+    if (r.eventFile && !isCurrentSchedule) {
+      actions.push(`<button type="button" class="assoc-associate-btn h-7 px-3 rounded-md border border-blue-200 text-xs text-blue-600 hover:bg-blue-50 transition-colors flex-shrink-0"
+        data-event-file="${esc(r.eventFile)}" data-label="${esc(r.label)}">
+        <i class="fas fa-link mr-1 text-[0.6rem]"></i>Associate
+      </button>`);
+    }
+    if (isCurrentSchedule && currentEventFile) {
+      actions.push(`<button type="button" class="assoc-disassociate-btn h-7 px-3 rounded-md border border-red-200 text-xs text-red-500 hover:bg-red-50 transition-colors flex-shrink-0">
+        <i class="fas fa-unlink mr-1 text-[0.6rem]"></i>Disassociate
+      </button>`);
+    }
+    if (r.plannerKey && r.plannerKey !== currentPlannerKey) {
+      actions.push(`<button type="button" class="assoc-switch-btn h-7 px-3 rounded-md border border-gray-300 text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0"
+        data-planner-key="${esc(r.plannerKey)}">
+        <i class="fas fa-arrow-right-to-bracket mr-1 text-[0.6rem]"></i>Switch
+      </button>`);
+    }
+
+    return `<div class="flex items-center gap-2 px-4 py-3 border-b border-gray-100 last:border-0 ${r.sponsorMatch ? 'bg-amber-50/40' : ''}">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center flex-wrap gap-0.5">
+          <span class="text-sm font-medium text-gray-800 truncate">${esc(r.label)}</span>
+          ${sponsorBadge}${modeBadge}${diskBadge}
+        </div>
+        ${isCurrentSchedule ? '<p class="text-xs text-blue-500 mt-0.5"><i class="fas fa-check-circle mr-1 text-[0.6rem]"></i>Current schedule</p>' : ''}
+        ${hasPlannerData && !isCurrentSchedule ? `<p class="text-xs text-gray-400 mt-0.5">${r.plannerData._displayName || r.plannerKey || ''}</p>` : ''}
+        ${r.eventFile && !hasPlannerData ? '<p class="text-xs text-gray-300 mt-0.5 italic">No planner data yet</p>' : ''}
+      </div>
+      <div class="flex gap-1.5 flex-shrink-0">${actions.join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+function wireEventAssocModal() {
+  const modal     = document.getElementById('eventAssocModal');
+  const searchInput = document.getElementById('assocSearchInput');
+  const closeBtn  = document.getElementById('eventAssocModalClose');
+
+  function openModal() {
+    if (!modal) return;
+    document.body.style.overflow = 'hidden';
+    modal.classList.remove('hidden');
+    if (searchInput) searchInput.value = '';
+    const list = document.getElementById('assocModalResults');
+    if (list) list.innerHTML = '<p class="text-sm text-gray-400 px-4 py-6 text-center"><i class="fas fa-spinner fa-spin mr-2"></i>Loading…</p>';
+    searchInput?.focus();
+    gatherAssocSources().then((items) => {
+      _assocModalResults = items;
+      renderAssocResults(items, '');
+    });
+  }
+
+  function closeModal() {
+    modal?.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('manageEventBtn')?.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeModal();
+  });
+
+  searchInput?.addEventListener('input', (e) => {
+    renderAssocResults(_assocModalResults, e.target.value.trim());
+  });
+
+  document.getElementById('assocModalResults')?.addEventListener('click', async (e) => {
+    const assocBtn   = e.target.closest('.assoc-associate-btn');
+    const disassocBtn = e.target.closest('.assoc-disassociate-btn');
+    const switchBtn  = e.target.closest('.assoc-switch-btn');
+
+    if (assocBtn) {
+      const ef  = assocBtn.dataset.eventFile;
+      const lbl = assocBtn.dataset.label;
+      state.planner._eventFile = ef;
+      if (!state.planner._displayName) state.planner._displayName = lbl;
+      state.eventFile = ef;
+      savePlanner(state.plannerKey, state.planner);
+      await loadSchedule(ef);
+      syncSponsoredSessions();
+      updateHeader();
+      renderAll();
+      closeModal();
+    }
+
+    if (disassocBtn) {
+      state.planner._eventFile = '';
+      state.eventFile = null;
+      state.eventMeta = {};
+      state.allSessions = [];
+      savePlanner(state.plannerKey, state.planner);
+      updateHeader();
+      renderAll();
+      closeModal();
+    }
+
+    if (switchBtn) {
+      const key = switchBtn.dataset.plannerKey;
+      if (key) {
+        closeModal();
+        location.href = `planner.html?id=${encodeURIComponent(key)}`;
+      }
+    }
+  });
+}
+
 function wireSummaryPanel() {
   // This/All toggle
   document.getElementById('summaryToggleThis')?.addEventListener('click', () => {
@@ -2094,7 +2521,7 @@ function closeDrilldown() {
 // ── Export / Import ──────────────────────────────────────────────────────────
 
 function handleExport() {
-  exportPlannerJson(state.eventFile, state.planner);
+  exportPlannerJson(state.plannerKey, state.planner);
 }
 
 function handleImport(file) {
@@ -2103,9 +2530,9 @@ function handleImport(file) {
     try {
       const parsed = parsePlannerImport(e.target.result);
       state.planner = parsed;
-      state.eventFile = parsed._eventFile;
+      // Preserve current plannerKey — imported data is merged into current slot
       renderAll();
-      savePlanner(state.eventFile, state.planner);
+      savePlanner(state.plannerKey, state.planner);
       showToast();
     } catch (err) {
       window.alert(`Import failed: ${err.message}`);
@@ -2123,7 +2550,7 @@ async function handleSaveToFile() {
   const btn = document.getElementById('plannerSaveFileBtn');
   if (btn) btn.disabled = true;
   try {
-    await savePlannerViaApi(apiEndpoint, state.eventFile, state.planner);
+    await savePlannerViaApi(apiEndpoint, state.plannerKey, state.planner);
     showToast();
   } catch (err) {
     window.alert(`Save to file failed: ${err.message}`);
@@ -2631,6 +3058,7 @@ function renderPersonalTab() {
   renderPersonalItinerary()
   renderTrackedSessions('personal')
   renderPersonalAccomList()
+  renderBudgetItems('personal')
   renderPersonalBudgetBreakdown()
 }
 
@@ -2744,8 +3172,17 @@ function openPersonalLegModal(direction, legId) {
   document.getElementById('personalLegModalTo').value           = leg.to           || '';
   document.getElementById('personalLegModalDepartTime').value   = leg.departTime   || '';
   document.getElementById('personalLegModalArriveTime').value   = leg.arriveTime   || '';
-  document.getElementById('personalLegModalDepartTz').value     = leg.departTz     || '';
-  document.getElementById('personalLegModalArriveTz').value     = leg.arriveTz     || '';
+  const departTzEl = document.getElementById('personalLegModalDepartTz');
+  const arriveTzEl = document.getElementById('personalLegModalArriveTz');
+  const eventTz    = state.eventMeta?.timezone || '';
+  if (departTzEl) {
+    departTzEl.value       = leg.departTz || '';
+    departTzEl.placeholder = direction === 'return' ? (eventTz || 'Departure timezone') : 'Departure timezone';
+  }
+  if (arriveTzEl) {
+    arriveTzEl.value       = leg.arriveTz || '';
+    arriveTzEl.placeholder = direction === 'outbound' ? (eventTz || 'Arrival timezone') : 'Arrival timezone';
+  }
   document.getElementById('personalLegModalConfirmation').value = leg.confirmation || '';
   renderPersonalLegReceiptStatus(leg);
   _personalLegModal.open('personalLegModalFrom');
@@ -2883,6 +3320,148 @@ function wirePersonalLegModal() {
     renderDocumentsTab();
     e.target.value = '';
   });
+}
+
+// ── Budget Items ─────────────────────────────────────────────────────────────
+
+let _budgetItemCtx = null  // 'personal' | 'sponsor'
+let _budgetItemId  = null
+
+function getBudgetItemList(ctx) {
+  if (ctx === 'personal') return (state.planner.personal.budgetItems ??= [])
+  return (state.planner.org.budgetItems ??= [])
+}
+
+function renderBudgetItems(ctx) {
+  const containerId = ctx === 'personal' ? 'personalBudgetItems' : 'sponsorBudgetItems'
+  const container   = document.getElementById(containerId)
+  if (!container) return
+
+  const items = getBudgetItemList(ctx)
+  const cats  = ctx === 'personal' ? BUDGET_ITEM_CATS_PERSONAL : BUDGET_ITEM_CATS_SPONSOR
+  const fmt   = (n) => parseBudget(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  if (!items.length) {
+    container.innerHTML = '<p class="text-xs text-gray-400 italic py-1">No items added yet.</p>'
+    return
+  }
+
+  container.innerHTML = items.map((item) => {
+    const catLabel = cats.find((c) => c.value === item.category)?.label || item.category || 'Misc'
+    const b  = parseBudget(item.budget)
+    const ac = parseBudget(item.actual)
+    const over = ac > b && b > 0
+    return `<div class="flex items-center gap-2 py-1.5 px-2.5 rounded-md border border-gray-200 bg-white" data-bi-id="${esc(item.id)}">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="text-sm font-medium text-gray-700 truncate">${esc(item.name || 'Budget item')}</span>
+          <span class="text-[0.6rem] px-1.5 py-px rounded bg-gray-100 text-gray-500 flex-shrink-0">${esc(catLabel)}</span>
+        </div>
+        <div class="flex gap-3 text-xs mt-0.5">
+          ${item.currency ? `<span class="text-gray-400 font-medium">${esc(item.currency)}</span>` : ''}
+          ${b  ? `<span class="text-gray-400">Budget: <span class="tabular-nums text-gray-600">${fmt(b)}</span></span>` : ''}
+          ${ac ? `<span class="text-gray-400">Actual: <span class="tabular-nums ${over ? 'text-red-500' : 'text-gray-600'}">${fmt(ac)}</span></span>` : ''}
+          ${!b && !ac ? '<span class="text-gray-300 italic">No amounts set</span>' : ''}
+        </div>
+      </div>
+      <button type="button" class="edit-budget-item-btn h-7 w-7 flex items-center justify-center rounded-md border border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0"
+        data-bi-ctx="${esc(ctx)}" data-bi-id="${esc(item.id)}" aria-label="Edit ${esc(item.name || 'item')}">
+        <i class="fas fa-pen-to-square text-[0.65rem]" aria-hidden="true"></i>
+      </button>
+    </div>`
+  }).join('')
+}
+
+function openBudgetItemModal(ctx, id = null) {
+  _budgetItemCtx = ctx
+  _budgetItemId  = id
+
+  const cats      = ctx === 'personal' ? BUDGET_ITEM_CATS_PERSONAL : BUDGET_ITEM_CATS_SPONSOR
+  const catSelect = document.getElementById('budgetItemCategory')
+  if (catSelect) catSelect.innerHTML = cats.map((c) => `<option value="${c.value}">${esc(c.label)}</option>`).join('')
+
+  const item = id ? getBudgetItemList(ctx).find((i) => i.id === id) : null
+
+  const currencyEl = document.getElementById('budgetItemCurrency')
+  if (currencyEl) {
+    const defaultCurrency = ctx === 'personal'
+      ? (state.planner.personal?.currency || 'AUD')
+      : (state.planner.org?.sponsorCurrency || 'AUD')
+    currencyEl.innerHTML = currencyOptions(item?.currency || defaultCurrency)
+  }
+
+  document.getElementById('budgetItemModalTitle').textContent = id ? 'Edit Budget Item' : 'Add Budget Item'
+  document.getElementById('budgetItemName').value   = item?.name   || ''
+  document.getElementById('budgetItemBudget').value = item?.budget || ''
+  document.getElementById('budgetItemActual').value = item?.actual || ''
+  document.getElementById('budgetItemNotes').value  = item?.notes  || ''
+  if (catSelect && item?.category) catSelect.value  = item.category
+
+  document.getElementById('budgetItemModalDelete')?.classList.toggle('hidden', !id)
+  _budgetItemModal.open('budgetItemName')
+}
+
+function saveBudgetItem() {
+  if (!_budgetItemCtx) return
+  const list     = getBudgetItemList(_budgetItemCtx)
+  const name     = document.getElementById('budgetItemName')?.value.trim()   || ''
+  const category = document.getElementById('budgetItemCategory')?.value      || 'misc'
+  const currency = document.getElementById('budgetItemCurrency')?.value      || 'AUD'
+  const budget   = document.getElementById('budgetItemBudget')?.value        || ''
+  const actual   = document.getElementById('budgetItemActual')?.value        || ''
+  const notes    = document.getElementById('budgetItemNotes')?.value.trim()  || ''
+
+  if (_budgetItemId) {
+    const item = list.find((i) => i.id === _budgetItemId)
+    if (item) Object.assign(item, { name, category, currency, budget, actual, notes })
+  } else {
+    const newItem = { id: makeItemId('bi'), name, category, currency, budget, actual, notes }
+    list.push(newItem)
+    _budgetItemId = newItem.id
+  }
+  scheduleAutoSave()
+}
+
+function afterBudgetItemClose() {
+  const ctx = _budgetItemCtx
+  _budgetItemCtx = null
+  _budgetItemId  = null
+  if (!ctx) return
+  renderBudgetItems(ctx)
+  if (ctx === 'personal') renderPersonalBudgetBreakdown()
+  else renderSponsorBudgetBreakdown()
+  if (state.activeTab === 'summary') renderSummaryTab()
+}
+
+const _budgetItemModal = createModal('budgetItemModal', {
+  onSave: saveBudgetItem,
+  onDelete: () => {
+    if (!_budgetItemCtx || !_budgetItemId) return
+    const list = getBudgetItemList(_budgetItemCtx)
+    const idx  = list.findIndex((i) => i.id === _budgetItemId)
+    if (idx !== -1) list.splice(idx, 1)
+    scheduleAutoSave()
+  },
+  onClose: afterBudgetItemClose,
+})
+
+function wireBudgetItemsPanel() {
+  _budgetItemModal.wire()
+
+  document.getElementById('addPersonalBudgetItemBtn')?.addEventListener('click', () => openBudgetItemModal('personal'))
+  document.getElementById('addSponsorBudgetItemBtn')?.addEventListener('click',  () => openBudgetItemModal('sponsor'))
+
+  // Edit delegation — personal budget items list
+  document.getElementById('personalBudgetItems')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.edit-budget-item-btn')
+    if (btn) openBudgetItemModal(btn.dataset.biCtx, btn.dataset.biId)
+  })
+
+  // Edit delegation — sponsor budget items list
+  document.getElementById('sponsorBudgetItems')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.edit-budget-item-btn')
+    if (btn) openBudgetItemModal(btn.dataset.biCtx, btn.dataset.biId)
+  })
 }
 
 // ── Swag modal ────────────────────────────────────────────────────────────────
@@ -3157,6 +3736,7 @@ function wirePersonalPanel() {
 // ── Render all tabs ──────────────────────────────────────────────────────────
 
 function renderAll() {
+  applyScheduleGating();
   renderContactsTab();
   renderTasksTab();
   renderOrgTab();
@@ -3894,7 +4474,7 @@ const PERSONAL_TABS = new Set(['personal', 'receipts', 'documents', 'summary']);
 
 function applyMode(mode) {
   state.planner.mode = mode;
-  savePlanner(state.eventFile, state.planner);
+  savePlanner(state.plannerKey, state.planner);
 
   const isSponsor  = mode === 'sponsor';
   const visibleTabs = isSponsor ? SPONSOR_TABS : PERSONAL_TABS;
@@ -3913,7 +4493,7 @@ function applyMode(mode) {
   // Navigate away from the current tab if it isn't available in this mode
   const cur = state.activeTab;
   if (!visibleTabs.has(cur)) {
-    setActiveTab(isSponsor ? 'contacts' : 'personal');
+    setActiveTab(isSponsor ? 'sponsor' : 'personal');
   }
 
   // Re-render summary if it's visible (stats differ by mode)
@@ -4180,6 +4760,7 @@ function wireToolbar() {
   });
 
   document.getElementById('plannerSaveFileBtn')?.addEventListener('click', handleSaveToFile);
+  // New planner / manage event wiring is in wireCreatePlannerModal / wireEventAssocModal
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────
@@ -4189,37 +4770,72 @@ function revealPage() {
 }
 
 function updateHeader() {
-  const meta = state.eventMeta;
-  if (!meta) return;
-  const kicker = [meta.designation, meta.location].filter(Boolean).join(' · ');
-  const title  = meta.year ? `${meta.location || meta.designation} ${meta.year}` : (meta.location || meta.designation || 'Trip Notebook');
+  const meta  = state.eventMeta || {};
+  const hasSchedule = !!state.eventFile;
+
+  const kicker = hasSchedule
+    ? [meta.designation, meta.location].filter(Boolean).join(' · ')
+    : 'Conference Planner';
+  const title  = hasSchedule
+    ? (meta.year ? `${meta.location || meta.designation} ${meta.year}` : (meta.location || meta.designation || 'Trip Notebook'))
+    : (state.planner?._displayName || plannerDisplayName(state.planner, state.plannerKey) || 'Trip Notebook');
+
   const kickerEl = document.getElementById('plannerHeaderKicker');
   const eventEl  = document.getElementById('plannerHeaderEvent');
   const nameEl   = document.getElementById('plannerEventName');
-  if (kickerEl) kickerEl.textContent = kicker || 'Conference Planner';
+  if (kickerEl) kickerEl.textContent = kicker;
   if (eventEl)  eventEl.textContent  = title;
   if (nameEl)   nameEl.textContent   = title;
+
+  // Association indicator badge
+  const assocBadge = document.getElementById('plannerAssocBadge');
+  if (assocBadge) {
+    if (hasSchedule) {
+      assocBadge.textContent = state.eventFile.replace('.json', '');
+      assocBadge.title = 'Schedule associated — click "Manage event" to change';
+      assocBadge.classList.remove('hidden');
+    } else {
+      assocBadge.classList.add('hidden');
+    }
+  }
 
   // Show "Save to file" button if API is configured
   const apiEndpoint = localStorage.getItem('editorApiEndpoint') || '';
   if (apiEndpoint) document.getElementById('plannerSaveFileBtn')?.classList.remove('hidden');
 }
 
-async function init() {
-  await loadThemes();
-  applyThemeClass(getCurrentThemeId());
+function applyScheduleGating() {
+  const hasSchedule = !!state.eventFile && state.allSessions.length > 0;
+  const msg = 'Associate a schedule to enable session features.';
 
-  const eventFile = localStorage.getItem('selectedEventFile');
-
-  if (!eventFile) {
-    document.getElementById('plannerNoEvent')?.classList.remove('hidden');
-    document.getElementById('plannerApp')?.classList.add('hidden');
-    revealPage();
-    return;
+  // Session notes panel - gate the notes content area
+  const notesPanel = document.getElementById('plannerNotesPanel');
+  let notesGate = document.getElementById('scheduleGateNotes');
+  if (notesPanel) {
+    if (!hasSchedule) {
+      if (!notesGate) {
+        notesGate = document.createElement('div');
+        notesGate.id = 'scheduleGateNotes';
+        notesGate.className = 'rounded-md border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-400';
+        notesGate.innerHTML = `<i class="fas fa-calendar-xmark block text-2xl mb-2 text-gray-300"></i>${msg}`;
+        notesPanel.prepend(notesGate);
+      }
+    } else {
+      notesGate?.remove();
+    }
   }
 
-  state.eventFile = eventFile;
+  // Tracked sessions search inputs
+  ['sponsorSessionSearchInput', 'personalSessionSearchInput'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.disabled = !hasSchedule;
+    el.placeholder = hasSchedule ? (id.includes('sponsor') ? 'Search sessions…' : 'Search sessions…') : msg;
+    el.title = hasSchedule ? '' : msg;
+  });
+}
 
+async function loadSchedule(eventFile) {
   try {
     const res  = await fetch(`./data/${eventFile}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -4235,9 +4851,48 @@ async function init() {
     state.eventMeta   = {};
     state.allSessions = [];
   }
+}
+
+async function init() {
+  await loadThemes();
+  applyThemeClass(getCurrentThemeId());
+
+  // Resolve the planner key from URL params (new) or localStorage (legacy)
+  const params      = new URLSearchParams(location.search);
+  const eventParam  = params.get('event');   // e.g. drupalcon-us-2025.json (legacy)
+  const idParam     = params.get('id');       // e.g. planner-my-trip (new)
+
+  let plannerKey = eventParam || idParam || localStorage.getItem('selectedEventFile') || null;
+
+  if (!plannerKey) {
+    document.getElementById('plannerNoEvent')?.classList.remove('hidden');
+    document.getElementById('plannerApp')?.classList.add('hidden');
+    revealPage();
+    wireCreatePlannerModal();
+    return;
+  }
+
+  state.plannerKey = plannerKey;
+
+  // For ?event= param: the key IS the schedule file; pass it as defaultEventFile so
+  // freshly-created (empty) planners get the association set automatically.
+  const isScheduleParam = !!eventParam;
+  state.planner = loadPlanner(plannerKey, isScheduleParam ? plannerKey : '');
+
+  // Backward compat: old planners have _eventFile equal to the storage key
+  if (!state.planner._eventFile && plannerKey.endsWith('.json')) {
+    state.planner._eventFile = plannerKey;
+  }
+  state.eventFile = state.planner._eventFile || null;
+
+  if (state.eventFile) {
+    await loadSchedule(state.eventFile);
+  } else {
+    state.eventMeta   = {};
+    state.allSessions = [];
+  }
 
   state.global  = loadGlobal();
-  state.planner = loadPlanner(eventFile);
 
   syncSponsoredSessions();
 
@@ -4246,11 +4901,14 @@ async function init() {
   applyMode(state.planner.mode || 'personal');
 
   wireToolbar();
+  wireCreatePlannerModal();
+  wireEventAssocModal();
   wireContactsPanel();
   wireTasksPanel();
   wireOrgPanel();
   wirePersonalPanel();
   wireTrackedSessionModal();
+  wireBudgetItemsPanel();
   wireSwagModal();
   wirePersonalLegModal();
   wirePersonalAccomModal();

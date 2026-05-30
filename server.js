@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { readFile, writeFile, mkdir } from 'fs/promises';
+import { readFile, writeFile, mkdir, readdir } from 'fs/promises';
 import { resolve, join, dirname, sep } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -96,6 +96,17 @@ app.put('/api/data/:file', express.text({ type: 'application/json', limit: '10mb
   }
 });
 
+// List planner files on disk
+app.get('/api/planner', async (_, res) => {
+  try {
+    await mkdir(PLANNER_DIR, { recursive: true });
+    const files = await readdir(PLANNER_DIR);
+    res.json(files.filter((f) => f.endsWith('.json')));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Read a planner file
 app.get('/api/planner/:file', async (req, res) => {
   if (!req.params.file.endsWith('.json')) return res.status(400).json({ error: 'JSON files only' });
@@ -148,8 +159,8 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 app.post('/api/receipts', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file received' });
   const eventFile = String(req.body.eventFile || '').trim();
-  if (!eventFile || !eventFile.endsWith('.json')) return res.status(400).json({ error: 'eventFile required' });
-  const slug = eventFile.replace('.json', '');
+  if (!eventFile) return res.status(400).json({ error: 'eventFile required' });
+  const slug = eventFile.endsWith('.json') ? eventFile.slice(0, -5) : eventFile;
   const safeName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
   const target = guardPath(RECEIPT_DIR, join(slug, safeName));
   if (!target) return res.status(400).json({ error: 'Invalid path' });

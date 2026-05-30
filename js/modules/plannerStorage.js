@@ -32,10 +32,12 @@ export function saveGlobal(data) {
 
 // ── Per-event planner store ───────────────────────────────────────────────────
 
-export function makeEmptyPlanner(eventFile) {
+export function makeEmptyPlanner(plannerKey, eventFile = '') {
   return {
     _version: PLANNER_VERSION,
+    _plannerKey: plannerKey,
     _eventFile: eventFile,
+    _displayName: '',
     _lastModified: new Date().toISOString(),
     mode: 'personal',
     sessionNotes: {},
@@ -66,6 +68,7 @@ export function makeEmptyPlanner(eventFile) {
       trackedSessions: [],
       autoAddedSponsoredSessions: [],
       documents: [],
+      budgetItems: [],
     },
     itinerary: [],
     receipts: [],
@@ -80,16 +83,17 @@ export function makeEmptyPlanner(eventFile) {
       trackedSessions: [],
       itinerary:      [],
       documents:      [],
+      budgetItems:    [],
     },
   };
 }
 
-export function loadPlanner(eventFile) {
+export function loadPlanner(plannerKey, defaultEventFile = '') {
   try {
-    const raw = localStorage.getItem(getPlannerKey(eventFile));
-    if (!raw) return makeEmptyPlanner(eventFile);
+    const raw = localStorage.getItem(getPlannerKey(plannerKey));
+    if (!raw) return makeEmptyPlanner(plannerKey, defaultEventFile);
     const parsed = JSON.parse(raw);
-    const empty  = makeEmptyPlanner(eventFile);
+    const empty  = makeEmptyPlanner(plannerKey, parsed._eventFile || defaultEventFile);
     // Deep-merge org so new sub-fields are always present
     return {
       ...empty,
@@ -122,9 +126,9 @@ export function loadPlanner(eventFile) {
   }
 }
 
-export function savePlanner(eventFile, data) {
+export function savePlanner(plannerKey, data) {
   const toSave = { ...data, _lastModified: new Date().toISOString() };
-  localStorage.setItem(getPlannerKey(eventFile), JSON.stringify(toSave));
+  localStorage.setItem(getPlannerKey(plannerKey), JSON.stringify(toSave));
 }
 
 // Derives the same session ID used by events.js line 982
@@ -132,13 +136,14 @@ export function makeSessionId(session) {
   return `${session.startTime}-${session.location}-${session.title}`.replace(/[^a-zA-Z0-9-]/g, '-');
 }
 
-export function exportPlannerJson(eventFile, data) {
+export function exportPlannerJson(plannerKey, data) {
   const json = JSON.stringify({ ...data, _lastModified: new Date().toISOString() }, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `planner-${eventFile}`;
+  const basename = plannerKey.endsWith('.json') ? plannerKey : `${plannerKey}.json`;
+  a.download = `planner-${basename}`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
@@ -146,12 +151,20 @@ export function exportPlannerJson(eventFile, data) {
 export function parsePlannerImport(jsonText) {
   const parsed = JSON.parse(jsonText); // throws on invalid JSON
   if (!parsed || typeof parsed !== 'object') throw new Error('Not a valid planner file');
-  if (!parsed._eventFile) throw new Error('Missing _eventFile — this does not look like a planner export');
+  if (!parsed._eventFile && !parsed._plannerKey && !parsed._displayName) throw new Error('Missing identity fields — this does not look like a planner export');
   return parsed;
 }
 
-export async function savePlannerViaApi(apiEndpoint, eventFile, data) {
-  const url = `${apiEndpoint.replace(/\/$/, '')}/api/planner/${eventFile}`;
+export async function listPlannerFiles(apiEndpoint) {
+  const url = `${apiEndpoint.replace(/\/$/, '')}/api/planner`;
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function savePlannerViaApi(apiEndpoint, plannerKey, data) {
+  const filename = plannerKey.endsWith('.json') ? plannerKey : `${plannerKey}.json`;
+  const url = `${apiEndpoint.replace(/\/$/, '')}/api/planner/${filename}`;
   const body = JSON.stringify({ ...data, _lastModified: new Date().toISOString() }, null, 2);
   const res = await fetch(url, {
     method: 'PUT',
