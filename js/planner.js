@@ -18,10 +18,13 @@ import {
   listPlannerFiles,
   loadGlobal,
   saveGlobal,
+  GLOBAL_KEY,
   STORAGE_PREFIX,
 } from './modules/plannerStorage.js';
 
 import { escapeHtml, parseSponsorIds } from './modules/utils.js';
+import { configureEventSearch, openEventSearchModal } from './modules/eventSearch.js';
+import { loadEventCatalog } from './modules/eventCatalog.js';
 
 // ── State ────────────────────────────────────────────────────────────────────
 
@@ -112,6 +115,123 @@ function scheduleAutoSave() {
   }, 600);
 }
 
+// ── Disk recovery ────────────────────────────────────────────────────────────
+
+// Seeds localStorage from the API disk copy when the local entry is missing or has a corrupted
+// event association (e.g. _eventFile was overwritten by a stale bug and points to the wrong event).
+async function seedFromDiskIfMissing(plannerKey) {
+  const raw = localStorage.getItem(`${STORAGE_PREFIX}${plannerKey}`);
+  if (raw) {
+    // For schedule-linked planners (key ends in .json), the _eventFile must equal the plannerKey.
+    // If they differ the local entry was corrupted — fall through to re-seed from disk.
+    try {
+      const local = JSON.parse(raw);
+      const corrupted = plannerKey.endsWith('.json') && local._eventFile && local._eventFile !== plannerKey;
+      if (!corrupted) return;
+    } catch { /* parse error — fall through to re-seed */ }
+  }
+  try {
+    const filename = plannerKey.endsWith('.json') ? plannerKey : `${plannerKey}.json`;
+    const res = await fetch(`./api/planner/${filename}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data || typeof data !== 'object') return;
+    if (!data._eventFile && !data._plannerKey && !data._displayName) return;
+    localStorage.setItem(`${STORAGE_PREFIX}${plannerKey}`, JSON.stringify(data));
+  } catch { /* server not running or file not found — silent */ }
+}
+
+// Seeds global (shared team member list) from disk if localStorage has no entry yet.
+// Only runs once — never overwrites existing global data.
+async function seedGlobalFromDiskIfMissing() {
+  if (localStorage.getItem(GLOBAL_KEY)) return;
+  try {
+    const res = await fetch('./api/planner/global.json');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data || typeof data !== 'object' || !Array.isArray(data.teamMembers)) return;
+    localStorage.setItem(GLOBAL_KEY, JSON.stringify(data));
+  } catch { /* server not running or file not found — silent */ }
+}
+
+// ── Event catalog + URL routing ──────────────────────────────────────────────
+
+let _eventCatalog = [];
+let _searchCatalog = [];
+
+// Builds a search-ready catalog with labels, matching the shape expected by eventSearch.js.
+// Tries /api/meta first (one request); falls back to fetching each event file in parallel.
+async function buildPlannerSearchCatalog(catalog) {
+  function mapMeta(file, meta, enabled) {
+    const designation = String(meta.designation || '').trim();
+    const year        = String(meta.year        || '').trim();
+    const location    = String(meta.location    || '').trim();
+    const label = designation && year && location
+      ? `${designation} ${year}: ${location}`
+      : [designation, year, location].filter(Boolean).join(' ') || file;
+    return {
+      file, label,
+      category:    designation || 'Other',
+      designation, location, year,
+      region:  String(meta.region  || '').trim(),
+      venue:   String(meta.venue   || '').trim(),
+      enabled: enabled !== false,
+    };
+  }
+
+  function sortByYearDesc(arr) {
+    return arr.sort((a, b) => {
+      const ya = Number.parseInt(a.year, 10);
+      const yb = Number.parseInt(b.year, 10);
+      if (Number.isFinite(ya) && Number.isFinite(yb) && ya !== yb) return yb - ya;
+      return a.label.localeCompare(b.label);
+    });
+  }
+
+  try {
+    const res = await fetch('./api/meta');
+    if (res.ok) {
+      const metas = await res.json();
+      if (Array.isArray(metas) && metas.length > 0) {
+        return sortByYearDesc(metas.filter((m) => m?.file).map((m) => mapMeta(m.file, m, m.enabled)));
+      }
+    }
+  } catch { /* API not running — fall through */ }
+
+  const results = await Promise.all(
+    catalog.map(async (item) => {
+      try {
+        const res = await fetch(`./data/${item.file}`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        return mapMeta(item.file, data?.event || {}, item.enabled);
+      } catch { return null; }
+    })
+  );
+  return sortByYearDesc(results.filter(Boolean));
+}
+
+// Keep ?event= or ?id= in the address bar so refresh stays on the same planner.
+function pushPlannerUrl(plannerKey) {
+  if (!plannerKey) return;
+  const params = new URLSearchParams();
+  plannerKey.endsWith('.json') ? params.set('event', plannerKey) : params.set('id', plannerKey);
+  history.replaceState(null, '', `${location.pathname}?${params}`);
+}
+
+// Return the storage key of any existing planner already linked to eventFile.
+function findPlannerKeyForEvent(eventFile) {
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key?.startsWith(STORAGE_PREFIX) || key === `${STORAGE_PREFIX}global`) continue;
+    try {
+      const data = JSON.parse(localStorage.getItem(key) || '{}');
+      if (data._eventFile === eventFile) return key.slice(STORAGE_PREFIX.length);
+    } catch { /* skip */ }
+  }
+  return null;
+}
+
 // ── Theme ────────────────────────────────────────────────────────────────────
 
 function applyTheme() {
@@ -165,6 +285,18 @@ const RECEIPT_CATEGORIES = [
   { value: 'misc',          label: 'Misc' },
 ]
 
+const DOC_CATEGORIES = [
+  { value: '',              label: 'No category' },
+  { value: 'general',       label: 'General' },
+  { value: 'travel',        label: 'Travel' },
+  { value: 'accommodation', label: 'Accommodation' },
+  { value: 'financial',     label: 'Financial' },
+  { value: 'contract',      label: 'Contract' },
+  { value: 'visa',          label: 'Visa / Passport' },
+  { value: 'insurance',     label: 'Insurance' },
+  { value: 'other',         label: 'Other' },
+]
+
 function currencyOptions(selected = 'AUD') {
   return CURRENCIES.map((c) => `<option value="${c}"${c === selected ? ' selected' : ''}>${c}</option>`).join('')
 }
@@ -176,17 +308,17 @@ function tzDatalist() {
   return tzs.map((tz) => `<option value="${tz}">`).join('')
 }
 
-// Upload file to API server (saves to receipts/<event-slug>/ on disk) or,
-// when no server is configured, encode as a base64 data URL stored in localStorage
-// via the planner JSON. Files > 1.5 MB are rejected in the no-API path to stay
-// within localStorage's ~5 MB quota.
-async function uploadOrReadFile(file) {
+// Upload file to API server or, when no server is configured, encode as a base64
+// data URL stored in localStorage via the planner JSON. Files > 1.5 MB are rejected
+// in the no-API path to stay within localStorage's ~5 MB quota.
+// destination: 'receipts' (default) | 'documents'
+async function uploadOrReadFile(file, destination = 'receipts') {
   const apiEndpoint = localStorage.getItem('editorApiEndpoint') || '';
   if (apiEndpoint) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('eventFile', state.plannerKey);
-    const res  = await fetch(`${apiEndpoint.replace(/\/$/, '')}/api/receipts`, { method: 'POST', body: formData });
+    const res  = await fetch(`${apiEndpoint.replace(/\/$/, '')}/api/${destination}`, { method: 'POST', body: formData });
     const data = await res.json();
     if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
     return { path: data.path, label: file.name };
@@ -209,7 +341,7 @@ function fileDisplayName(filePath, fileLabel) {
 }
 
 function parseBudget(str) {
-  const n = parseFloat(String(str || '').replace(/[^0-9.]/g, ''))
+  const n = parseFloat(String(str || ''))
   return isNaN(n) ? 0 : n
 }
 
@@ -684,11 +816,11 @@ function renderAssignmentLegsInModal(assignment) {
 }
 
 const TIMELINE_COLORS = [
-  { bg: '#dbeafe', border: '#93c5fd', text: '#1e40af' },
-  { bg: '#d1fae5', border: '#6ee7b7', text: '#065f46' },
-  { bg: '#ede9fe', border: '#c4b5fd', text: '#5b21b6' },
-  { bg: '#ffedd5', border: '#fdba74', text: '#9a3412' },
-  { bg: '#fce7f3', border: '#f9a8d4', text: '#9d174d' },
+  { bg: '#bfdbfe', border: '#60a5fa', text: '#1d4ed8' },
+  { bg: '#a7f3d0', border: '#34d399', text: '#065f46' },
+  { bg: '#ddd6fe', border: '#a78bfa', text: '#5b21b6' },
+  { bg: '#fed7aa', border: '#fb923c', text: '#9a3412' },
+  { bg: '#fbcfe8', border: '#f472b6', text: '#9d174d' },
 ];
 
 function assignmentCardHtml(assignment) {
@@ -805,13 +937,32 @@ function renderTimeline() {
   const colorMap = Object.fromEntries(accommodations.map((a, i) => [a.id, TIMELINE_COLORS[i % TIMELINE_COLORS.length]]));
 
   function dayAccomMap(memberId) {
-    const map = {};
+    const primary  = {};  // main stay (checkIn through day before checkOut)
+    const checkouts = {}; // accommodation being checked out of on that day
+
     accommodations.forEach((acc) => {
       const ma = acc.assignments?.find((a) => a.memberId === memberId);
       if (!ma?.checkIn || !ma?.checkOut) return;
+      // Mark the checkout day separately
+      checkouts[ma.checkOut] = acc;
+      // Fill primary from checkIn up to (but not including) checkOut day
       let d = new Date(ma.checkIn + 'T00:00:00');
       const e = new Date(ma.checkOut + 'T00:00:00');
-      while (d <= e) { map[localDateStr(d)] = acc; d.setDate(d.getDate() + 1); }
+      e.setDate(e.getDate() - 1);
+      while (d <= e) { primary[localDateStr(d)] = acc; d.setDate(d.getDate() + 1); }
+    });
+
+    // Merge: a checkout day that also has a primary (new checkin) → split cell
+    const map = {};
+    const allDays = new Set([...Object.keys(primary), ...Object.keys(checkouts)]);
+    allDays.forEach((day) => {
+      const inAccom  = primary[day];
+      const outAccom = checkouts[day];
+      if (inAccom && outAccom && inAccom.id !== outAccom.id) {
+        map[day] = { accom: inAccom, splitAccom: outAccom }; // left=checkout, right=checkin
+      } else {
+        map[day] = { accom: inAccom || outAccom, splitAccom: null };
+      }
     });
     return map;
   }
@@ -845,13 +996,23 @@ function renderTimeline() {
       retDayMode[assignment.flightReturn.date] = 'flight';
 
     const cells = days.map((day) => {
-      const accom   = dam[day];
+      const dayInfo    = dam[day];
+      const accom      = dayInfo?.accom      || null;
+      const splitAccom = dayInfo?.splitAccom || null;
       const outMode = outDayMode[day];
       const retMode = retDayMode[day];
       const isEvent = eventDaySet.has(day);
       const isToday = day === todayStr;
-      const cellCls = accom ? '' : isToday ? 'tl-cell-today' : isEvent ? 'tl-cell-event' : '';
-      const bgStyle = accom ? `background:color-mix(in srgb,${colorMap[accom.id].bg} 55%,var(--surface-0))` : '';
+      const cellCls = (accom || splitAccom) ? '' : isToday ? 'tl-cell-today' : isEvent ? 'tl-cell-event' : '';
+      let bgStyle = '';
+      if (splitAccom && accom) {
+        const outCol = colorMap[splitAccom.id];
+        const inCol  = colorMap[accom.id];
+        bgStyle = `background:linear-gradient(to right,${outCol?.bg} 50%,${inCol?.bg} 50%);border-bottom:2px solid ${inCol?.border}`;
+      } else if (accom) {
+        const col = colorMap[accom.id];
+        bgStyle = `background:${col?.bg};border-bottom:2px solid ${col?.border}`;
+      }
 
       let content = '';
       if (outMode && retMode) {
@@ -1692,12 +1853,12 @@ function buildEventBudgetData(planner) {
     }
   })
 
-  // Receipts by category
+  // Receipts are tracked for drilldown display only — amounts are not added to
+  // actual totals to avoid double-counting with manually entered actual fields.
   ;(planner.receipts || []).forEach((r) => {
     const cat = r.category || 'misc'
     const amt = parseBudget(r.amount)
     if (amt && cats[cat]) {
-      cats[cat].actual += amt
       cats[cat].receipts.push({ label: r.name || 'Receipt', amount: amt, currency: r.currency || '', date: r.date || '' })
     }
   })
@@ -1736,23 +1897,17 @@ function buildPersonalBudgetData(planner) {
     }
   })
 
+  // Receipts are tracked for drilldown display only — amounts are not added to
+  // actual totals to avoid double-counting with manually entered actual fields.
   ;(planner.receipts || []).forEach((r) => {
     const cat = r.category || 'misc'
     const amt = parseBudget(r.amount)
     if (amt && cats[cat]) {
-      cats[cat].actual += amt
       cats[cat].receipts.push({ label: r.name || 'Receipt', amount: amt, currency: r.currency || '', date: r.date || '' })
     }
   })
 
   return cats
-}
-
-function sumEventBudgetTotals(planner) {
-  const cats = buildEventBudgetData(planner)
-  let budget = 0, actual = 0
-  Object.values(cats).forEach((c) => { budget += c.budget; actual += c.actual })
-  return { budget, actual }
 }
 
 function renderSummaryTab() {
@@ -1762,6 +1917,64 @@ function renderSummaryTab() {
   } else {
     renderSummaryThisEvent()
   }
+}
+
+function renderBudgetHealth(cats, totalBudget, totalActual) {
+  const el = document.getElementById('summaryBudgetHealth')
+  if (!el) return
+
+  const activeCats = Object.entries(cats).filter(([, c]) => c.budget !== 0 || c.actual !== 0)
+  if (!activeCats.length) { el.innerHTML = ''; return }
+
+  const netBudget  = totalBudget
+  const netActual  = totalActual
+  const pct        = netBudget > 0 ? Math.min((netActual / netBudget) * 100, 100) : 0
+  const overBudget = netActual > netBudget && netBudget > 0
+  const remaining  = netBudget - netActual
+  const barColor   = overBudget ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#10b981'
+
+  const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  const catRows = activeCats.map(([, c]) => {
+    const catPct   = c.budget > 0 ? Math.min((c.actual / c.budget) * 100, 100) : 0
+    const catOver  = c.actual > c.budget && c.budget > 0
+    const catColor = catOver ? '#ef4444' : catPct >= 70 ? '#f59e0b' : '#10b981'
+    const isCredit = c.budget < 0 || c.actual < 0
+    const catBadge = catOver
+      ? `<span class="text-[0.6rem] px-1 py-px rounded bg-red-100 text-red-500 ml-1 whitespace-nowrap">over</span>`
+      : isCredit
+      ? `<span class="text-[0.6rem] px-1 py-px rounded bg-emerald-50 text-emerald-600 ml-1 whitespace-nowrap">credit</span>`
+      : ''
+    return `
+      <div class="flex items-center gap-2 text-xs">
+        <span class="w-28 text-gray-500 truncate flex-shrink-0">${esc(c.label)}</span>
+        <div class="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+          ${c.budget > 0 ? `<div style="width:${catPct.toFixed(1)}%;background:${catColor}" class="h-full rounded-full transition-all"></div>` : ''}
+        </div>
+        <span class="w-24 text-right text-gray-500 flex-shrink-0 tabular-nums">${fmt(c.actual)} / ${fmt(c.budget)}${catBadge}</span>
+      </div>`
+  }).join('')
+
+  const totalLine = netBudget !== 0
+    ? `Spent <span class="font-medium text-gray-700">${fmt(netActual)}</span>
+       of <span class="font-medium text-gray-700">${fmt(netBudget)}</span>
+       ${overBudget
+         ? `<span class="text-red-500 font-medium ml-1">(${fmt(Math.abs(remaining))} over)</span>`
+         : `<span class="text-gray-500 ml-1">(${fmt(remaining)} remaining)</span>`}`
+    : `Net: <span class="font-medium text-gray-700">${fmt(netActual)}</span>`
+
+  el.innerHTML = `
+    <div class="rounded-lg border border-gray-200 bg-white p-3 space-y-2">
+      <div class="flex items-center justify-between flex-wrap gap-1">
+        <span class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Budget Health</span>
+        <span class="text-xs text-gray-400">${totalLine}</span>
+      </div>
+      ${netBudget > 0 ? `
+      <div class="bg-gray-100 rounded-full h-2 overflow-hidden">
+        <div style="width:${pct.toFixed(1)}%;background:${barColor}" class="h-full rounded-full transition-all"></div>
+      </div>` : ''}
+      ${activeCats.length ? `<div class="space-y-1.5 pt-1">${catRows}</div>` : ''}
+    </div>`
 }
 
 function renderSummaryThisEvent() {
@@ -1844,6 +2057,7 @@ function renderSummaryThisEvent() {
     const cats = buildPersonalBudgetData(state.planner)
     let totalBudget = 0, totalActual = 0
     Object.values(cats).forEach((c) => { totalBudget += c.budget; totalActual += c.actual })
+    const hasBudgetData = Object.values(cats).some((c) => c.budget !== 0 || c.actual !== 0)
 
     statsGrid.innerHTML = [
       statCard('fas fa-plane',        'Travel legs',    totalLegs),
@@ -1853,10 +2067,11 @@ function renderSummaryThisEvent() {
       statCard('fas fa-address-book', 'Contacts',       contactCount),
       statCard('fas fa-file-lines',   'Sessions noted', notedCount),
       statCard('fas fa-receipt',      'Receipts',       receiptCount, receiptTotal ? receiptTotal.toLocaleString() : ''),
-      (totalBudget || totalActual) ? statCard('fas fa-wallet', 'My budget', totalBudget.toLocaleString()) : '',
-      (totalBudget || totalActual) ? statCard('fas fa-coins',  'My actual', totalActual.toLocaleString()) : '',
+      hasBudgetData ? statCard('fas fa-wallet', 'My budget', totalBudget.toLocaleString()) : '',
+      hasBudgetData ? statCard('fas fa-coins',  'My actual', totalActual.toLocaleString()) : '',
     ].filter(Boolean).join('')
 
+    renderBudgetHealth(cats, totalBudget, totalActual)
     renderCategoryChart(cats)
     destroyCharts('member')
     return
@@ -1882,6 +2097,7 @@ function renderSummaryThisEvent() {
   const cats = buildEventBudgetData(state.planner)
   let totalBudget = 0, totalActual = 0
   Object.values(cats).forEach((c) => { totalBudget += c.budget; totalActual += c.actual })
+  const hasBudgetData = Object.values(cats).some((c) => c.budget !== 0 || c.actual !== 0)
 
   statsGrid.innerHTML = [
     statCard('fas fa-users',        'Members',        memberCount),
@@ -1892,10 +2108,11 @@ function renderSummaryThisEvent() {
     statCard('fas fa-address-book', 'Contacts',       contactCount),
     statCard('fas fa-file-lines',   'Sessions noted', notedCount),
     statCard('fas fa-receipt',      'Receipts',       receiptCount, receiptTotal ? receiptTotal.toLocaleString() : ''),
-    (totalBudget || totalActual) ? statCard('fas fa-wallet', 'Total budget', totalBudget.toLocaleString()) : '',
-    (totalBudget || totalActual) ? statCard('fas fa-coins',  'Total actual', totalActual.toLocaleString()) : '',
+    hasBudgetData ? statCard('fas fa-wallet', 'Total budget', totalBudget.toLocaleString()) : '',
+    hasBudgetData ? statCard('fas fa-coins',  'Total actual', totalActual.toLocaleString()) : '',
   ].filter(Boolean).join('')
 
+  renderBudgetHealth(cats, totalBudget, totalActual)
   renderCategoryChart(cats)
 
   // ── Per-member chart ─────────────────────────────────────────────────────────
@@ -1948,9 +2165,6 @@ function renderSummaryAllEvents() {
   const container = document.getElementById('summaryAllEvents')
   if (!container) return
 
-  const currentMode = state.planner?.mode || 'personal'
-  const isSponsor   = currentMode === 'sponsor'
-
   // Gather all planner entries from localStorage
   const events = []
   for (let i = 0; i < localStorage.length; i++) {
@@ -1964,7 +2178,9 @@ function renderSummaryAllEvents() {
       const plannerMode = data.mode === 'individual' ? 'personal' : (data.mode || 'personal')
 
       let budget = 0, actual = 0, catData = {}
-      if (isSponsor) {
+      // Use each planner's own mode — not the currently open planner's mode — so that
+      // personal and sponsor planners are each processed by the correct budget builder.
+      if (plannerMode === 'sponsor') {
         const cats = buildEventBudgetData(data)
         Object.values(cats).forEach((c) => { budget += c.budget; actual += c.actual })
         catData = cats
@@ -2235,27 +2451,28 @@ function openMemberDrilldown(memberData, planner) {
 
 // ── Create Planner modal ──────────────────────────────────────────────────────
 
+let openCreatePlannerModal = () => {};
+
 function wireCreatePlannerModal() {
   const modal    = document.getElementById('createPlannerModal');
   const nameInput = document.getElementById('createPlannerName');
   const createBtn = document.getElementById('createPlannerConfirmBtn');
   const closeBtn  = document.getElementById('createPlannerModalClose');
 
-  function openCreateModal() {
+  openCreatePlannerModal = function() {
     if (!modal) return;
     if (nameInput) nameInput.value = '';
     document.body.style.overflow = 'hidden';
     modal.classList.remove('hidden');
     nameInput?.focus();
-  }
+  };
 
   function closeCreateModal() {
     modal?.classList.add('hidden');
     document.body.style.overflow = '';
   }
 
-  document.getElementById('newPlannerBtn')?.addEventListener('click', openCreateModal);
-  document.getElementById('newPlannerBtnNoEvent')?.addEventListener('click', openCreateModal);
+  document.getElementById('newPlannerBtnNoEvent')?.addEventListener('click', openCreatePlannerModal);
   closeBtn?.addEventListener('click', closeCreateModal);
   document.getElementById('createPlannerModalClose2')?.addEventListener('click', closeCreateModal);
   modal?.addEventListener('click', (e) => { if (e.target === modal) closeCreateModal(); });
@@ -2289,7 +2506,7 @@ async function gatherAssocSources() {
   const apiEndpoint = localStorage.getItem('editorApiEndpoint') || '';
   const currentSponsorId = state.planner?.org?.sponsorId || '';
 
-  // 1. Server schedule files
+  // 1. Server schedule files — fall back to the already-built search catalog if server is unavailable
   try {
     const res = await fetch('./api/meta');
     if (res.ok) {
@@ -2302,6 +2519,13 @@ async function gatherAssocSources() {
     }
   } catch { /* offline / no data dir */ }
 
+  if (results.size === 0) {
+    _searchCatalog.forEach((item) => {
+      if (!item.file || item.enabled === false) return;
+      results.set(item.file, { label: item.label, eventFile: item.file, plannerKey: null, hasDiskFile: false, plannerData: null, meta: item });
+    });
+  }
+
   // 2. localStorage planners
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
@@ -2311,7 +2535,7 @@ async function gatherAssocSources() {
       const data = JSON.parse(localStorage.getItem(k) || '{}');
       const ef = data._eventFile || '';
       const lbl = data._displayName || ef.replace('.json', '') || slug;
-      const existing = ef ? results.get(ef) : null;
+      const existing = ef ? results.get(ef) : (results.get(slug) || null);
       if (existing) {
         existing.plannerKey = slug;
         existing.plannerData = data;
@@ -2336,8 +2560,9 @@ async function gatherAssocSources() {
   // Compute sponsor match and sort: sponsor matches first, then alphabetical
   const currentKey = state.plannerKey;
   const arr = [...results.values()].filter((r) => {
-    // Don't show the current planner as a switch target
-    return r.plannerKey !== currentKey && r.eventFile !== currentKey;
+    // Keep if there's an event file to act on (associate/disassociate), or a different planner to switch to.
+    // This correctly shows the current event when plannerKey === eventFile (legacy URL case).
+    return r.eventFile || r.plannerKey !== currentKey;
   });
 
   arr.forEach((r) => {
@@ -2396,12 +2621,6 @@ function renderAssocResults(items, query) {
         <i class="fas fa-unlink mr-1 text-[0.6rem]"></i>Disassociate
       </button>`);
     }
-    if (r.plannerKey && r.plannerKey !== currentPlannerKey) {
-      actions.push(`<button type="button" class="assoc-switch-btn h-7 px-3 rounded-md border border-gray-300 text-xs text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0"
-        data-planner-key="${esc(r.plannerKey)}">
-        <i class="fas fa-arrow-right-to-bracket mr-1 text-[0.6rem]"></i>Switch
-      </button>`);
-    }
 
     return `<div class="flex items-center gap-2 px-4 py-3 border-b border-gray-100 last:border-0 ${r.sponsorMatch ? 'bg-amber-50/40' : ''}">
       <div class="flex-1 min-w-0">
@@ -2418,6 +2637,25 @@ function renderAssocResults(items, query) {
   }).join('');
 }
 
+function wireManageEventBtn() {
+  // "Find event" uses the shared event-search modal, same as editor.html.
+  document.getElementById('plannerFindEventBtn')?.addEventListener('click', openEventSearchModal);
+
+  // Disassociate via the × inside the association badge (delegated — badge is re-rendered by updateHeader).
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#plannerDisassocBtn')) return;
+    state.planner._eventFile = '';
+    state.eventFile = null;
+    state.eventMeta = {};
+    state.allSessions = [];
+    savePlanner(state.plannerKey, state.planner);
+    pushPlannerUrl(state.plannerKey);
+    updateHeader();
+    renderAll();
+  });
+}
+
+// ── Manage event modal — associate / disassociate the planner from any event (including custom ones) ──
 function wireEventAssocModal() {
   const modal     = document.getElementById('eventAssocModal');
   const searchInput = document.getElementById('assocSearchInput');
@@ -2456,7 +2694,6 @@ function wireEventAssocModal() {
   document.getElementById('assocModalResults')?.addEventListener('click', async (e) => {
     const assocBtn   = e.target.closest('.assoc-associate-btn');
     const disassocBtn = e.target.closest('.assoc-disassociate-btn');
-    const switchBtn  = e.target.closest('.assoc-switch-btn');
 
     if (assocBtn) {
       const ef  = assocBtn.dataset.eventFile;
@@ -2483,13 +2720,29 @@ function wireEventAssocModal() {
       closeModal();
     }
 
-    if (switchBtn) {
-      const key = switchBtn.dataset.plannerKey;
-      if (key) {
-        closeModal();
-        location.href = `planner.html?id=${encodeURIComponent(key)}`;
-      }
+  });
+
+  document.getElementById('managePlannerNewBtn')?.addEventListener('click', () => {
+    closeModal();
+    openCreatePlannerModal();
+  });
+
+  document.getElementById('managePlannerDeleteBtn')?.addEventListener('click', async () => {
+    const name = state.planner._displayName || state.plannerKey;
+    if (!window.confirm(`Delete "${name}"? This removes it from storage and cannot be undone.`)) return;
+
+    localStorage.removeItem(`${STORAGE_PREFIX}${state.plannerKey}`);
+
+    const apiEndpoint = localStorage.getItem('editorApiEndpoint') || '';
+    if (apiEndpoint) {
+      try {
+        const filename = state.plannerKey.endsWith('.json') ? state.plannerKey : `${state.plannerKey}.json`;
+        await fetch(`${apiEndpoint.replace(/\/$/, '')}/api/planner/${filename}`, { method: 'DELETE' });
+      } catch { /* best effort */ }
     }
+
+    closeModal();
+    location.href = 'planner.html';
   });
 }
 
@@ -2874,22 +3127,26 @@ function renderPersonalTimeline() {
   outLegs.filter((l) => l.date).forEach((l) => { if (!outDayMode[l.date]) outDayMode[l.date] = l.mode || 'other' })
   retLegs.filter((l) => l.date).forEach((l) => { if (!retDayMode[l.date]) retDayMode[l.date] = l.mode || 'other' })
 
-  // Per-accommodation day sets and color mapping
-  const accomDaySets = accoms.map((acc) => {
-    const s = new Set()
-    if (acc.checkIn && acc.checkOut) {
-      let d = new Date(acc.checkIn + 'T00:00:00')
-      const e = new Date(acc.checkOut + 'T00:00:00')
-      while (d <= e) { s.add(localDateStr(d)); d.setDate(d.getDate() + 1) }
-    }
-    return s
+  // Per-accommodation day maps: primary (checkIn to day before checkOut) and checkout day
+  const accomPrimary  = {}  // day → { acc, color }
+  const accomCheckout = {}  // day → { acc, color }
+  accoms.forEach((acc, i) => {
+    const color = TIMELINE_COLORS[i % TIMELINE_COLORS.length]
+    if (!acc.checkIn || !acc.checkOut) return
+    accomCheckout[acc.checkOut] = { acc, color }
+    let d = new Date(acc.checkIn + 'T00:00:00')
+    const e = new Date(acc.checkOut + 'T00:00:00')
+    e.setDate(e.getDate() - 1)
+    while (d <= e) { accomPrimary[localDateStr(d)] = { acc, color }; d.setDate(d.getDate() + 1) }
   })
 
   function accomForDay(day) {
-    for (let i = 0; i < accoms.length; i++) {
-      if (accomDaySets[i].has(day)) return { acc: accoms[i], color: TIMELINE_COLORS[i % TIMELINE_COLORS.length] }
+    const primary  = accomPrimary[day]
+    const checkout = accomCheckout[day]
+    if (primary && checkout && primary.acc.id !== checkout.acc.id) {
+      return { acc: primary.acc, color: primary.color, splitAcc: checkout.acc, splitColor: checkout.color }
     }
-    return null
+    return primary || checkout || null
   }
 
   // Itinerary items by date
@@ -2912,7 +3169,12 @@ function renderPersonalTimeline() {
     const isToday = day === todayStr
     const isEvent = eventDaySet.has(day)
     const cellCls = match ? '' : isToday ? 'tl-cell-today' : isEvent ? 'tl-cell-event' : ''
-    const bgStyle = match ? `background:color-mix(in srgb,${match.color.bg} 55%,var(--surface-0))` : ''
+    let bgStyle = ''
+    if (match?.splitAcc) {
+      bgStyle = `background:linear-gradient(to right,${match.splitColor.bg} 50%,${match.color.bg} 50%);border-bottom:2px solid ${match.color.border}`
+    } else if (match) {
+      bgStyle = `background:${match.color.bg};border-bottom:2px solid ${match.color.border}`
+    }
     let content = ''
     if (outMode && retMode) {
       content = `<i class="${travelIcon(outMode, false)}" style="color:#7c3aed;font-size:0.6rem" title="Outbound + return"></i><i class="${travelIcon(retMode, true)}" style="color:#7c3aed;font-size:0.6rem;margin-left:2px"></i>`
@@ -2931,9 +3193,9 @@ function renderPersonalTimeline() {
     const isEvent  = eventDaySet.has(day)
     const cellCls  = isToday ? 'tl-cell-today' : isEvent ? 'tl-cell-event' : ''
     const pills    = dayItems.map((item) =>
-      `<span class="block text-[0.6rem] px-1 py-0.5 rounded ${item.done ? 'line-through text-gray-400 bg-gray-100' : 'bg-blue-50 text-blue-700'} truncate cursor-pointer" title="${esc(item.title)}">${esc(item.title.slice(0, 15))}${item.title.length > 15 ? '…' : ''}</span>`
+      `<span class="block text-[0.6rem] px-1 py-0.5 truncate cursor-pointer" style="${item.done ? 'background:#e2e8f0;color:#94a3b8;text-decoration:line-through' : 'background:#1e293b;color:#cbd5e1'}" title="${esc(item.title)}">${esc(item.title.slice(0, 15))}${item.title.length > 15 ? '…' : ''}</span>`
     ).join('')
-    return `<td class="${cellCls} px-1 py-1 border-l border-gray-100 align-top cursor-pointer personal-itinerary-cell" data-date="${esc(day)}" style="min-width:80px">${pills || '<span class="block text-[0.55rem] text-gray-300 text-center py-1">+</span>'}</td>`
+    return `<td class="${cellCls} px-1 py-1 border-l border-gray-100 align-top cursor-pointer personal-itinerary-cell" data-date="${esc(day)}" style="min-width:80px">${pills || '<span class="block text-[0.55rem] text-center py-1" style="color:#cbd5e1">+</span>'}</td>`
   }).join('')
 
   const legend = accoms.length
@@ -2979,26 +3241,31 @@ function renderPersonalAccomList() {
 function renderBudgetBreakdownInto(containerId, cats, currency) {
   const container  = document.getElementById(containerId)
   if (!container) return
-  const activeCats = Object.entries(cats).filter(([, c]) => c.budget > 0 || c.actual > 0)
+  const activeCats = Object.entries(cats).filter(([, c]) => c.budget !== 0 || c.actual !== 0)
   if (!activeCats.length) { container.classList.add('hidden'); return }
 
   const totalB    = activeCats.reduce((s, [, c]) => s + c.budget, 0)
   const totalA    = activeCats.reduce((s, [, c]) => s + c.actual, 0)
   const remaining = totalB - totalA
   const over      = remaining < 0
-  const showTotal = activeCats.length > 1
-  const fmt = (n) => n ? n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'
+  const fmt = (n) => n !== 0 ? n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'
+
+  // Flatten all items across active categories, tagging each with its category label
+  const allItems = activeCats.flatMap(([, c]) =>
+    (c.items || []).map((item) => ({ ...item, catLabel: c.label }))
+  )
+  const showTotal = allItems.length > 1
 
   container.classList.remove('hidden')
   container.innerHTML = `
     <div class="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1">
-      <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-300 pb-0.5">Category</span>
+      <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-300 pb-0.5">Item</span>
       <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-300 text-right pb-0.5">Budget</span>
       <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-300 text-right pb-0.5">Actual</span>
-      ${activeCats.map(([, c]) => `
-        <span class="text-gray-500 truncate">${esc(c.label)}</span>
-        <span class="text-gray-400 tabular-nums text-right">${fmt(c.budget)}</span>
-        <span class="text-gray-600 tabular-nums text-right">${fmt(c.actual)}</span>
+      ${allItems.map((item) => `
+        <span class="text-gray-500 truncate">${esc(item.label)} <span class="text-gray-400">(${esc(item.catLabel)})</span></span>
+        <span class="text-gray-400 tabular-nums text-right">${fmt(item.budget)}</span>
+        <span class="tabular-nums text-right ${item.actual < 0 ? 'text-emerald-600' : item.actual > item.budget && item.budget > 0 ? 'text-red-500' : 'text-gray-600'}">${fmt(item.actual)}</span>
       `).join('')}
       ${showTotal ? `
         <div class="col-span-3 h-px bg-gray-200 my-0.5"></div>
@@ -3007,9 +3274,9 @@ function renderBudgetBreakdownInto(containerId, cats, currency) {
         <span class="text-gray-700 font-medium tabular-nums text-right">${fmt(totalA)}</span>
       ` : ''}
     </div>
-    ${totalB > 0 ? `
+    ${totalB !== 0 ? `
       <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-gray-200 font-medium ${over ? 'text-red-500' : 'text-emerald-600'}">
-        <span>${over ? 'Over budget' : 'Remaining'}</span>
+        <span>${over ? 'Over budget' : remaining < 0 ? 'Net credit' : 'Remaining'}</span>
         <span class="tabular-nums">${currency} ${fmt(Math.abs(remaining))}</span>
       </div>
     ` : ''}
@@ -4490,6 +4757,10 @@ function applyMode(mode) {
     document.getElementById(TAB_BTN_IDS[tab])?.classList.toggle('hidden', !visibleTabs.has(tab));
   });
 
+  // Update header subtitle
+  const subtitle = document.getElementById('plannerModeSubtitle');
+  if (subtitle) subtitle.textContent = isSponsor ? 'Your sponsor notebook for this event.' : 'Your personal notebook for this event.';
+
   // Mark the active mode button
   document.getElementById('modeToggleSponsor')?.classList.toggle('is-active', isSponsor);
   document.getElementById('modeToggleSponsor')?.setAttribute('aria-pressed', String(isSponsor));
@@ -4564,6 +4835,9 @@ function collectDocuments() {
         name: fileDisplayName(r.filePath, r.fileLabel),
         filePath: r.filePath,
         isDirect: false,
+        docType: 'receipt',
+        date: r.date || '',
+        category: r.category || '',
         sourceLabel: `Receipt${r.merchant ? ` · ${r.merchant}` : ''}`,
         sourceIcon: 'fas fa-receipt',
       });
@@ -4628,36 +4902,55 @@ function documentCardHtml(doc) {
     : '';
 
   if (doc.isDirect) {
+    const catOptions = DOC_CATEGORIES.map((c) =>
+      `<option value="${c.value}"${doc.category === c.value ? ' selected' : ''}>${esc(c.label)}</option>`
+    ).join('');
     return `
-      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white group" data-doc-id="${esc(doc.id)}">
-        <i class="fas fa-file-alt text-gray-400 flex-shrink-0 text-sm" aria-hidden="true"></i>
-        <div class="flex-1 min-w-0">
-          <input type="text" class="doc-name-input w-full border-0 border-b border-transparent hover:border-gray-200 focus:border-gray-300 focus:ring-0 bg-transparent text-sm text-gray-800 px-0 py-0.5 transition-colors"
-            data-doc-id="${esc(doc.id)}" value="${esc(doc.name)}" placeholder="Document name"
-            aria-label="Document name for ${esc(doc.name || 'this file')}">
-          ${date ? `<p class="text-xs text-gray-400 mt-0.5">Updated ${esc(date)}</p>` : ''}
+      <div class="rounded-lg border border-gray-200 bg-white group" data-doc-id="${esc(doc.id)}">
+        <div class="flex items-center gap-3 px-3 py-2.5">
+          <i class="fas fa-file-alt text-gray-400 flex-shrink-0 text-sm" aria-hidden="true"></i>
+          <div class="flex-1 min-w-0">
+            <input type="text" class="doc-name-input w-full border-0 border-b border-transparent hover:border-gray-200 focus:border-gray-300 focus:ring-0 bg-transparent text-sm text-gray-800 px-0 py-0.5 transition-colors"
+              data-doc-id="${esc(doc.id)}" value="${esc(doc.name)}" placeholder="Document name"
+              aria-label="Document name for ${esc(doc.name || 'this file')}">
+            ${date ? `<p class="text-[0.7rem] text-gray-400 mt-0.5">Updated ${esc(date)}</p>` : ''}
+          </div>
+          ${doc.filePath
+            ? `<a href="${esc(doc.filePath)}" target="_blank"
+                 class="flex-shrink-0 h-8 px-3 border border-gray-300 rounded-md text-xs text-blue-600 hover:bg-blue-50 transition-colors inline-flex items-center"
+                 aria-label="View ${esc(doc.name || 'document')}">
+                 <i class="fas fa-external-link-alt mr-1 text-[0.65rem]" aria-hidden="true"></i>View
+               </a>`
+            : '<span class="text-xs text-gray-400 flex-shrink-0 italic">No file</span>'
+          }
+          <button type="button" class="delete-doc-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+            data-doc-id="${esc(doc.id)}" aria-label="Delete ${esc(doc.name || 'document')}">
+            <i class="fas fa-times text-xs" aria-hidden="true"></i>
+          </button>
         </div>
-        ${doc.filePath
-          ? `<a href="${esc(doc.filePath)}" target="_blank"
-               class="flex-shrink-0 h-8 px-3 border border-gray-300 rounded-md text-xs text-blue-600 hover:bg-blue-50 transition-colors inline-flex items-center"
-               aria-label="View ${esc(doc.name || 'document')}">
-               <i class="fas fa-external-link-alt mr-1 text-[0.65rem]" aria-hidden="true"></i>View
-             </a>`
-          : '<span class="text-xs text-gray-400 flex-shrink-0 italic">No file</span>'
-        }
-        <button type="button" class="delete-doc-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-          data-doc-id="${esc(doc.id)}" aria-label="Delete ${esc(doc.name || 'document')}">
-          <i class="fas fa-times text-xs" aria-hidden="true"></i>
-        </button>
+        <div class="flex gap-2 px-3 pb-2.5 border-t border-gray-100 pt-2">
+          <input type="text" class="doc-desc-input flex-1 h-7 rounded border border-gray-200 text-xs text-gray-600 px-2 focus:outline-none focus:border-gray-300 bg-white"
+            data-doc-id="${esc(doc.id)}" value="${esc(doc.description || '')}" placeholder="Description (optional)"
+            aria-label="Description for ${esc(doc.name || 'this file')}">
+          <select class="doc-cat-select h-7 rounded border border-gray-200 text-xs text-gray-600 px-1.5 bg-white focus:outline-none focus:border-gray-300"
+            data-doc-id="${esc(doc.id)}" aria-label="Category for ${esc(doc.name || 'this file')}">
+            ${catOptions}
+          </select>
+        </div>
       </div>`;
   }
+
+  const receiptCatLabel = doc.docType === 'receipt' && doc.category
+    ? RECEIPT_CATEGORIES.find((c) => c.value === doc.category)?.label || ''
+    : '';
+  const receiptMeta = [doc.date, receiptCatLabel].filter(Boolean).join(' · ');
 
   return `
     <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-100 bg-gray-50">
       <i class="${esc(doc.sourceIcon)} text-gray-400 flex-shrink-0 text-sm" aria-hidden="true"></i>
       <div class="flex-1 min-w-0">
         <p class="text-sm text-gray-800 truncate">${esc(doc.name || 'Attached file')}</p>
-        <p class="text-xs text-gray-400 mt-0.5">${esc(doc.sourceLabel)}</p>
+        <p class="text-xs text-gray-400 mt-0.5">${esc(doc.sourceLabel)}${receiptMeta ? ` · ${esc(receiptMeta)}` : ''}</p>
       </div>
       ${doc.filePath
         ? `<a href="${esc(doc.filePath)}" target="_blank"
@@ -4691,10 +4984,12 @@ function wireDocumentsPanel() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const { path, label } = await uploadOrReadFile(file);
+      const { path, label } = await uploadOrReadFile(file, 'documents');
       const doc = {
         id: makeItemId('doc'),
         name: label,
+        description: '',
+        category: '',
         filePath: path,
         fileLabel: label,
         updatedAt: new Date().toISOString(),
@@ -4713,13 +5008,21 @@ function wireDocumentsPanel() {
   });
 
   panel.addEventListener('input', (e) => {
-    const input = e.target.closest('.doc-name-input');
-    if (!input) return;
-    const id   = input.dataset.docId;
+    const nameInput = e.target.closest('.doc-name-input');
+    const descInput = e.target.closest('.doc-desc-input');
+    const catSelect = e.target.closest('.doc-cat-select');
+    const el = nameInput || descInput || catSelect;
+    if (!el) return;
+    const id   = el.dataset.docId;
     const mode = state.planner.mode || 'personal';
     const arr  = mode === 'sponsor' ? (state.planner.org.documents || []) : (state.planner.personal.documents || []);
     const doc  = arr.find((d) => d.id === id);
-    if (doc) { doc.name = input.value; doc.updatedAt = new Date().toISOString(); scheduleAutoSave(); }
+    if (!doc) return;
+    if (nameInput) doc.name = nameInput.value;
+    if (descInput) doc.description = descInput.value;
+    if (catSelect) doc.category = catSelect.value;
+    doc.updatedAt = new Date().toISOString();
+    scheduleAutoSave();
   });
 
   panel.addEventListener('click', (e) => {
@@ -4793,14 +5096,14 @@ function updateHeader() {
   if (eventEl)  eventEl.textContent  = title;
   if (nameEl)   nameEl.textContent   = title;
 
-  // Association indicator badge
+  // Association indicator badge — includes an inline × to disassociate
   const assocBadge = document.getElementById('plannerAssocBadge');
   if (assocBadge) {
     if (hasSchedule) {
-      assocBadge.textContent = state.eventFile.replace('.json', '');
-      assocBadge.title = 'Schedule associated — click "Manage event" to change';
+      assocBadge.innerHTML = `${escapeHtml(state.eventFile.replace('.json', ''))}<button id="plannerDisassocBtn" class="ml-1 opacity-50 hover:opacity-100 transition-opacity leading-none" title="Remove schedule association" aria-label="Remove schedule association"><i class="fas fa-xmark text-[0.5rem]"></i></button>`;
       assocBadge.classList.remove('hidden');
     } else {
+      assocBadge.innerHTML = '';
       assocBadge.classList.add('hidden');
     }
   }
@@ -4860,7 +5163,9 @@ async function loadSchedule(eventFile) {
 }
 
 async function init() {
-  await loadThemes();
+  // Load themes and event catalog in parallel
+  const [, catalog] = await Promise.all([loadThemes(), loadEventCatalog()]);
+  _eventCatalog = catalog;
   applyThemeClass(getCurrentThemeId());
 
   // Resolve the planner key from URL params (new) or localStorage (legacy)
@@ -4879,6 +5184,12 @@ async function init() {
   }
 
   state.plannerKey = plannerKey;
+
+  // Start building the search catalog in the background — runs in parallel with schedule load.
+  const searchCatalogPromise = buildPlannerSearchCatalog(catalog);
+
+  // Restore from disk if localStorage has no entry (cleared storage, new browser, etc.)
+  await Promise.all([seedFromDiskIfMissing(plannerKey), seedGlobalFromDiskIfMissing()]);
 
   // For ?event= param: the key IS the schedule file; pass it as defaultEventFile so
   // freshly-created (empty) planners get the association set automatically.
@@ -4902,14 +5213,49 @@ async function init() {
 
   state.global  = loadGlobal();
 
+  // Sync the URL so refresh stays on this planner and the address is shareable
+  pushPlannerUrl(state.plannerKey);
+
   syncSponsoredSessions();
 
   updateHeader();
   renderAll();
   applyMode(state.planner.mode || 'personal');
 
+  // Configure the shared event-search modal used by "Find event" / "Manage event"
+  _searchCatalog = await searchCatalogPromise;
+  configureEventSearch({
+    getEvents: () => _searchCatalog,
+    onSelect: async (_category, file) => {
+      const existingKey = findPlannerKeyForEvent(file);
+      // If a different planner already owns this event, navigate to it
+      if (existingKey && existingKey !== state.plannerKey) {
+        location.href = `planner.html?event=${encodeURIComponent(file)}`;
+        return;
+      }
+      // If no planner exists for this event but the current planner is already
+      // linked to a different event, navigate to create a fresh planner rather
+      // than overwriting the current planner's event association
+      if (!existingKey && state.planner._eventFile && state.planner._eventFile !== file) {
+        location.href = `planner.html?event=${encodeURIComponent(file)}`;
+        return;
+      }
+      // Only reach here for first-time association (current planner has no _eventFile)
+      state.planner._eventFile = file;
+      state.eventFile = file;
+      savePlanner(state.plannerKey, state.planner);
+      pushPlannerUrl(state.plannerKey);
+      await loadSchedule(file);
+      applyTheme();
+      syncSponsoredSessions();
+      updateHeader();
+      renderAll();
+    },
+  });
+
   wireToolbar();
   wireCreatePlannerModal();
+  wireManageEventBtn();
   wireEventAssocModal();
   wireContactsPanel();
   wireTasksPanel();

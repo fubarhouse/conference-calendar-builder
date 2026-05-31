@@ -4,54 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trip Planner - Drupal Event Schedule Builder</title>
-  <style>
-    html { transition: opacity .15s ease; overflow-y: scroll; scrollbar-gutter: stable }
-
-    /* ── Planner: editor-tab-button contrast fixes ──────────────────────────
-       Hardcoded colour overrides for editor-tab-button since its colour
-       is not var-based and must be set explicitly per context.
-    ─────────────────────────────────────────────────────────────────────── */
-
-    /* Toolbar mode toggle + summary toggle on white: dark readable text */
-    .editor-tab-button { color: #4b5563 }
-    .editor-tab-button:hover { background: rgba(0,0,0,0.06); color: #111827 }
-    .editor-tab-row { border-color: rgba(0,0,0,0.12); background: rgba(0,0,0,0.04) }
-
-    /* Dark accordion header tab bar: restore light text */
-    .editor-meta-accordion > div > .editor-tab-row .editor-tab-button { color: #c8d6e8 }
-    .editor-meta-accordion > div > .editor-tab-row .editor-tab-button:hover {
-      background: rgba(255,255,255,0.08); color: #eef6ff;
-    }
-    .editor-meta-accordion > div > .editor-tab-row {
-      border-color: rgba(135,186,233,0.22); background: rgba(255,255,255,0.04);
-    }
-
-    /* Summary toggle inside accordion → bg-white card: keep dark text */
-    .editor-meta-accordion .bg-white .editor-tab-button { color: #4b5563 }
-    .editor-meta-accordion .bg-white .editor-tab-button:hover {
-      background: rgba(0,0,0,0.06); color: #111827;
-    }
-    .editor-meta-accordion .bg-white .editor-tab-row {
-      border-color: rgba(0,0,0,0.12); background: rgba(0,0,0,0.04);
-    }
-    /* In dark theme that white card also darkens — restore light tab text */
-    .theme-dark .editor-meta-accordion .bg-white .editor-tab-button { color: #c8d6e8 }
-    .theme-dark .editor-meta-accordion .bg-white .editor-tab-button:hover {
-      background: rgba(255,255,255,0.08); color: #eef6ff;
-    }
-    .theme-dark .editor-meta-accordion .bg-white .editor-tab-row {
-      border-color: rgba(135,186,233,0.22); background: rgba(255,255,255,0.04);
-    }
-
-    /* Theme-aware timeline header and cell classes */
-    .tl-head-today  { background: color-mix(in srgb, #f59e0b 22%, var(--surface-1, #f9fafb)) !important; color: #92400e !important; font-weight: 600 }
-    .tl-head-event  { background: color-mix(in srgb, var(--accent, #0678be) 14%, var(--surface-1, #f9fafb)) !important; color: var(--accent, #0369a1) !important; font-weight: 600 }
-    .tl-head-normal { color: var(--text-2, #6b7280) }
-    .tl-cell-today  { background: color-mix(in srgb, #f59e0b 10%, var(--surface-0, #fff)) !important }
-    .tl-cell-event  { background: color-mix(in srgb, var(--accent, #0678be) 8%, var(--surface-0, #fff)) !important }
-    .theme-dark .tl-head-today { color: #fbbf24 !important }
-    .theme-dark .tl-head-event { color: color-mix(in srgb, var(--accent) 80%, #fff) !important }
-  </style>
+  <style>html { transition: opacity .15s ease; overflow-y: scroll; scrollbar-gutter: stable }</style>
   <noscript><style>html{opacity:1}</style></noscript>
   <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -60,6 +13,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="./css/app.css">
+  <link rel="stylesheet" href="./css/forms.css">
+  <link rel="stylesheet" href="./css/schedule.css">
+  <link rel="stylesheet" href="./css/planner.css">
 </head>
 <body class="bg-gray-100 min-h-screen">
 
@@ -119,11 +75,11 @@
             <div id="plannerDirtyState" class="h-11 inline-flex items-center px-4 rounded-md border border-gray-300 text-sm text-gray-400 gap-2">
               <i class="fas fa-circle text-xs text-emerald-400"></i><span>Saved</span>
             </div>
-            <button id="manageEventBtn" type="button" class="h-11 inline-flex items-center justify-center pl-4 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" title="Associate, switch, or disassociate schedule">
-              <i class="fas fa-calendar-pen mr-2 text-xs"></i>Manage event
+            <button id="plannerFindEventBtn" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-search mr-2 text-xs"></i>Find event
             </button>
-            <button id="newPlannerBtn" type="button" class="h-11 inline-flex items-center justify-center pl-4 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-              <i class="fas fa-plus mr-2 text-xs"></i>New planner
+            <button id="manageEventBtn" type="button" class="h-11 inline-flex items-center justify-center pl-4 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap" title="New, delete, associate or switch planner">
+              <i class="fas fa-book mr-2 text-xs"></i>Manage planner
             </button>
           </div>
           <div class="flex gap-2 flex-wrap">
@@ -145,7 +101,7 @@
         <div class="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h2 class="text-lg font-semibold text-gray-100">Planner</h2>
-            <p class="text-sm text-gray-400">Your personal notebook for this event.</p>
+            <p id="plannerModeSubtitle" class="text-sm text-gray-400">Your personal notebook for this event.</p>
           </div>
           <div class="editor-tab-row" role="tablist" aria-label="Planner sections">
             <button id="showSponsorTab" type="button" class="editor-tab-button hidden" role="tab" aria-selected="false" aria-controls="plannerSponsorPanel">
@@ -153,9 +109,6 @@
             </button>
             <button id="showTeamTab" type="button" class="editor-tab-button hidden" role="tab" aria-selected="false" aria-controls="plannerTeamPanel">
               <i class="fas fa-users mr-2 text-[0.72rem]"></i>Team
-            </button>
-            <button id="showDocumentsTab" type="button" class="editor-tab-button hidden" role="tab" aria-selected="false" aria-controls="plannerDocumentsPanel">
-              <i class="fas fa-folder-open mr-2 text-[0.72rem]"></i>Documents
             </button>
             <button id="showTasksTab" type="button" class="editor-tab-button hidden" role="tab" aria-selected="false" aria-controls="plannerTasksPanel">
               <i class="fas fa-list-check mr-2 text-[0.72rem]"></i>Tasks
@@ -168,6 +121,9 @@
             </button>
             <button id="showReceiptsTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="plannerReceiptsPanel">
               <i class="fas fa-receipt mr-2 text-[0.72rem]"></i>Receipts
+            </button>
+            <button id="showDocumentsTab" type="button" class="editor-tab-button hidden" role="tab" aria-selected="false" aria-controls="plannerDocumentsPanel">
+              <i class="fas fa-folder-open mr-2 text-[0.72rem]"></i>Documents
             </button>
             <button id="showSummaryTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="plannerSummaryPanel">
               <i class="fas fa-chart-bar mr-2 text-[0.72rem]"></i>Summary
@@ -602,6 +558,7 @@
             <!-- This Event -->
             <div id="summaryThisEvent" class="space-y-4">
               <div id="summaryStatsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2"></div>
+              <div id="summaryBudgetHealth"></div>
               <div class="flex gap-4 min-w-0">
                 <div class="flex-1 min-w-0">
                   <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Category <span class="normal-case font-normal text-gray-300 ml-1">(click to drill down)</span></h3>
@@ -731,11 +688,11 @@
   </div>
 
   <!-- Event Association / Switch modal -->
-  <div id="eventAssocModal" class="hidden fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-8 overflow-y-auto" style="background:rgba(0,0,0,0.55)" role="dialog" aria-modal="true" aria-labelledby="eventAssocModalTitle">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col my-auto">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+  <div id="eventAssocModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8" style="background:rgba(0,0,0,0.55)" role="dialog" aria-modal="true" aria-labelledby="eventAssocModalTitle">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col" style="height:min(600px,90vh)">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
         <div>
-          <h2 id="eventAssocModalTitle" class="text-base font-semibold text-gray-800">Manage Event</h2>
+          <h2 id="eventAssocModalTitle" class="text-base font-semibold text-gray-800">Manage Planner</h2>
           <p class="text-xs text-gray-400 mt-0.5">Associate, switch, or disassociate a schedule.</p>
         </div>
         <button type="button" id="eventAssocModalClose" aria-label="Close"
@@ -743,7 +700,7 @@
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <div class="px-4 py-3 border-b border-gray-100">
+      <div class="px-4 py-3 border-b border-gray-100 flex-shrink-0">
         <div class="relative">
           <input type="text" id="assocSearchInput" placeholder="Search events…"
             class="h-9 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3 pr-8"
@@ -751,7 +708,15 @@
           <i class="fas fa-search absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 text-xs pointer-events-none"></i>
         </div>
       </div>
-      <div id="assocModalResults" class="overflow-y-auto" style="max-height:60vh"></div>
+      <div id="assocModalResults" class="overflow-y-auto flex-1 min-h-0"></div>
+      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100 flex-shrink-0">
+        <button type="button" id="managePlannerNewBtn" class="h-8 inline-flex items-center px-3 rounded-md border border-gray-300 text-xs font-medium text-gray-600 bg-white hover:bg-gray-50 transition-colors">
+          <i class="fas fa-plus mr-1.5 text-[0.65rem]"></i>New planner
+        </button>
+        <button type="button" id="managePlannerDeleteBtn" class="h-8 inline-flex items-center px-3 rounded-md border border-red-200 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors">
+          <i class="fas fa-trash mr-1.5 text-[0.65rem]"></i>Delete this planner
+        </button>
+      </div>
     </div>
   </div>
 

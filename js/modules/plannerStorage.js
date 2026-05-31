@@ -43,20 +43,10 @@ export function makeEmptyPlanner(plannerKey, eventFile = '') {
     sessionNotes: {},
     contacts: [],
     tasks: [],
-    trip: {
-      outbound:      { date: '', mode: '', confirmation: '', notes: '' },
-      return:        { date: '', mode: '', confirmation: '', notes: '' },
-      accommodation: { name: '', address: '', checkIn: '', checkOut: '', confirmation: '', notes: '' },
-      generalNotes: '',
-    },
     org: {
       boothInfo: '',
       boothNotes: '',
-      // teamAssignments: per-event references to global team members + their event-specific travel data
-      // [{ memberId, flightOut:{date,flightNo,from,to,confirmation}, flightReturn:{…}, budget, notes }]
       teamAssignments: [],
-      // accommodations: per-event properties, each with member assignments + dates
-      // [{ id, name, address, confirmation, notes, assignments:[{memberId, checkIn, checkOut}] }]
       accommodations: [],
       timeline: { startDate: '', endDate: '' },
       swag: [],
@@ -94,13 +84,15 @@ export function loadPlanner(plannerKey, defaultEventFile = '') {
     if (!raw) return makeEmptyPlanner(plannerKey, defaultEventFile);
     const parsed = JSON.parse(raw);
     const empty  = makeEmptyPlanner(plannerKey, parsed._eventFile || defaultEventFile);
-    // Deep-merge org so new sub-fields are always present
+    // Strip legacy top-level keys before spreading
+    const { trip: _trip, individual: _individual, ...cleanParsed } = parsed;
     return {
       ...empty,
-      ...parsed,
-      mode: parsed.mode === 'individual' ? 'personal' : parsed.mode, // migrate old mode value
+      ...cleanParsed,
+      mode: cleanParsed.mode === 'individual' ? 'personal' : cleanParsed.mode,
       org: (() => {
-        const po = parsed.org || {};
+        // Strip org-level legacy/unknown fields (attendees was an early unused feature)
+        const { attendees: _att, ...po } = cleanParsed.org || {};
         // Migrate old swag items {label, done} → {name, quantity, budget, actual, currency, done, notes}
         const swag = (po.swag || []).map((item) =>
           item.name !== undefined ? item
@@ -108,21 +100,22 @@ export function loadPlanner(plannerKey, defaultEventFile = '') {
         );
         return { ...empty.org, ...po, swag };
       })(),
-      itinerary: parsed.itinerary || [],
-      receipts: parsed.receipts || [],
+      itinerary: cleanParsed.itinerary || [],
+      receipts:  cleanParsed.receipts  || [],
       personal: (() => {
-        const pi = parsed.personal || parsed.individual || {}; // fallback: old key was 'individual'
-        // Migrate old single-object accommodation to array
-        let accommodations = Array.isArray(pi.accommodations) ? pi.accommodations : [];
-        if (!accommodations.length && pi.accommodation && Object.values(pi.accommodation).some(Boolean)) {
-          const o = pi.accommodation;
+        const pi = cleanParsed.personal || _individual || {};
+        // Strip the old single-object accommodation key; its data has already been migrated to the array
+        const { accommodation: _accom, ...cleanPi } = pi;
+        let accommodations = Array.isArray(cleanPi.accommodations) ? cleanPi.accommodations : [];
+        if (!accommodations.length && _accom && Object.values(_accom).some(Boolean)) {
+          const o = _accom;
           accommodations = [{ id: makeItemId('ia'), name: o.name || '', address: o.address || '', checkIn: o.checkIn || '', checkOut: o.checkOut || '', confirmation: o.confirmation || '', budget: o.budget || '', budgetActual: o.budgetActual || '', currency: o.currency || 'AUD', notes: o.notes || '' }];
         }
-        return { ...empty.personal, ...pi, accommodations };
+        return { ...empty.personal, ...cleanPi, accommodations };
       })(),
     };
   } catch {
-    return makeEmptyPlanner(eventFile);
+    return makeEmptyPlanner(plannerKey, defaultEventFile);
   }
 }
 
