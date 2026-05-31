@@ -1,20 +1,23 @@
         :root {
-            --bg-0: #010810;
-            --bg-1: #040d1c;
-            --surface-0: rgba(3, 10, 22, 0.93);
-            --surface-1: rgba(7, 18, 36, 0.96);
-            --surface-2: rgba(12, 28, 52, 0.84);
-            --text-0: #eaf2fc;
-            --text-1: #cdd9ee;
-            --text-2: #8eaacc;
-            --text-3: #6a8cb0;
-            --line-0: #162c4c;
-            --accent: #00cfff;
-            --accent-strong: #40dcff;
-            --color-secondary: #4a90d9;
+            /* Light-mode defaults. Dark and event themes override these via
+               body.theme-{id} rules injected by theme.js — :root only ever
+               shows during the initial hidden load, so changing it is safe. */
+            --bg-0: #f0f4f8;
+            --bg-1: #ffffff;
+            --surface-0: rgba(255, 255, 255, 0.98);
+            --surface-1: #f9fafb;
+            --surface-2: rgba(241, 245, 249, 0.95);
+            --text-0: #111827;
+            --text-1: #374151;
+            --text-2: #6b7280;
+            --text-3: #9ca3af;
+            --line-0: #e5e7eb;
+            --accent: #0078bf;
+            --accent-strong: #0ea5e9;
+            --color-secondary: #4a8ec2;
             --color-tertiary: #7c3aed;
-            --glow-1: rgba(0,150,230,0.20);
-            --glow-2: rgba(124,58,237,0.22);
+            --glow-1: rgba(0, 120, 191, 0.15);
+            --glow-2: rgba(124, 58, 237, 0.16);
         }
 
         @keyframes aurora-bg {
@@ -208,22 +211,22 @@
             padding: 0 2px;
         }
         .theme-dark .bg-white {
-            background: var(--surface-0) !important;
-            border: 1px solid color-mix(in srgb, var(--accent) 15%, var(--line-0)) !important;
+            background: var(--surface-0) !important; /* needs !important — UnoCSS bg-white ties on specificity */
+            border: 1px solid color-mix(in srgb, var(--accent) 15%, var(--line-0));
             box-shadow:
                 0 24px 64px rgba(0, 0, 0, 0.52),
                 0 4px 20px rgba(0, 0, 0, 0.3),
                 0 0 0 1px color-mix(in srgb, var(--accent) 4%, transparent),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-            backdrop-filter: blur(22px) saturate(160%) !important;
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(22px) saturate(160%);
         }
         /* Buttons and links should not inherit the heavy card-style bg-white treatment */
         .theme-dark button.bg-white,
         .theme-dark a.bg-white {
-            background: var(--surface-1) !important;
-            border-color: var(--line-0) !important;
-            box-shadow: none !important;
-            backdrop-filter: none !important;
+            background: var(--surface-1) !important; /* needs !important — element+class ties UnoCSS */
+            border-color: var(--line-0);
+            box-shadow: none;
+            backdrop-filter: none;
         }
         .theme-dark button.bg-white:hover,
         .theme-dark a.bg-white:hover {
@@ -233,40 +236,39 @@
         .theme-dark button.bg-gray-800,
         .theme-dark a.bg-gray-800 {
             background: var(--surface-2) !important;
-            color: var(--text-0) !important;
-            box-shadow: none !important;
-            backdrop-filter: none !important;
+            color: var(--text-0);
+            box-shadow: none;
+            backdrop-filter: none;
         }
         .theme-dark button.bg-gray-800:hover,
         .theme-dark a.bg-gray-800:hover {
             background: color-mix(in srgb, var(--accent) 20%, var(--surface-2)) !important;
         }
-        .theme-dark .bg-gray-100 { background-color: transparent !important; }
-        .theme-dark .bg-gray-50 { background: var(--surface-1) !important; }
-        .theme-dark .hover\:bg-gray-50:hover  { background: var(--surface-1) !important; }
+        .theme-dark .bg-gray-100 { background-color: transparent; }
+        .theme-dark .bg-gray-50 { background: var(--surface-1) !important; } /* ties UnoCSS */
+        .theme-dark .hover\:bg-gray-50:hover  { background: var(--surface-1); }
         .theme-dark .hover\:bg-gray-100:hover,
-        .theme-dark .hover\:bg-gray-200:hover { background: var(--surface-2) !important; }
-        .theme-dark .bg-black { background: linear-gradient(180deg, #0b1725, #09131f) !important; }
+        .theme-dark .hover\:bg-gray-200:hover { background: var(--surface-2); }
+        .theme-dark .bg-black { background: linear-gradient(180deg, #0b1725, #09131f); }
         .theme-dark .border-gray-200,
         .theme-dark .border-gray-300,
-        .theme-dark .border-gray-700 { border-color: var(--line-0) !important; }
+        .theme-dark .border-gray-700 { border-color: var(--line-0); }
         .theme-dark .text-gray-900,
         .theme-dark .text-gray-800,
-        .theme-dark .text-gray-700 { color: var(--text-0) !important; }
+        .theme-dark .text-gray-700 { color: var(--text-0); }
         .theme-dark .text-gray-600,
         .theme-dark .text-gray-500,
-        .theme-dark .text-gray-400 { color: var(--text-2) !important; }
-        .theme-dark .drupal-blue-text {
-            color: #9fd6ff !important;
-        }
-        .theme-dark .drupal-blue-text:hover {
-            color: #c7e7ff !important;
-        }
+        .theme-dark .text-gray-400 { color: var(--text-2); }
+        .theme-dark .drupal-blue-text { color: #9fd6ff; }
+        .theme-dark .drupal-blue-text:hover { color: #c7e7ff; }
         .theme-dark .schedule-select-checkbox {
             accent-color: #66beff;
         }
         .theme-dark .schedule-select-label:focus-within {
             outline-color: #9fd6ff;
+        }
+        .theme-dark button {
+            background: transparent;
         }
         .theme-dark input,
         .theme-dark select,
@@ -275,6 +277,7 @@
             color: var(--text-0) !important;
             border-color: var(--line-0) !important;
             box-shadow: none !important;
+            backdrop-filter: none !important;
         }
         .theme-dark input::placeholder,
         .theme-dark textarea::placeholder {
@@ -340,10 +343,11 @@
         .sponsor-row {
             transition: border-color 0.12s ease, background-color 0.12s ease;
         }
+        /* :hover:not() is (0,3,0) vs base (0,1,0) — specificity wins */
         .session-row:hover:not(.border-blue-400),
         .sponsor-row:hover:not(.border-blue-400) {
-            border-color: rgba(100, 150, 200, 0.5) !important;
-            background-color: rgba(40, 70, 100, 0.25) !important;
+            border-color: rgba(100, 150, 200, 0.5);
+            background-color: rgba(40, 70, 100, 0.25);
         }
         .sitemap-toolbar {
             display: flex;
@@ -607,20 +611,18 @@
         .editor-tab-button.hidden {
             display: none !important;
         }
-        .editor-quick-edit-toggle-active {
-            border-color: rgba(110, 192, 255, 0.75) !important;
-            background: linear-gradient(180deg, rgba(22, 140, 222, 0.98), rgba(13, 108, 182, 0.98)) !important;
-            color: #ffffff !important;
+        /* Combine rest + hover into one rule so active state always wins
+           without needing !important to beat the hover pseudo-class */
+        .editor-quick-edit-toggle-active,
+        .editor-quick-edit-toggle-active:hover,
+        .editor-quick-edit-toggle-active:focus-visible {
+            border-color: rgba(110, 192, 255, 0.75);
+            background: linear-gradient(180deg, rgba(22, 140, 222, 0.98), rgba(13, 108, 182, 0.98));
+            color: #ffffff;
             box-shadow:
                 0 10px 26px rgba(13, 120, 204, 0.32),
                 inset 0 1px 0 rgba(255, 255, 255, 0.22),
                 0 0 0 1px rgba(46, 163, 255, 0.18);
-        }
-        .editor-quick-edit-toggle-active:hover,
-        .editor-quick-edit-toggle-active:focus-visible {
-            border-color: rgba(144, 210, 255, 0.82) !important;
-            background: linear-gradient(180deg, rgba(28, 145, 225, 0.98), rgba(14, 115, 188, 0.98)) !important;
-            color: #ffffff !important;
         }
         .editor-quick-edit-toggle-active:focus-visible {
             outline: none;
@@ -743,34 +745,29 @@
             border: 1px solid color-mix(in srgb, var(--color-secondary) 35%, var(--line-0));
             color: var(--text-1) !important;
         }
-        .theme-dark .hover\:bg-gray-50:hover {
-            background-color: rgba(46, 163, 255, 0.1) !important;
-            border-color: rgba(46, 163, 255, 0.32) !important;
-        }
+        /* Light theme — vars injected by theme.js; these rules use them consistently */
 
-        /* Light theme structural overrides (variables injected by JS) */
-
-        /* Session cards — white with visible border/shadow in light mode */
+        /* Session cards — surface colour + visible border in light mode */
         .theme-light .design-drupalcon .event-card-dc {
-            background: #ffffff !important;
-            border-color: #e2e8f0 !important;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04) !important;
+            background: var(--surface-0);
+            border-color: var(--line-0);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
             color: var(--text-0);
         }
         .theme-light .design-drupalcon .event-card-dc:hover {
-            border-color: var(--accent) !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12), 0 0 0 1px var(--accent) !important;
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12), 0 0 0 1px var(--accent);
         }
-        /* Slot rows alternate very subtly in light mode */
-        .theme-light .slot-bg-a { background: #f8fafc !important; }
-        .theme-light .slot-bg-b { background: #f1f5f9 !important; }
-        /* Ensure text in cards is dark in light mode */
-        .theme-light .text-gray-900 { color: #0f172a !important; }
-        .theme-light .text-gray-700 { color: #334155 !important; }
-        .theme-light .text-gray-600 { color: #475569 !important; }
-        .theme-light .text-gray-500 { color: #64748b !important; }
-        /* bg-white inputs/buttons stay white in light mode */
-        .theme-light .bg-white { background: #ffffff !important; }
+        /* Slot rows use surface vars */
+        .theme-light .slot-bg-a { background: var(--surface-1) !important; } /* ties UnoCSS */
+        .theme-light .slot-bg-b { background: var(--surface-2) !important; }
+        /* Text uses theme vars — Tailwind class remappings no longer needed since
+           body.theme-light sets color: var(--text-0) which cascades to most elements */
+        .theme-light .bg-white { background: var(--surface-0) !important; } /* ties UnoCSS */
+        .theme-light .bg-gray-100 { background-color: var(--surface-2); }
+        .theme-light .bg-black {
+            background: linear-gradient(180deg, #0c2448, #0a1e3c);
+        }
 
         .theme-light .header-shell {
             background: linear-gradient(135deg,
@@ -780,10 +777,6 @@
             background-size: 400% 400%;
             animation: aurora-bg 20s ease infinite;
         }
-        .theme-light .bg-black {
-            background: linear-gradient(180deg, #0c2448, #0a1e3c) !important;
-        }
-        .theme-light .bg-gray-100 { background-color: #f1f5f9 !important; }
 
         .header-shell {
             background: linear-gradient(135deg,
@@ -922,7 +915,7 @@
             margin-top: 0.55rem;
         }
         .mobile-instructions-panel h2 {
-            margin-bottom: 0.55rem !important;
+            margin-bottom: 0.55rem;
         }
         .mobile-instructions-panel ul {
             margin: 0;
@@ -938,12 +931,13 @@
                 background: var(--surface-1) !important;
                 box-shadow: 0 16px 38px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.05);
             }
+            /* compound (0,2,0) beats UnoCSS utility (0,1,0) */
             .mobile-instructions-panel .text-gray-800,
             .mobile-instructions-panel .text-gray-700,
             .mobile-instructions-panel .text-gray-600,
             #sessionFiltersPanel .text-gray-700,
             #sessionFiltersPanel .text-gray-600 {
-                color: var(--text-1) !important;
+                color: var(--text-1);
             }
             #sessionFiltersPanel button:not(.mobile-accordion-toggle) {
                 background: var(--surface-2) !important;
@@ -983,9 +977,6 @@
                 border: 0 !important;
                 box-shadow: none !important;
                 color: var(--text-0) !important;
-            }
-            #eventsContainer h2 {
-                padding-left: 0.75rem;
             }
             #eventsContainer h2 {
                 padding-left: 0.75rem;
@@ -1067,8 +1058,9 @@
         .brand-community { background: linear-gradient(135deg, rgba(72, 202, 190, 0.94), rgba(20, 98, 116, 0.97)); }
         .brand-drupalcon { background: linear-gradient(135deg, rgba(148, 162, 200, 0.84), rgba(66, 84, 124, 0.95)); }
 
+        /* (1,1,0) beats UnoCSS bg utilities (0,1,0) */
         body.design-drupalcon #eventsContainer {
-            background: transparent !important;
+            background: transparent;
             border: none;
             box-shadow: none;
             padding-left: 0;
@@ -1121,21 +1113,23 @@
         .design-drupalcon .timeline-events .event-card > div {
             height: 100%;
         }
+        /* (1,1,0) beats UnoCSS in light mode; dark mode handled by neon chrome override below */
         .design-drupalcon #filtersPanel,
         .design-drupalcon .mobile-instructions-panel,
         .design-drupalcon #sessionFiltersPanel {
-            border: 1px solid var(--line-0) !important;
-            background: var(--surface-1) !important;
+            border: 1px solid var(--line-0);
+            background: var(--surface-1);
             box-shadow: 0 16px 38px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
+        /* (0,2,0)+(0,3,0) beats UnoCSS single-class utilities */
         .design-drupalcon .mobile-instructions-panel {
-            padding: 1rem !important;
+            padding: 1rem;
         }
         .design-drupalcon .mobile-instructions-panel .text-gray-800 {
-            color: var(--text-0) !important;
+            color: var(--text-0);
         }
         .design-drupalcon .mobile-instructions-panel .text-gray-600 {
-            color: var(--text-2) !important;
+            color: var(--text-2);
         }
         .design-drupalcon .mobile-instructions-panel ul {
             margin: 0;
@@ -1144,15 +1138,16 @@
         .design-drupalcon .mobile-instructions-panel li + li {
             margin-top: 0.35rem;
         }
+        /* ID+class (1,1,0) beats UnoCSS utility (0,1,0) */
         .design-drupalcon #filtersPanel .text-gray-700,
         .design-drupalcon #sessionFiltersPanel .text-gray-700 {
-            color: var(--text-0) !important;
+            color: var(--text-0);
             letter-spacing: 0.01em;
             padding-left: 0rem;
         }
         .design-drupalcon #filtersPanel .text-gray-600,
         .design-drupalcon #sessionFiltersPanel .text-gray-600 {
-            color: var(--text-2) !important;
+            color: var(--text-2);
         }
         .design-drupalcon #filtersPanel input,
         .design-drupalcon #filtersPanel select,
@@ -1174,40 +1169,42 @@
         .design-drupalcon #sessionFiltersPanel input::placeholder {
             color: var(--text-3);
         }
+        /* (1,1,2) from ID+class+element+pseudo — no !important needed */
         .design-drupalcon #filtersPanel input:focus,
         .design-drupalcon #filtersPanel select:focus,
         .design-drupalcon #sessionFiltersPanel input:focus,
         .design-drupalcon #sessionFiltersPanel select:focus {
-            border-color: var(--accent) !important;
+            border-color: var(--accent);
             box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
         }
         .design-drupalcon #filtersPanel .border-t,
         .design-drupalcon #sessionFiltersPanel .border-t {
-            border-top-color: var(--line-0) !important;
+            border-top-color: var(--line-0);
         }
         .design-drupalcon #filtersPanel button,
         .design-drupalcon #sessionFiltersPanel button {
             border-radius: 0.62rem;
-            border-color: var(--line-0) !important;
+            border-color: var(--line-0);
             background: var(--surface-2);
-            color: var(--text-0) !important;
+            color: var(--text-0);
         }
         .design-drupalcon #filtersPanel button:hover,
         .design-drupalcon #sessionFiltersPanel button:hover {
             background: var(--surface-1);
-            border-color: var(--accent) !important;
+            border-color: var(--accent);
         }
+        /* (1,2,0) — very specific, no !important needed */
         .design-drupalcon #filtersPanel #clearKeywords,
         .design-drupalcon #sessionFiltersPanel #clearKeywords {
             background: transparent;
-            border: none !important;
-            box-shadow: none !important;
-            color: var(--text-2) !important;
+            border: none;
+            box-shadow: none;
+            color: var(--text-2);
             padding: 0;
         }
         .design-drupalcon #filtersPanel #clearKeywords:hover,
         .design-drupalcon #sessionFiltersPanel #clearKeywords:hover {
-            color: var(--text-0) !important;
+            color: var(--text-0);
         }
         .design-drupalcon .event-card-dc {
             border-color: var(--line-0);
@@ -1226,18 +1223,21 @@
             border-color: var(--accent);
             box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
         }
+        /* (0,2,0) beats base .track-pill-dc (0,1,0) */
         .design-drupalcon .track-pill-dc {
-            background: color-mix(in srgb, var(--event-color-b) 12%, var(--surface-2)) !important;
+            background: color-mix(in srgb, var(--event-color-b) 12%, var(--surface-2));
             border-color: color-mix(in srgb, var(--event-color-b) 50%, var(--line-0));
-            color: var(--text-0) !important;
-            font-size:0.7rem;
+            color: var(--text-0);
+            font-size: 0.7rem;
         }
+        /* :not() adds specificity — keeps !important only to beat UnoCSS .hidden if needed */
         .design-drupalcon #eventMediaPromo:not(.hidden) {
             display: block !important;
         }
+        /* (1,1,2) with element combinators — no !important needed */
         .design-drupalcon #eventMediaPromo > div > div {
-            border-color: var(--line-0) !important;
-            background: var(--surface-1) !important;
+            border-color: var(--line-0);
+            background: var(--surface-1);
         }
         .sponsors-shell {
             max-width: 1480px;
@@ -1472,9 +1472,10 @@
             border-color: var(--accent);
             color: var(--text-0);
         }
+        /* (1,1,0) beats UnoCSS utility classes */
         .design-drupalcon #sponsorsContainer {
-            border-color: var(--line-0) !important;
-            background: var(--surface-1) !important;
+            border-color: var(--line-0);
+            background: var(--surface-1);
         }
         .design-drupalcon .sponsors-heading {
             color: var(--text-0);
@@ -1524,12 +1525,13 @@
                 grid-template-columns: 142px minmax(0, 1fr);
                 gap: 0.75rem;
             }
+            /* #id selector wins on specificity without !important */
             #sponsorsContainer {
                 width: 100vw;
                 margin-left: calc(50% - 50vw);
                 border-radius: 0;
-                border-left: none !important;
-                border-right: none !important;
+                border-left: none;
+                border-right: none;
             }
             .sponsor-logo-row {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1601,16 +1603,18 @@
             min-width: 0;
             line-height: 1.35;
         }
+        /* (0,3,1) from .design-drupalcon .event-info-card dt — beats base */
         .design-drupalcon .event-info-card dt {
-            color: var(--text-2) !important;
+            color: var(--text-2);
         }
         .design-drupalcon .event-info-card dd {
-            color: var(--text-0) !important;
+            color: var(--text-0);
         }
+        /* #id + class selectors win without !important */
         .selection-overview,
         #selectionOverview {
-            background: var(--surface-1) !important;
-            border-top: 2px solid var(--accent) !important;
+            background: var(--surface-1);
+            border-top: 2px solid var(--accent);
             box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.36);
             backdrop-filter: blur(10px);
         }
@@ -1629,14 +1633,14 @@
             padding: 1rem 1rem 0.75rem;
             border: 0;
             border-radius: 0;
-            background: transparent !important;
+            background: transparent;
             box-shadow: none;
-            color: var(--text-0) !important;
+            color: var(--text-0);
         }
         .selection-overview-toggle:hover,
         #selectionOverview #toggleDetails:hover {
-            color: var(--accent) !important;
-            background: color-mix(in srgb, var(--accent) 5%, transparent) !important;
+            color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 5%, transparent);
         }
         .selection-overview-toggle:focus-visible,
         #selectionOverview #toggleDetails:focus-visible {
@@ -1647,14 +1651,14 @@
         .selection-overview-toggle i,
         #selectionOverview #toggleDetails span,
         #selectionOverview #toggleDetails i {
-            color: inherit !important;
+            color: inherit;
         }
         .selection-overview-details,
         #selectionOverview #stageDetails {
             scrollbar-color: color-mix(in srgb, var(--accent) 45%, transparent) color-mix(in srgb, var(--accent) 4%, transparent);
         }
         .selection-overview-details-inner {
-            border-top-color: var(--line-0) !important;
+            border-top-color: var(--line-0);
         }
         #selectionOverview #stageStats {
             color: var(--text-0);
@@ -1671,10 +1675,10 @@
             border-top: 1px solid var(--line-0);
         }
         #selectionOverview #stageStats h4 {
-            color: var(--text-0) !important;
+            color: var(--text-0);
             font-size: 0.95rem;
             font-weight: 700;
-            margin-bottom: 0.75rem !important;
+            margin-bottom: 0.75rem;
         }
         #selectionOverview #stageStats table {
             width: 100%;
@@ -1684,22 +1688,22 @@
         .selection-stats-table {
             width: 100%;
             border-collapse: collapse;
-            background: transparent !important;
+            background: transparent;
         }
         .selection-stats-cell {
-            background: transparent !important;
+            background: transparent;
             color: inherit;
             vertical-align: top;
         }
         .selection-stats-row {
-            background: transparent !important;
+            background: transparent;
         }
         .selection-stats-detail {
-            background: rgba(255, 255, 255, 0.03) !important;
+            background: rgba(255, 255, 255, 0.03);
         }
         .selection-stats-detail-cell {
             padding: 0.2rem 0 0.55rem;
-            background: transparent !important;
+            background: transparent;
         }
         .selection-stats-subtable {
             margin-top: 0.2rem;
@@ -1714,7 +1718,7 @@
             color: var(--text-2);
         }
         .selection-stats-value {
-            color: var(--text-0) !important;
+            color: var(--text-0);
             white-space: nowrap;
         }
         #selectionOverview #stageStats tr {
@@ -1732,7 +1736,7 @@
             font-weight: 700;
         }
         #selectionOverview #stageStats tr.cursor-pointer:hover {
-            background: color-mix(in srgb, var(--accent) 8%, transparent) !important;
+            background: color-mix(in srgb, var(--accent) 8%, transparent);
         }
         .selection-overview-actions-row {
             display: grid;
@@ -1762,28 +1766,29 @@
         }
         .selection-overview-action-secondary,
         #selectionOverview #addGoogleCalendar {
-            border: 1px solid var(--line-0) !important;
-            background: var(--surface-2) !important;
-            color: var(--text-0) !important;
+            border: 1px solid var(--line-0);
+            background: var(--surface-2);
+            color: var(--text-0);
         }
         .selection-overview-action-secondary:hover,
         .selection-overview-action-secondary:focus-visible,
         #selectionOverview #addGoogleCalendar:hover,
         #selectionOverview #addGoogleCalendar:focus-visible {
-            background: var(--surface-1) !important;
-            color: var(--accent) !important;
-            border-color: color-mix(in srgb, var(--accent) 55%, var(--line-0)) !important;
+            background: var(--surface-1);
+            color: var(--accent);
+            border-color: color-mix(in srgb, var(--accent) 55%, var(--line-0));
         }
         #selectionOverview #downloadIcs:disabled,
         #selectionOverview #addGoogleCalendar:disabled {
             opacity: 0.45;
         }
+        /* (1,1,0) from #selectionOverview beats base (0,1,0) + (1,0,0) */
         .design-drupalcon .selection-overview,
         .design-drupalcon #selectionOverview {
             background:
                 radial-gradient(circle at 14% -18%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 34%),
                 radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--color-secondary) 16%, transparent), transparent 28%),
-                var(--surface-1) !important;
+                var(--surface-1);
         }
         .design-drupalcon #selectionOverview #stageStats > div {
             border-color: var(--line-0);
@@ -2852,70 +2857,73 @@
         }
 
         /* ── Per-track pill colours ─────────────────────────────────── */
+        /* Attribute selectors are (0,2,0) vs .track-pill (0,1,0) — no !important needed */
         .track-pill[data-track="Keynote"] {
-            background: rgba(245, 158, 11, 0.14) !important;
-            border-color: rgba(245, 158, 11, 0.5) !important;
-            color: #fbbf24 !important;
+            background: rgba(245, 158, 11, 0.14);
+            border-color: rgba(245, 158, 11, 0.5);
+            color: #fbbf24;
         }
         .track-pill[data-track="Drupal Development"] {
-            background: rgba(16, 185, 129, 0.12) !important;
-            border-color: rgba(16, 185, 129, 0.45) !important;
-            color: #34d399 !important;
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.45);
+            color: #34d399;
         }
         .track-pill[data-track="Web Tools & Complementary Technologies"] {
-            background: rgba(14, 165, 233, 0.12) !important;
-            border-color: rgba(14, 165, 233, 0.45) !important;
-            color: #38bdf8 !important;
+            background: rgba(14, 165, 233, 0.12);
+            border-color: rgba(14, 165, 233, 0.45);
+            color: #38bdf8;
         }
         .track-pill[data-track="User Experience & Content"] {
-            background: rgba(249, 115, 22, 0.12) !important;
-            border-color: rgba(249, 115, 22, 0.45) !important;
-            color: #fb923c !important;
+            background: rgba(249, 115, 22, 0.12);
+            border-color: rgba(249, 115, 22, 0.45);
+            color: #fb923c;
         }
         .track-pill[data-track="People & Culture"] {
-            background: rgba(168, 85, 247, 0.12) !important;
-            border-color: rgba(168, 85, 247, 0.45) !important;
-            color: #c084fc !important;
+            background: rgba(168, 85, 247, 0.12);
+            border-color: rgba(168, 85, 247, 0.45);
+            color: #c084fc;
         }
         .track-pill[data-track="Sponsor"] {
-            background: rgba(99, 102, 241, 0.12) !important;
-            border-color: rgba(99, 102, 241, 0.45) !important;
-            color: #a5b4fc !important;
+            background: rgba(99, 102, 241, 0.12);
+            border-color: rgba(99, 102, 241, 0.45);
+            color: #a5b4fc;
         }
 
-        /* ── Per-track card left-border accents (not applied to selected cards) */
+        /* ── Per-track card left-border accents ─────────────────────── */
+        /* [attr]:not() selectors are (0,4,0) — specificity wins cleanly */
         .event-card[data-primary-track]:not(.drupal-blue-border-light) {
             border-left-width: 3px;
         }
         .event-card[data-primary-track="Keynote"]:not(.drupal-blue-border-light) {
-            border-left-color: rgba(245, 158, 11, 0.75) !important;
+            border-left-color: rgba(245, 158, 11, 0.75);
         }
         .event-card[data-primary-track="Drupal Development"]:not(.drupal-blue-border-light) {
-            border-left-color: rgba(16, 185, 129, 0.7) !important;
+            border-left-color: rgba(16, 185, 129, 0.7);
         }
         .event-card[data-primary-track="Web Tools & Complementary Technologies"]:not(.drupal-blue-border-light) {
-            border-left-color: rgba(14, 165, 233, 0.7) !important;
+            border-left-color: rgba(14, 165, 233, 0.7);
         }
         .event-card[data-primary-track="User Experience & Content"]:not(.drupal-blue-border-light) {
-            border-left-color: rgba(249, 115, 22, 0.7) !important;
+            border-left-color: rgba(249, 115, 22, 0.7);
         }
         .event-card[data-primary-track="People & Culture"]:not(.drupal-blue-border-light) {
-            border-left-color: rgba(168, 85, 247, 0.7) !important;
+            border-left-color: rgba(168, 85, 247, 0.7);
         }
         .event-card[data-primary-track="Sponsor"]:not(.drupal-blue-border-light) {
-            border-left-color: rgba(99, 102, 241, 0.7) !important;
+            border-left-color: rgba(99, 102, 241, 0.7);
         }
         .event-card[data-primary-track="Other"]:not(.drupal-blue-border-light) {
-            border-left-color: rgba(100, 116, 139, 0.5) !important;
+            border-left-color: rgba(100, 116, 139, 0.5);
         }
 
         /* ── Day headings ────────────────────────────────────────────── */
+        /* #id selector is (1,0,0) — wins without !important */
         #eventsContainer h2 {
-            font-weight: 700 !important;
-            color: var(--text-0) !important;
+            font-weight: 700;
+            color: var(--text-0);
             border-bottom: 1px solid var(--line-0);
             padding-bottom: 0.55rem;
-            margin-bottom: 1.1rem !important;
+            margin-bottom: 1.1rem;
         }
 
 /* == Timeline Editor == */
@@ -3872,207 +3880,210 @@ body.has-preview-banner { padding-top: 2.25rem; }
 }
 .recovery-bar-btn--primary:hover { background: #b45309; }
 
-/* ── Retheme: neon/electric editor chrome ────────────────────────────────── */
+/* ── Editor chrome: neon/electric dark aesthetic ─────────────────────────── */
 
 /* Toolbar: near-black glass, neon border */
 .theme-dark #editorToolbar.bg-white,
 .theme-dark #editorToolbar {
-    background: rgba(2, 7, 16, 0.97) !important;
-    border-color: rgba(0, 207, 255, 0.24) !important;
+    background: rgba(2, 7, 16, 0.97) !important; /* needs !important — .bg-white tie */
+    border-color: rgba(0, 207, 255, 0.24);
     box-shadow:
         0 24px 64px rgba(0, 0, 0, 0.58),
         inset 0 1px 0 rgba(0, 207, 255, 0.07),
-        inset 0 -1px 0 rgba(0, 207, 255, 0.04) !important;
+        inset 0 -1px 0 rgba(0, 207, 255, 0.04);
 }
 
-/* Editor sections panel: aurora corner glows */
+/* Editor sections panel: aurora corner glows — overrides earlier .editor-meta-accordion */
 .editor-meta-accordion {
     background:
         radial-gradient(circle at 98% 2%,  rgba(0, 207, 255, 0.18), transparent 32%),
         radial-gradient(circle at 2%  98%, rgba(124, 58, 237, 0.12), transparent 30%),
-        linear-gradient(165deg, rgba(5, 14, 30, 0.99), rgba(2, 8, 18, 1)) !important;
-    border: 1px solid rgba(0, 207, 255, 0.22) !important;
+        linear-gradient(165deg, rgba(5, 14, 30, 0.99), rgba(2, 8, 18, 1));
+    border: 1px solid rgba(0, 207, 255, 0.22);
     box-shadow:
         0 20px 55px rgba(0, 0, 0, 0.48),
-        inset 0 1px 0 rgba(0, 207, 255, 0.06) !important;
+        inset 0 1px 0 rgba(0, 207, 255, 0.06);
 }
 
-/* Tab row: dark glass with neon rim */
+/* Tab row: dark glass with neon rim — overrides earlier .editor-tab-row */
 .editor-tab-row {
-    border-color: rgba(0, 207, 255, 0.26) !important;
-    background: rgba(0, 5, 14, 0.65) !important;
+    border-color: rgba(0, 207, 255, 0.26);
+    background: rgba(0, 5, 14, 0.65);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.04),
-        0 0 14px rgba(0, 207, 255, 0.07) !important;
+        0 0 14px rgba(0, 207, 255, 0.07);
 }
 
-/* Tab hover: electric cyan */
+/* Tab hover: electric cyan — overrides earlier :hover definition */
 .editor-tab-button:hover {
-    background: rgba(0, 207, 255, 0.13) !important;
-    color: #e8f8ff !important;
-    border-color: rgba(0, 207, 255, 0.32) !important;
+    background: rgba(0, 207, 255, 0.13);
+    color: #e8f8ff;
+    border-color: rgba(0, 207, 255, 0.32);
 }
 
-/* Active tab: vivid neon glow */
+/* Active tab: vivid neon glow — overrides earlier .is-active definition */
 .editor-tab-button.is-active,
 .editor-quick-edit-toggle-active {
-    background: linear-gradient(180deg, #0ea5e9, #0369a1) !important;
-    border-color: rgba(0, 207, 255, 0.92) !important;
-    color: #ffffff !important;
+    background: linear-gradient(180deg, #0ea5e9, #0369a1);
+    border-color: rgba(0, 207, 255, 0.92);
+    color: #ffffff;
     box-shadow:
         0 4px 22px rgba(14, 165, 233, 0.55),
         0 0 0 1px rgba(0, 207, 255, 0.32),
         0 0 32px rgba(0, 207, 255, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-/* Button hover: electric cyan tint */
+/* Button hover: electric cyan tint (needs !important — hover pseudo ties UnoCSS) */
 .theme-dark .hover\:bg-gray-50:hover {
     background-color: rgba(0, 207, 255, 0.1) !important;
     border-color: rgba(0, 207, 255, 0.4) !important;
 }
 
-/* Dirty save button: amber neon glow */
+/* Dirty save button: amber neon glow — (1,1,0) beats base, later in file */
 #saveDataset.is-dirty,
 #timelineSaveBtn.is-dirty {
     box-shadow:
         0 0 26px rgba(245, 158, 11, 0.6),
         0 0 55px rgba(245, 158, 11, 0.22),
-        0 4px 14px rgba(0, 0, 0, 0.3) !important;
+        0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
-/* Dirty state badge: amber neon */
+/* Dirty state badge: attribute selector (1,1,0) > base (1,0,0), later in file */
 #dirtyState[data-dirty="true"] {
-    border-color: rgba(245, 158, 11, 0.82) !important;
-    background: rgba(245, 158, 11, 0.13) !important;
-    box-shadow: 0 0 18px rgba(245, 158, 11, 0.25) !important;
-    color: #fbbf24 !important;
+    border-color: rgba(245, 158, 11, 0.82);
+    background: rgba(245, 158, 11, 0.13);
+    box-shadow: 0 0 18px rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
 }
 
-/* Session/sponsor list: neon border + glow on hover */
+/* Session/sponsor list hover: (1,1,1) specificity, later in file */
 .theme-dark #sessionList li:hover,
 .theme-dark #sponsorList li:hover {
-    border-color: rgba(0, 207, 255, 0.4) !important;
-    box-shadow: 0 0 14px rgba(0, 207, 255, 0.1) !important;
+    border-color: rgba(0, 207, 255, 0.4);
+    box-shadow: 0 0 14px rgba(0, 207, 255, 0.1);
 }
 
-/* Save toast: glass pill with neon cyan */
+/* Save toast: overrides earlier .save-toast by cascade order */
 .save-toast {
-    background: linear-gradient(135deg, #050e20, #02080e) !important;
-    border: 1px solid rgba(0, 207, 255, 0.5) !important;
-    color: #b8e8ff !important;
+    background: linear-gradient(135deg, #050e20, #02080e);
+    border: 1px solid rgba(0, 207, 255, 0.5);
+    color: #b8e8ff;
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.48),
-        0 0 28px rgba(0, 207, 255, 0.22) !important;
+        0 0 28px rgba(0, 207, 255, 0.22);
 }
 
-/* Input focus: neon cyan ring */
+/* Input focus: no competing rule — only definition for this state */
 .editor-form-field input:not([type="checkbox"]):focus,
 .editor-form-field select:focus,
 .editor-form-field textarea:focus {
-    border-color: rgba(0, 207, 255, 0.72) !important;
+    border-color: rgba(0, 207, 255, 0.72);
     box-shadow:
         0 0 0 3px rgba(0, 207, 255, 0.18),
-        0 0 16px rgba(0, 207, 255, 0.12) !important;
+        0 0 16px rgba(0, 207, 255, 0.12);
     outline: none;
 }
 
-/* Brand gradients: maximum opacity, vivid fills */
-.brand-drupalsouth { background: linear-gradient(135deg, rgba(88, 178, 248, 0.97), rgba(18, 78, 158, 0.99)) !important; }
-.brand-community   { background: linear-gradient(135deg, rgba(72, 202, 190, 0.97), rgba(20, 98, 116, 0.99)) !important; }
-.brand-drupalcon   { background: linear-gradient(135deg, rgba(148, 162, 200, 0.90), rgba(66, 84, 124, 0.98)) !important; }
+/* Brand gradients: overrides base by cascade order */
+.brand-drupalsouth { background: linear-gradient(135deg, rgba(88, 178, 248, 0.97), rgba(18, 78, 158, 0.99)); }
+.brand-community   { background: linear-gradient(135deg, rgba(72, 202, 190, 0.97), rgba(20, 98, 116, 0.99)); }
+.brand-drupalcon   { background: linear-gradient(135deg, rgba(148, 162, 200, 0.90), rgba(66, 84, 124, 0.98)); }
 
 /* ── Index body: neon glass for content, modals, cards ──────────────────── */
 
-/* Modal overlay: stronger blur + darker backdrop */
+/* All rules below use .theme-dark compound selectors (0,2,0+) which beat
+   their base counterparts (0,1,0). Later position in file handles equal cases. */
+
+/* Modal overlay */
 .theme-dark .session-modal-overlay {
-    background: rgba(1, 5, 14, 0.85) !important;
-    backdrop-filter: blur(14px) saturate(140%) !important;
+    background: rgba(1, 5, 14, 0.85);
+    backdrop-filter: blur(14px) saturate(140%);
 }
 
-/* Session modal card: deep glass with aurora corner glows */
+/* Session modal card */
 .theme-dark .session-modal-card {
     background:
         radial-gradient(ellipse at 95% 5%, rgba(0, 207, 255, 0.08), transparent 40%),
         radial-gradient(ellipse at 5% 95%, rgba(124, 58, 237, 0.06), transparent 40%),
-        linear-gradient(160deg, rgba(4, 12, 26, 0.98), rgba(2, 7, 16, 0.99)) !important;
-    border: 1px solid rgba(0, 207, 255, 0.28) !important;
+        linear-gradient(160deg, rgba(4, 12, 26, 0.98), rgba(2, 7, 16, 0.99));
+    border: 1px solid rgba(0, 207, 255, 0.28);
     box-shadow:
         0 36px 90px rgba(0, 0, 0, 0.7),
         0 0 0 1px rgba(0, 207, 255, 0.06),
-        0 0 60px rgba(0, 207, 255, 0.08) !important;
+        0 0 60px rgba(0, 207, 255, 0.08);
 }
 
-/* Modal header: dark glass with accent separator */
+/* Modal header */
 .theme-dark .session-modal-header {
-    background: rgba(2, 8, 18, 0.97) !important;
-    border-bottom-color: rgba(0, 207, 255, 0.22) !important;
-    box-shadow: 0 1px 0 rgba(0, 207, 255, 0.06) !important;
+    background: rgba(2, 8, 18, 0.97);
+    border-bottom-color: rgba(0, 207, 255, 0.22);
+    box-shadow: 0 1px 0 rgba(0, 207, 255, 0.06);
 }
 
-/* Modal buttons: neon glass style */
+/* Modal buttons */
 .theme-dark .session-modal-back,
 .theme-dark .session-modal-close {
-    background: rgba(0, 207, 255, 0.08) !important;
-    border-color: rgba(0, 207, 255, 0.28) !important;
-    color: #b8e8ff !important;
+    background: rgba(0, 207, 255, 0.08);
+    border-color: rgba(0, 207, 255, 0.28);
+    color: #b8e8ff;
 }
 
-/* Day headings: neon cyan accent */
+/* Day headings: (0,3,0) beats (0,2,0) */
 .theme-dark .design-drupalcon .schedule-day-heading {
-    border-color: rgba(0, 207, 255, 0.4) !important;
+    border-color: rgba(0, 207, 255, 0.4);
     background:
         radial-gradient(ellipse at 0% 50%, rgba(0, 207, 255, 0.12), transparent 55%),
-        linear-gradient(95deg, rgba(6, 20, 44, 0.92), rgba(3, 11, 26, 0.92)) !important;
-    box-shadow: 0 0 24px rgba(0, 207, 255, 0.1) !important;
+        linear-gradient(95deg, rgba(6, 20, 44, 0.92), rgba(3, 11, 26, 0.92));
+    box-shadow: 0 0 24px rgba(0, 207, 255, 0.1);
 }
 
-/* Event cards: neon border + hover glow */
+/* Event cards: (0,3,0) beats (0,2,0) */
 .theme-dark .design-drupalcon .event-card-dc {
-    border-color: rgba(0, 207, 255, 0.2) !important;
+    border-color: rgba(0, 207, 255, 0.2);
     background:
         linear-gradient(160deg, rgba(4, 12, 26, 0.95), rgba(2, 8, 18, 0.93)),
-        linear-gradient(110deg, var(--event-color-a), var(--event-color-b)) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+        linear-gradient(110deg, var(--event-color-a), var(--event-color-b));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 .theme-dark .design-drupalcon .event-card-dc:hover {
-    border-color: var(--event-color-a) !important;
-    box-shadow: 0 0 24px rgba(0, 207, 255, 0.16), 0 12px 36px rgba(0, 0, 0, 0.5) !important;
+    border-color: var(--event-color-a);
+    box-shadow: 0 0 24px rgba(0, 207, 255, 0.16), 0 12px 36px rgba(0, 0, 0, 0.5);
 }
 
-/* Filter panels: neon glass */
+/* Filter panels: need !important — these panels have bg-white class, so
+   .theme-dark .bg-white { background !important } (0,2,0) would otherwise win.
+   (1,2,0) specificity + !important ensures the neon treatment prevails. */
 .theme-dark .design-drupalcon #filtersPanel,
 .theme-dark .design-drupalcon #sessionFiltersPanel {
     border-color: rgba(0, 207, 255, 0.28) !important;
     background:
         radial-gradient(circle at 92% -20%, rgba(0, 207, 255, 0.12), transparent 40%),
         linear-gradient(165deg, rgba(4, 14, 30, 0.97), rgba(2, 8, 18, 0.95)) !important;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(0, 207, 255, 0.06) !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(0, 207, 255, 0.06);
 }
 
-/* Sponsor surfaces: respect per-sponsor bgStyle; only style text outside the surface */
-
-/* transparent bgStyle: give it a subtle dark tint in dark mode */
+/* Sponsor surfaces */
 .theme-dark .sponsor-bg-transparent {
-    background: rgba(0, 207, 255, 0.04) !important;
-    border-color: rgba(0, 207, 255, 0.22) !important;
+    background: rgba(0, 207, 255, 0.04);
+    border-color: rgba(0, 207, 255, 0.22);
 }
 
-/* Speaker session cards: neon glass */
+/* Speaker session cards */
 .theme-dark .speaker-session-card {
-    background: rgba(3, 10, 24, 0.92) !important;
-    border-color: rgba(0, 207, 255, 0.2) !important;
+    background: rgba(3, 10, 24, 0.92);
+    border-color: rgba(0, 207, 255, 0.2);
 }
 .theme-dark .speaker-session-card-current {
-    background: rgba(0, 207, 255, 0.1) !important;
-    border-color: rgba(0, 207, 255, 0.52) !important;
-    box-shadow: 0 0 22px rgba(0, 207, 255, 0.16), inset 0 0 0 1px rgba(0, 207, 255, 0.22) !important;
+    background: rgba(0, 207, 255, 0.1);
+    border-color: rgba(0, 207, 255, 0.52);
+    box-shadow: 0 0 22px rgba(0, 207, 255, 0.16), inset 0 0 0 1px rgba(0, 207, 255, 0.22);
 }
 
-/* Slot headings: neon left accent */
+/* Slot headings */
 .theme-dark .slot-heading {
-    border-left-color: rgba(0, 207, 255, 0.72) !important;
-    box-shadow: -2px 0 14px rgba(0, 207, 255, 0.22) !important;
+    border-left-color: rgba(0, 207, 255, 0.72);
+    box-shadow: -2px 0 14px rgba(0, 207, 255, 0.22);
 }
 
 /* ── Neon transitions & animations ──────────────────────────────────────── */
@@ -4084,8 +4095,8 @@ body.has-preview-banner { padding-top: 2.25rem; }
 
 /* Day headings: slow breathing glow (barely perceptible) */
 @keyframes day-heading-breathe {
-    0%, 100% { box-shadow: 0 0 24px rgba(0, 207, 255, 0.10) !important; }
-    50%       { box-shadow: 0 0 40px rgba(0, 207, 255, 0.22) !important; }
+    0%, 100% { box-shadow: 0 0 24px rgba(0, 207, 255, 0.10); }
+    50%       { box-shadow: 0 0 40px rgba(0, 207, 255, 0.22); }
 }
 .theme-dark .design-drupalcon .schedule-day-heading {
     animation: day-heading-breathe 5s ease-in-out infinite;

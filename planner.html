@@ -7,83 +7,40 @@
   <style>
     html { transition: opacity .15s ease; overflow-y: scroll; scrollbar-gutter: stable }
 
-    /* ── Planner: fix the CSS-variable cascade ──────────────────────────────
-       app.css sets all --text-* / --surface-* vars in :root as dark-theme
-       values. Every var()-based style (labels, descriptions, borders…) then
-       renders as pale-on-white in the planner's white-card panels.
-       Fix: redefine the vars at body level to light values; restore dark
-       values on the dark containers and in dark-theme mode.
+    /* ── Planner: editor-tab-button contrast fixes ──────────────────────────
+       Hardcoded colour overrides for editor-tab-button since its colour
+       is not var-based and must be set explicitly per context.
     ─────────────────────────────────────────────────────────────────────── */
 
-    /* 1. Light defaults for white-panel context (the planner page default) */
-    body {
-      --text-0:   #111827;          /* gray-900  */
-      --text-1:   #374151;          /* gray-700  */
-      --text-2:   #6b7280;          /* gray-500  */
-      --surface-0: #ffffff;
-      --surface-1: #f9fafb;
-      --line-0:   #e5e7eb;
-    }
-
-    /* 2. Dark containers within the planner restore dark vars so their
-          var()-based children (labels etc.) stay readable on dark bg */
-    .header-shell,
-    .editor-meta-accordion {
-      --text-0:   #eaf2fc;
-      --text-1:   #cdd9ee;
-      --text-2:   #8eaacc;
-      --surface-0: rgba(3,10,22,0.93);
-      --surface-1: rgba(7,18,36,0.96);
-      --line-0:   #162c4c;
-    }
-
-    /* 3. Full dark-theme: restore dark vars everywhere */
-    .theme-dark {
-      --text-0:   #eaf2fc;
-      --text-1:   #cdd9ee;
-      --text-2:   #8eaacc;
-      --surface-0: rgba(3,10,22,0.93);
-      --surface-1: rgba(7,18,36,0.96);
-      --line-0:   #162c4c;
-    }
-
-    /* 4. editor-tab-button uses a hardcoded colour (#c8d6e8), not a var,
-          so it still needs context-specific overrides.
-          Default: dark text (toolbar mode toggle, summary toggle on white) */
+    /* Toolbar mode toggle + summary toggle on white: dark readable text */
     .editor-tab-button { color: #4b5563 }
-    .editor-tab-button:hover { background: rgba(0,0,0,0.06) !important; color: #111827 }
-    .editor-tab-row {
-      border-color: rgba(0,0,0,0.12) !important;
-      background:   rgba(0,0,0,0.04) !important;
-    }
+    .editor-tab-button:hover { background: rgba(0,0,0,0.06); color: #111827 }
+    .editor-tab-row { border-color: rgba(0,0,0,0.12); background: rgba(0,0,0,0.04) }
 
-    /* Inside the dark accordion header tab bar: restore light colours */
+    /* Dark accordion header tab bar: restore light text */
     .editor-meta-accordion > div > .editor-tab-row .editor-tab-button { color: #c8d6e8 }
     .editor-meta-accordion > div > .editor-tab-row .editor-tab-button:hover {
-      background: rgba(255,255,255,0.08) !important; color: #eef6ff;
+      background: rgba(255,255,255,0.08); color: #eef6ff;
     }
     .editor-meta-accordion > div > .editor-tab-row {
-      border-color: rgba(135,186,233,0.22) !important;
-      background:   rgba(255,255,255,0.04) !important;
+      border-color: rgba(135,186,233,0.22); background: rgba(255,255,255,0.04);
     }
 
-    /* Summary scope toggle sits inside accordion → bg-white card: needs dark text */
+    /* Summary toggle inside accordion → bg-white card: keep dark text */
     .editor-meta-accordion .bg-white .editor-tab-button { color: #4b5563 }
     .editor-meta-accordion .bg-white .editor-tab-button:hover {
-      background: rgba(0,0,0,0.06) !important; color: #111827;
+      background: rgba(0,0,0,0.06); color: #111827;
     }
     .editor-meta-accordion .bg-white .editor-tab-row {
-      border-color: rgba(0,0,0,0.12) !important;
-      background:   rgba(0,0,0,0.04) !important;
+      border-color: rgba(0,0,0,0.12); background: rgba(0,0,0,0.04);
     }
-    /* …but in dark theme that white card also becomes dark, so restore light */
+    /* In dark theme that white card also darkens — restore light tab text */
     .theme-dark .editor-meta-accordion .bg-white .editor-tab-button { color: #c8d6e8 }
     .theme-dark .editor-meta-accordion .bg-white .editor-tab-button:hover {
-      background: rgba(255,255,255,0.08) !important; color: #eef6ff;
+      background: rgba(255,255,255,0.08); color: #eef6ff;
     }
     .theme-dark .editor-meta-accordion .bg-white .editor-tab-row {
-      border-color: rgba(135,186,233,0.22) !important;
-      background:   rgba(255,255,255,0.04) !important;
+      border-color: rgba(135,186,233,0.22); background: rgba(255,255,255,0.04);
     }
 
     /* Theme-aware timeline header and cell classes */

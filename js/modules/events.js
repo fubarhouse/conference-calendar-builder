@@ -959,7 +959,11 @@ export async function loadEvent(filename) {
   const meta = state.eventMeta || {};
   const themeVal = meta.theme;
   const themeId = typeof themeVal === 'object' ? themeVal?.id : themeVal;
-  applyThemeClass(themeId ? normalizeThemeId(themeId) : state.themeMode);
+  const effectiveThemeId = themeId ? normalizeThemeId(themeId) : state.themeMode;
+  applyThemeClass(effectiveThemeId);
+  // Persist the effective theme so the planner page can match it exactly,
+  // even when the event overrides the user's saved preference.
+  localStorage.setItem('scheduleCurrentThemeId', effectiveThemeId);
   applyEventColors(
     typeof themeVal === 'object' ? themeVal?.primaryColor : meta.primaryColor,
     typeof themeVal === 'object' ? themeVal?.secondaryColor : meta.secondaryColor,

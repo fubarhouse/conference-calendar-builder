@@ -118,7 +118,13 @@ function applyTheme() {
   const meta = state.eventMeta || {};
   const themeVal = meta.theme;
   const themeId = typeof themeVal === 'object' ? themeVal?.id : themeVal;
-  applyThemeClass(themeId ? normalizeThemeId(themeId) : getCurrentThemeId());
+  // Use the schedule viewer's last effective theme as the fallback so the
+  // planner always matches the schedule even when the event overrides the
+  // user's saved preference without updating localStorage.
+  const fallbackId = localStorage.getItem('scheduleCurrentThemeId') || getCurrentThemeId();
+  const effectiveThemeId = themeId ? normalizeThemeId(themeId) : fallbackId;
+  applyThemeClass(effectiveThemeId);
+  localStorage.setItem('scheduleCurrentThemeId', effectiveThemeId);
   applyEventColors(
     typeof themeVal === 'object' ? themeVal?.primaryColor : meta.primaryColor,
     typeof themeVal === 'object' ? themeVal?.secondaryColor : meta.secondaryColor,
@@ -4890,6 +4896,8 @@ async function init() {
   } else {
     state.eventMeta   = {};
     state.allSessions = [];
+    const fallback = localStorage.getItem('scheduleCurrentThemeId') || getCurrentThemeId();
+    applyThemeClass(fallback);
   }
 
   state.global  = loadGlobal();
