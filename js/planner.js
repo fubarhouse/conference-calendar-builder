@@ -4757,7 +4757,9 @@ function applyMode(mode) {
     document.getElementById(TAB_BTN_IDS[tab])?.classList.toggle('hidden', !visibleTabs.has(tab));
   });
 
-  // Update header subtitle
+  // Update header mode label and subtitle
+  const suffix = document.getElementById('plannerHeaderSuffix');
+  if (suffix) suffix.textContent = isSponsor ? 'Sponsor' : 'Personal';
   const subtitle = document.getElementById('plannerModeSubtitle');
   if (subtitle) subtitle.textContent = isSponsor ? 'Your sponsor notebook for this event.' : 'Your personal notebook for this event.';
 
