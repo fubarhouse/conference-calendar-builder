@@ -204,8 +204,28 @@ app.post('/api/documents', upload.single('file'), async (req, res) => {
   }
 });
 
+// Proxy exchange rates from Frankfurter so the browser call is same-origin.
+// date param: 'YYYY-MM-DD' for historical lookup, omit for latest rates.
+app.get('/api/rates', async (req, res) => {
+  const base = String(req.query.base || '').toUpperCase();
+  const date = String(req.query.date || '').trim();
+  if (!/^[A-Z]{3}$/.test(base)) return res.status(400).json({ error: 'Invalid currency code' });
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Invalid date format, expected YYYY-MM-DD' });
+  try {
+    const path = date ? `/${date}` : '/latest';
+    const upstream = await fetch(`https://api.frankfurter.app${path}?base=${base}`);
+    if (!upstream.ok) return res.status(502).json({ error: `Upstream ${upstream.status}` });
+    const data = await upstream.json();
+    // Historical rates never change — cache them for a year; current rates expire in 1h.
+    res.set('Cache-Control', date ? 'public, max-age=31536000' : 'public, max-age=3600').json(data);
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
 const PORT = parseInt(process.env.PORT || '8080', 10);
 app.listen(PORT, () => {
-  console.log(`Editor server → http://localhost:${PORT}`);
+  console.log(`Conference schedule editor & planner server → http://localhost:${PORT}`);
   console.log(`  editor.html → http://localhost:${PORT}/editor.html`);
+  console.log(`  planner.html → http://localhost:${PORT}/editor.html`);
 });

@@ -303,6 +303,18 @@
                 <div id="orgTimeline"></div>
               </div>
 
+              <!-- Team Events (Org Itinerary) -->
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Team Events</h3>
+                  <button id="addOrgEventBtn" type="button" class="h-8 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-plus mr-1.5 text-[0.65rem]"></i>Add
+                  </button>
+                </div>
+                <div id="orgEventsList" class="space-y-2"></div>
+                <p id="orgEventsEmpty" class="hidden text-xs text-gray-400 py-2">No team events yet. Add dinners, meetings, or activities for the whole group.</p>
+              </div>
+
               <!-- Row: Swag + Deliverables -->
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -545,14 +557,38 @@
             <!-- Header + toggle -->
             <div class="flex items-center justify-between flex-wrap gap-3">
               <h2 class="text-lg font-semibold text-gray-800">Summary</h2>
-              <div class="editor-tab-row" role="group" aria-label="Summary scope">
-                <button id="summaryToggleThis" type="button" class="editor-tab-button is-active">
-                  <i class="fas fa-calendar-day mr-2 text-[0.72rem]"></i>This Event
-                </button>
-                <button id="summaryToggleAll" type="button" class="editor-tab-button">
-                  <i class="fas fa-calendar-week mr-2 text-[0.72rem]"></i>All Events
-                </button>
+              <div class="flex items-center gap-3 flex-wrap">
+                <label class="flex items-center gap-1.5 text-xs text-gray-500">
+                  <i class="fas fa-coins text-gray-400 text-[0.65rem]"></i>
+                  Display in
+                  <select id="summaryCurrencySelect" class="h-7 rounded border-gray-300 text-xs bg-white px-2 drupal-blue-focus">
+                    <option value="">As entered</option>
+                    <option value="AUD">AUD</option>
+                    <option value="CAD">CAD</option>
+                    <option value="CHF">CHF</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="INR">INR</option>
+                    <option value="JPY">JPY</option>
+                    <option value="NZD">NZD</option>
+                    <option value="SGD">SGD</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </label>
+                <div class="editor-tab-row" role="group" aria-label="Summary scope">
+                  <button id="summaryToggleThis" type="button" class="editor-tab-button is-active">
+                    <i class="fas fa-calendar-day mr-2 text-[0.72rem]"></i>This Event
+                  </button>
+                  <button id="summaryToggleAll" type="button" class="editor-tab-button">
+                    <i class="fas fa-calendar-week mr-2 text-[0.72rem]"></i>All Events
+                  </button>
+                </div>
               </div>
+            </div>
+            <!-- Rate notice — shown by JS when a target currency is active -->
+            <div id="summaryRateNotice" class="hidden rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 flex items-start gap-2">
+              <i class="fas fa-triangle-exclamation flex-shrink-0 mt-0.5 text-amber-500"></i>
+              <span id="summaryRateNoticeText"></span>
             </div>
 
             <!-- This Event -->
@@ -573,6 +609,30 @@
 
             <!-- All Events (hidden by default) -->
             <div id="summaryAllEvents" class="hidden space-y-5">
+              <!-- Filters: date range + view-as person -->
+              <div class="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+                <span class="text-xs font-semibold uppercase tracking-widest text-gray-400 flex-shrink-0">Filter</span>
+                <label class="flex items-center gap-2 text-xs text-gray-500">
+                  From
+                  <input type="month" id="globalFilterStart" class="h-7 rounded border-gray-300 text-xs bg-white px-2 drupal-blue-focus">
+                </label>
+                <label class="flex items-center gap-2 text-xs text-gray-500">
+                  To
+                  <input type="month" id="globalFilterEnd" class="h-7 rounded border-gray-300 text-xs bg-white px-2 drupal-blue-focus">
+                </label>
+                <span class="w-px h-5 bg-gray-300 flex-shrink-0"></span>
+                <label class="flex items-center gap-2 text-xs text-gray-500">
+                  View as
+                  <select id="globalPersonFilter" class="h-7 rounded border-gray-300 text-xs bg-white px-2 drupal-blue-focus">
+                    <option value="">Everyone</option>
+                    <option value="me">Me (personal)</option>
+                  </select>
+                </label>
+                <button id="globalFilterClear" type="button" class="hidden h-7 px-2.5 rounded border border-gray-300 text-xs text-gray-500 hover:bg-gray-100 transition-colors">
+                  <i class="fas fa-times mr-1 text-[0.55rem]"></i>Clear
+                </button>
+              </div>
+
               <div id="globalSummaryStatsRow" class="flex flex-wrap gap-2"></div>
 
               <!-- Per-event breakdown table -->
@@ -587,6 +647,7 @@
               <!-- Budget vs Actual Over Time chart -->
               <div>
                 <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Budget vs Actual Over Time</h3>
+                <div id="globalChartEventFilter" style="display:none;flex-wrap:wrap;gap:0.375rem;margin-bottom:0.75rem"></div>
                 <canvas id="globalBudgetChart"></canvas>
               </div>
             </div>
@@ -627,13 +688,13 @@
             <select id="budgetItemCurrency" class="h-10 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"></select>
           </label>
           <label class="editor-form-field">
-            <span class="editor-field-label">Budget amount</span>
-            <input type="number" min="0" step="0.01" id="budgetItemBudget" placeholder="0.00"
+            <span class="editor-field-label">Budget amount <span class="text-red-400">*</span></span>
+            <input type="number" step="0.01" id="budgetItemBudget" placeholder="0.00"
               class="h-10 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3">
           </label>
           <label class="editor-form-field">
-            <span class="editor-field-label">Actual amount</span>
-            <input type="number" min="0" step="0.01" id="budgetItemActual" placeholder="0.00"
+            <span class="editor-field-label">Actual amount <span class="text-red-400">*</span></span>
+            <input type="number" step="0.01" id="budgetItemActual" placeholder="0.00"
               class="h-10 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3">
           </label>
         </div>
@@ -963,6 +1024,13 @@
         </button>
         <!-- Add/edit item form (hidden by default) -->
         <div id="itineraryAddForm" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+          <!-- Org mode: date only (no member) -->
+          <div id="itineraryOrgDateRow" class="hidden">
+            <label class="editor-form-field">
+              <span class="editor-field-label">Date</span>
+              <input type="date" id="itineraryOrgDate" class="h-9 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3">
+            </label>
+          </div>
           <!-- Standalone mode: member + date selectors (hidden when opened from a grid cell) -->
           <div id="itineraryFormMemberRow" class="hidden grid grid-cols-2 gap-3">
             <label class="editor-form-field">
@@ -992,6 +1060,22 @@
             <span class="editor-field-label">Notes (optional)</span>
             <textarea id="itineraryFormNotes" rows="2" class="w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white p-2 resize-y" placeholder="Any extra details…"></textarea>
           </label>
+          <div class="grid grid-cols-3 gap-3">
+            <label class="editor-form-field">
+              <span class="editor-field-label">Currency</span>
+              <select id="itineraryFormCurrency" class="h-9 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"></select>
+            </label>
+            <label class="editor-form-field">
+              <span class="editor-field-label">Budget (optional)</span>
+              <input type="number" step="0.01" id="itineraryFormBudget" placeholder="0.00"
+                class="h-9 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3">
+            </label>
+            <label class="editor-form-field">
+              <span class="editor-field-label">Actual (optional)</span>
+              <input type="number" step="0.01" id="itineraryFormActual" placeholder="0.00"
+                class="h-9 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3">
+            </label>
+          </div>
           <input type="hidden" id="itineraryFormEditId">
           <div class="flex gap-2 justify-end">
             <button type="button" id="itineraryFormCancel" class="h-8 px-3 rounded-md border border-gray-300 text-xs text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>

@@ -41,6 +41,129 @@ const state = {
   dirty: false,
 };
 
+// Filter state for the All Events summary sub-tab (persists across re-renders)
+// person: '' = everyone, 'me' = personal planners only, '<memberId>' = sponsor planners for that member
+const _globalSummaryFilter = { start: '', end: '', hidden: new Set(), person: '' }
+
+// ── Currency conversion ──────────────────────────────────────────────────────
+// Rates from frankfurter.app (ECB, daily). Keyed by `${base}:${date}` (date='' → 'current').
+// Historical rates (date specified) are cached permanently; current rates expire after 24h.
+
+let _summaryCurrency = ''          // '' = as-entered; ISO code = convert everything to this
+let _primaryDisplayCurrency = ''   // detected primary currency from current planner data
+let _currentRenderDate = ''        // event start date used in the current This Event render
+
+const _rateCache   = new Map()     // key: `${base}:${date||'current'}` → { rates, fetchedAt, rateDate }
+const _RATE_LS_KEY = '__plannerRates_v2__'
+const _RATE_TTL    = 86_400_000    // 24h TTL for current rates; historical entries never expire
+
+function _loadRatesFromStorage() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(_RATE_LS_KEY) || 'null')
+    if (stored && typeof stored === 'object') {
+      Object.entries(stored).forEach(([key, val]) => {
+        if (val?.rates && typeof val.fetchedAt === 'number') _rateCache.set(key, val)
+      })
+    }
+  } catch { /* ignore corrupt cache */ }
+}
+
+function _saveRatesToStorage() {
+  try {
+    const obj = {}
+    _rateCache.forEach((val, key) => { obj[key] = val })
+    localStorage.setItem(_RATE_LS_KEY, JSON.stringify(obj))
+  } catch { /* ignore */ }
+}
+
+// date: 'YYYY-MM-DD' for historical lookup, '' for current/latest rates.
+async function _fetchRates(currency, date = '') {
+  const key = `${currency}:${date || 'current'}`
+  const cached = _rateCache.get(key)
+  const ttl = date ? Infinity : _RATE_TTL  // historical rates never go stale
+  if (cached && (Date.now() - cached.fetchedAt) < ttl) return cached
+  const url = date
+    ? `/api/rates?base=${encodeURIComponent(currency)}&date=${encodeURIComponent(date)}`
+    : `/api/rates?base=${encodeURIComponent(currency)}`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const data = await res.json()
+  const entry = { rates: { ...data.rates, [currency]: 1 }, fetchedAt: Date.now(), rateDate: data.date || date || '' }
+  _rateCache.set(key, entry)
+  _saveRatesToStorage()
+  return entry
+}
+
+// Returns (amount, fromCurrency) → converted amount, or null when no conversion is active.
+// date: the event date to look up historical rates for; '' uses current rates.
+function _buildConvFn(date = '') {
+  if (!_summaryCurrency) return null
+  const key = `${_summaryCurrency}:${date || 'current'}`
+  const cached = _rateCache.get(key)
+  if (!cached) return null
+  const target = _summaryCurrency
+  const { rates } = cached
+  return (n, curr) => {
+    if (!n || !curr || curr === target) return n
+    const rate = rates[curr]
+    return rate != null ? n / rate : n
+  }
+}
+
+// rateKey: the specific cache key whose rateDate to display in the notice.
+// Pass '' to auto-detect from _summaryCurrency + current.
+function _showRateNotice(error, rateKey = '') {
+  const notice = document.getElementById('summaryRateNotice')
+  const text   = document.getElementById('summaryRateNoticeText')
+  if (!notice || !text) return
+  if (!_summaryCurrency) { notice.classList.add('hidden'); return }
+  notice.classList.remove('hidden')
+  const key    = rateKey || `${_summaryCurrency}:current`
+  const cached = _rateCache.get(key)
+  if (error || !cached) {
+    text.textContent = error
+      ? `Could not fetch exchange rates for ${_summaryCurrency} — values shown as entered. Check your connection and try again.`
+      : `Exchange rates for ${_summaryCurrency} not loaded — values shown as entered.`
+  } else {
+    const isHistorical = !key.endsWith(':current')
+    const dateLabel    = isHistorical ? `${cached.rateDate} (event date)` : (cached.rateDate || 'latest available')
+    text.textContent =
+      `Values shown as approximate ${_summaryCurrency} equivalents using ECB rates from ${dateLabel}. ` +
+      `Currencies outside ECB coverage are shown as-entered. Suitable for budgeting; use actual transaction rates for formal bookkeeping.`
+  }
+}
+
+// ── Per-event date caches ─────────────────────────────────────────────────────
+const _eventDateCache      = new Map()  // eventFile → Wednesday of event week (chart time axis)
+const _eventStartDateCache = new Map()  // eventFile → raw startDate 'YYYY-MM-DD' (FX rate lookup)
+
+function toWednesdayOfWeek(dateStr) {
+  const d = new Date(dateStr.length === 10 ? `${dateStr}T00:00:00Z` : dateStr)
+  const offset = 3 - d.getUTCDay() // range [-3..3]; gives Wednesday of the same Mon-Sun week
+  const wed = new Date(d)
+  wed.setUTCDate(d.getUTCDate() + offset)
+  return wed.toISOString().slice(0, 10)
+}
+
+async function fetchEventWednesday(eventFile) {
+  if (_eventDateCache.has(eventFile)) return _eventDateCache.get(eventFile)
+  try {
+    const res = await fetch(`./data/${eventFile}`)
+    if (!res.ok) { _eventDateCache.set(eventFile, null); _eventStartDateCache.set(eventFile, null); return null }
+    const data = await res.json()
+    const startDate = data?.event?.startDate
+    if (!startDate) { _eventDateCache.set(eventFile, null); _eventStartDateCache.set(eventFile, null); return null }
+    const wed = toWednesdayOfWeek(startDate)
+    _eventDateCache.set(eventFile, wed)
+    _eventStartDateCache.set(eventFile, startDate.slice(0, 10))
+    return wed
+  } catch {
+    _eventDateCache.set(eventFile, null)
+    _eventStartDateCache.set(eventFile, null)
+    return null
+  }
+}
+
 // ── Utilities ────────────────────────────────────────────────────────────────
 
 const esc = escapeHtml;
@@ -254,7 +377,7 @@ function applyTheme() {
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const CURRENCIES = ['AUD', 'USD', 'EUR', 'GBP', 'NZD', 'CHF', 'CAD', 'JPY', 'SGD']
+const CURRENCIES = ['AUD', 'USD', 'EUR', 'GBP', 'NZD', 'CHF', 'CAD', 'INR', 'JPY', 'SGD']
 
 const BUDGET_ITEM_CATS_PERSONAL = [
   { value: 'travel',        label: 'Travel / Transport' },
@@ -1095,6 +1218,7 @@ function renderOrgTab() {
   }
 
   renderTimeline();
+  renderOrgItinerary();
   renderTrackedSessions('sponsor');
   renderBudgetItems('sponsor');
   renderSponsorBudgetBreakdown();
@@ -1141,7 +1265,7 @@ function openAssignmentModal(memberId) {
   document.getElementById('assignmentActual').value = assignment.budgetActual || '';
   document.getElementById('assignmentNotes').value  = assignment.notes        || '';
   const currencyEl = document.getElementById('assignmentCurrency');
-  if (currencyEl) currencyEl.innerHTML = currencyOptions(assignment.currency || 'AUD');
+  if (currencyEl) currencyEl.innerHTML = currencyOptions(assignment.currency || state.planner?.org?.sponsorCurrency || 'AUD');
 
   modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -1205,7 +1329,7 @@ function loadMemberStayFields(acc, memberId) {
   const actual   = document.getElementById('accomMemberActual');
   if (checkIn)  checkIn.value  = stay.checkIn      || '';
   if (checkOut) checkOut.value = stay.checkOut     || '';
-  if (currency) currency.innerHTML = currencyOptions(stay.currency || 'AUD');
+  if (currency) currency.innerHTML = currencyOptions(stay.currency || state.planner?.org?.sponsorCurrency || 'AUD');
   if (budget)   budget.value   = stay.budget       || '';
   if (actual)   actual.value   = stay.budgetActual || '';
 }
@@ -1272,7 +1396,10 @@ function swagCardHtml(item) {
 // ── Itinerary tab ────────────────────────────────────────────────────────────
 
 function makeItineraryItem(memberId, date) {
-  return { id: makeItemId('it'), memberId, date, time: '', title: '', location: '', notes: '', done: false }
+  const currency = state.planner?.mode === 'sponsor'
+    ? (state.planner?.org?.sponsorCurrency || 'AUD')
+    : (state.planner?.personal?.currency || 'AUD')
+  return { id: makeItemId('it'), memberId, date, time: '', title: '', location: '', notes: '', budget: '', actual: '', currency, done: false }
 }
 
 function renderItineraryTab() {
@@ -1379,7 +1506,11 @@ function renderItineraryDayItems(memberId, date) {
     container.innerHTML = '<p class="text-xs text-gray-400 italic py-1">No items yet. Click Add item to start.</p>'
     return
   }
-  container.innerHTML = items.map((item) => `
+  const fmtAmt = (n, cur) => `${esc(cur || 'AUD')} ${parseBudget(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  container.innerHTML = items.map((item) => {
+    const hasBudget = item.budget !== '' && item.budget !== undefined
+    const hasActual = item.actual !== '' && item.actual !== undefined
+    return `
     <div class="flex items-start gap-2 p-2 rounded-md border border-gray-200 bg-white" data-itinerary-item-id="${esc(item.id)}">
       <input type="checkbox" class="mt-0.5 h-4 w-4 rounded flex-shrink-0 itinerary-done-check" data-item-id="${esc(item.id)}" ${item.done ? 'checked' : ''} aria-label="Mark '${esc(item.title || 'item')}' as done">
       <div class="flex-1 min-w-0">
@@ -1387,6 +1518,8 @@ function renderItineraryDayItems(memberId, date) {
         <div class="flex items-center gap-2 mt-0.5 flex-wrap">
           ${item.time ? `<span class="text-xs text-gray-500"><i class="fas fa-clock text-[0.6rem] mr-0.5"></i>${esc(item.time)}</span>` : ''}
           ${item.location ? `<span class="text-xs text-gray-500"><i class="fas fa-location-dot text-[0.6rem] mr-0.5"></i>${esc(item.location)}</span>` : ''}
+          ${hasBudget ? `<span class="text-xs text-gray-400"><i class="fas fa-wallet text-[0.6rem] mr-0.5"></i>Budget: <span class="tabular-nums text-gray-600">${fmtAmt(item.budget, item.currency)}</span></span>` : ''}
+          ${hasActual ? `<span class="text-xs text-gray-400"><i class="fas fa-coins text-[0.6rem] mr-0.5"></i>Actual: <span class="tabular-nums ${parseBudget(item.actual) > parseBudget(item.budget) && hasBudget ? 'text-red-500' : 'text-gray-600'}">${fmtAmt(item.actual, item.currency)}</span></span>` : ''}
           ${item.notes ? `<span class="text-xs text-gray-400 truncate">${esc(item.notes)}</span>` : ''}
         </div>
       </div>
@@ -1396,7 +1529,8 @@ function renderItineraryDayItems(memberId, date) {
       <button type="button" class="itinerary-delete-btn flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors" data-item-id="${esc(item.id)}" aria-label="Delete '${esc(item.title || 'item')}'">
         <i class="fas fa-times text-xs" aria-hidden="true"></i>
       </button>
-    </div>`).join('')
+    </div>`
+  }).join('')
 }
 
 function openItineraryDayModal(memberId, date) {
@@ -1438,11 +1572,7 @@ function openItineraryDayModal(memberId, date) {
     renderItineraryDayItems(memberId, date)
   }
 
-  document.getElementById('itineraryFormTitle').value    = ''
-  document.getElementById('itineraryFormTime').value     = ''
-  document.getElementById('itineraryFormLocation').value = ''
-  document.getElementById('itineraryFormNotes').value    = ''
-  document.getElementById('itineraryFormEditId').value   = ''
+  _resetItineraryForm()
   modal.classList.remove('hidden')
   document.body.style.overflow = 'hidden'
   if (isStandalone) document.getElementById('itineraryFormTitle')?.focus()
@@ -1451,11 +1581,12 @@ function openItineraryDayModal(memberId, date) {
 function closeItineraryDayModal() {
   const modal   = document.getElementById('itineraryDayModal')
   if (!modal) return
-  const isPersonal = modal.dataset.ctx === 'personal'
+  const ctx = modal.dataset.ctx
   modal.classList.add('hidden')
   modal.dataset.ctx = ''
   document.body.style.overflow = ''
-  if (isPersonal) renderPersonalItinerary()
+  if (ctx === 'personal') renderPersonalItinerary()
+  else if (ctx === 'org') renderOrgItinerary()
   else renderItineraryTab()
 }
 
@@ -1474,16 +1605,117 @@ function openPersonalDayModal(date) {
     : ''
 
   document.getElementById('itineraryFormMemberRow')?.classList.add('hidden')
+  document.getElementById('itineraryOrgDateRow')?.classList.add('hidden')
   const addBtn = document.getElementById('addItineraryItemBtn')
   if (addBtn) addBtn.classList.remove('hidden')
   const form = document.getElementById('itineraryAddForm')
   if (form) form.classList.add('hidden')
-  ;['itineraryFormTitle','itineraryFormTime','itineraryFormLocation','itineraryFormNotes','itineraryFormEditId']
-    .forEach((id) => { const el = document.getElementById(id); if (el) el.value = '' })
+  _resetItineraryForm()
 
   renderItineraryDayItems('', date)
   modal.classList.remove('hidden')
   document.body.style.overflow = 'hidden'
+}
+
+function _resetItineraryForm() {
+  document.getElementById('itineraryFormTitle').value    = ''
+  document.getElementById('itineraryFormTime').value     = ''
+  document.getElementById('itineraryFormLocation').value = ''
+  document.getElementById('itineraryFormNotes').value    = ''
+  document.getElementById('itineraryFormBudget').value   = ''
+  document.getElementById('itineraryFormActual').value   = ''
+  document.getElementById('itineraryFormEditId').value   = ''
+  const currEl = document.getElementById('itineraryFormCurrency')
+  if (currEl) {
+    const defaultCurr = state.planner?.mode === 'sponsor'
+      ? (state.planner?.org?.sponsorCurrency || 'AUD')
+      : (state.planner?.personal?.currency || 'AUD')
+    currEl.innerHTML = currencyOptions(defaultCurr)
+  }
+}
+
+function openOrgEventModal(id = null) {
+  const modal = document.getElementById('itineraryDayModal')
+  if (!modal) return
+  modal.dataset.ctx      = 'org'
+  modal.dataset.memberId = ''
+  modal.dataset.date     = ''
+
+  const titleEl    = document.getElementById('itineraryDayModalTitle')
+  const subtitleEl = document.getElementById('itineraryDayModalSubtitle')
+  if (titleEl)    titleEl.textContent    = 'Team Event'
+  if (subtitleEl) subtitleEl.textContent = id ? 'Edit event' : 'Add an org-level itinerary item'
+
+  document.getElementById('itineraryFormMemberRow')?.classList.add('hidden')
+  document.getElementById('itineraryOrgDateRow')?.classList.remove('hidden')
+  document.getElementById('addItineraryItemBtn')?.classList.add('hidden')
+
+  const form = document.getElementById('itineraryAddForm')
+  if (form) form.classList.remove('hidden')
+  document.getElementById('itineraryDayItems').innerHTML = ''
+
+  _resetItineraryForm()
+
+  if (id) {
+    const item = (state.planner.org?.itinerary || []).find((i) => i.id === id)
+    if (item) {
+      document.getElementById('itineraryFormEditId').value   = id
+      document.getElementById('itineraryFormTitle').value    = item.title || ''
+      document.getElementById('itineraryFormTime').value     = item.time || ''
+      document.getElementById('itineraryFormLocation').value = item.location || ''
+      document.getElementById('itineraryFormNotes').value    = item.notes || ''
+      document.getElementById('itineraryOrgDate').value      = item.date || ''
+      document.getElementById('itineraryFormBudget').value   = item.budget || ''
+      document.getElementById('itineraryFormActual').value   = item.actual || ''
+      const currEl = document.getElementById('itineraryFormCurrency')
+      if (currEl) currEl.innerHTML = currencyOptions(item.currency || 'AUD')
+    }
+  }
+
+  modal.classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
+  document.getElementById('itineraryFormTitle')?.focus()
+}
+
+function renderOrgItinerary() {
+  const list    = document.getElementById('orgEventsList')
+  const empty   = document.getElementById('orgEventsEmpty')
+  if (!list) return
+  const items = (state.planner.org?.itinerary || []).slice().sort((a, b) => {
+    if (a.date !== b.date) return (a.date || '').localeCompare(b.date || '')
+    return (a.time || '').localeCompare(b.time || '')
+  })
+  empty?.classList.toggle('hidden', items.length > 0)
+  if (!items.length) { list.innerHTML = ''; return }
+
+  const fmtAmt = (n, cur) => `${esc(cur || 'AUD')} ${parseBudget(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  list.innerHTML = items.map((item) => {
+    const hasBudget = item.budget !== '' && item.budget !== undefined
+    const hasActual = item.actual !== '' && item.actual !== undefined
+    const dateLabel = item.date
+      ? new Date(item.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+      : ''
+    return `<div class="flex items-start gap-2 py-1.5 px-2.5 rounded-md border border-gray-200 bg-white">
+      <input type="checkbox" class="mt-0.5 h-4 w-4 rounded flex-shrink-0 org-event-done-check" data-event-id="${esc(item.id)}" ${item.done ? 'checked' : ''} aria-label="Mark '${esc(item.title || 'event')}' as done">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="text-sm font-medium ${item.done ? 'line-through text-gray-400' : 'text-gray-700'} truncate">${esc(item.title || 'Team Event')}</span>
+        </div>
+        <div class="flex gap-3 text-xs mt-0.5 flex-wrap">
+          ${dateLabel ? `<span class="text-gray-400"><i class="fas fa-calendar-day text-[0.6rem] mr-0.5"></i>${esc(dateLabel)}${item.time ? ' · ' + esc(item.time) : ''}</span>` : ''}
+          ${item.location ? `<span class="text-gray-400"><i class="fas fa-location-dot text-[0.6rem] mr-0.5"></i>${esc(item.location)}</span>` : ''}
+          ${hasBudget ? `<span class="text-gray-400">Budget: <span class="tabular-nums text-gray-600">${fmtAmt(item.budget, item.currency)}</span></span>` : ''}
+          ${hasActual ? `<span class="text-gray-400">Actual: <span class="tabular-nums ${parseBudget(item.actual) > parseBudget(item.budget) && hasBudget ? 'text-red-500' : 'text-gray-600'}">${fmtAmt(item.actual, item.currency)}</span></span>` : ''}
+        </div>
+      </div>
+      <button type="button" class="edit-org-event-btn h-7 w-7 flex items-center justify-center rounded-md border border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0" data-event-id="${esc(item.id)}" aria-label="Edit ${esc(item.title || 'event')}">
+        <i class="fas fa-pen-to-square text-[0.65rem]" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="delete-org-event-btn h-7 w-7 flex items-center justify-center rounded-md border border-gray-200 text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0" data-event-id="${esc(item.id)}" aria-label="Delete ${esc(item.title || 'event')}">
+        <i class="fas fa-times text-xs" aria-hidden="true"></i>
+      </button>
+    </div>`
+  }).join('')
 }
 
 function wireItineraryPanel() {
@@ -1498,40 +1730,64 @@ function wireItineraryPanel() {
   document.getElementById('addItineraryItemBtn')?.addEventListener('click', () => {
     const form = document.getElementById('itineraryAddForm')
     if (form) { form.classList.remove('hidden'); document.getElementById('itineraryFormTitle')?.focus() }
-    document.getElementById('itineraryFormEditId').value = ''
-    document.getElementById('itineraryFormTitle').value    = ''
-    document.getElementById('itineraryFormTime').value     = ''
-    document.getElementById('itineraryFormLocation').value = ''
-    document.getElementById('itineraryFormNotes').value    = ''
+    _resetItineraryForm()
   })
 
   document.getElementById('itineraryFormCancel')?.addEventListener('click', () => {
     document.getElementById('itineraryAddForm')?.classList.add('hidden')
   })
 
+  function _readItineraryBudgetFields() {
+    return {
+      budget:   document.getElementById('itineraryFormBudget')?.value  || '',
+      actual:   document.getElementById('itineraryFormActual')?.value  || '',
+      currency: document.getElementById('itineraryFormCurrency')?.value || 'AUD',
+    }
+  }
+
+  function _applyItineraryBudgetFields(item) {
+    const f = _readItineraryBudgetFields()
+    item.budget   = f.budget
+    item.actual   = f.actual
+    item.currency = f.currency
+  }
+
   document.getElementById('itineraryFormSave')?.addEventListener('click', () => {
     const titleEl = document.getElementById('itineraryFormTitle')
     const title   = titleEl?.value.trim()
     if (!title) { titleEl?.focus(); return }
 
-    // Determine context: standalone (member row visible) vs cell-opened
-    const memberRow    = document.getElementById('itineraryFormMemberRow')
-    const isStandalone = !memberRow?.classList.contains('hidden')
-    let memberId, date
-    if (isStandalone) {
-      memberId = document.getElementById('itineraryFormMember')?.value || ''
-      date     = document.getElementById('itineraryFormDate')?.value   || ''
-      if (!memberId) { document.getElementById('itineraryFormMember')?.focus(); return }
-      if (!date)     { document.getElementById('itineraryFormDate')?.focus();   return }
+    const ctx = modal.dataset.ctx
+    const isPersonal   = ctx === 'personal'
+    const isOrg        = ctx === 'org'
+
+    // Determine member + date depending on mode
+    let memberId = '', date = ''
+    if (isOrg) {
+      date = document.getElementById('itineraryOrgDate')?.value || ''
+      if (!date) { document.getElementById('itineraryOrgDate')?.focus(); return }
     } else {
-      const ctx = getModalCtx()
-      memberId  = ctx.memberId
-      date      = ctx.date
+      const memberRow    = document.getElementById('itineraryFormMemberRow')
+      const isStandalone = !memberRow?.classList.contains('hidden')
+      if (isStandalone) {
+        memberId = document.getElementById('itineraryFormMember')?.value || ''
+        date     = document.getElementById('itineraryFormDate')?.value   || ''
+        if (!memberId) { document.getElementById('itineraryFormMember')?.focus(); return }
+        if (!date)     { document.getElementById('itineraryFormDate')?.focus();   return }
+      } else {
+        const c = getModalCtx()
+        memberId = c.memberId
+        date     = c.date
+      }
     }
 
-    const isPersonal   = modal.dataset.ctx === 'personal'
-    const targetArr = isPersonal ? (state.planner.personal.itinerary ??= []) : (state.planner.itinerary ??= [])
-    const editId    = document.getElementById('itineraryFormEditId')?.value || ''
+    const targetArr = isPersonal
+      ? (state.planner.personal.itinerary ??= [])
+      : isOrg
+      ? (state.planner.org.itinerary ??= [])
+      : (state.planner.itinerary ??= [])
+
+    const editId = document.getElementById('itineraryFormEditId')?.value || ''
     if (editId) {
       const item = targetArr.find((i) => i.id === editId)
       if (item) {
@@ -1539,22 +1795,28 @@ function wireItineraryPanel() {
         item.time     = document.getElementById('itineraryFormTime').value
         item.location = document.getElementById('itineraryFormLocation').value
         item.notes    = document.getElementById('itineraryFormNotes').value
+        if (isOrg) item.date = date
+        _applyItineraryBudgetFields(item)
       }
     } else {
-      const item = makeItineraryItem(isPersonal ? null : memberId, date)
+      const item = makeItineraryItem(isPersonal || isOrg ? null : memberId, date)
       item.title    = title
       item.time     = document.getElementById('itineraryFormTime').value
       item.location = document.getElementById('itineraryFormLocation').value
       item.notes    = document.getElementById('itineraryFormNotes').value
+      _applyItineraryBudgetFields(item)
       targetArr.push(item)
     }
     document.getElementById('itineraryAddForm')?.classList.add('hidden')
-    if (isStandalone) {
+    if (isOrg) {
+      closeItineraryDayModal()
+    } else if (!document.getElementById('itineraryFormMemberRow')?.classList.contains('hidden')) {
       closeItineraryDayModal()
     } else {
       renderItineraryDayItems(isPersonal ? '' : memberId, date)
     }
     scheduleAutoSave()
+    if (state.activeTab === 'summary') renderSummaryTab()
   })
 
   // Item done / edit / delete
@@ -1581,10 +1843,14 @@ function wireItineraryPanel() {
       const form = document.getElementById('itineraryAddForm')
       if (form) form.classList.remove('hidden')
       document.getElementById('itineraryFormEditId').value   = id
-      document.getElementById('itineraryFormTitle').value    = item.title
-      document.getElementById('itineraryFormTime').value     = item.time
-      document.getElementById('itineraryFormLocation').value = item.location
-      document.getElementById('itineraryFormNotes').value    = item.notes
+      document.getElementById('itineraryFormTitle').value    = item.title || ''
+      document.getElementById('itineraryFormTime').value     = item.time || ''
+      document.getElementById('itineraryFormLocation').value = item.location || ''
+      document.getElementById('itineraryFormNotes').value    = item.notes || ''
+      document.getElementById('itineraryFormBudget').value   = item.budget || ''
+      document.getElementById('itineraryFormActual').value   = item.actual || ''
+      const currEl = document.getElementById('itineraryFormCurrency')
+      if (currEl) currEl.innerHTML = currencyOptions(item.currency || 'AUD')
       document.getElementById('itineraryFormTitle')?.focus()
       return
     }
@@ -1600,6 +1866,7 @@ function wireItineraryPanel() {
       }
       renderItineraryDayItems(isPersonal ? '' : modal.dataset.memberId, modal.dataset.date)
       scheduleAutoSave()
+      if (state.activeTab === 'summary') renderSummaryTab()
       return
     }
   })
@@ -1615,7 +1882,10 @@ function wireItineraryPanel() {
 // ── Receipts tab ─────────────────────────────────────────────────────────────
 
 function makeReceipt() {
-  return { id: makeItemId('rc'), name: '', date: '', amount: '', currency: 'AUD', category: 'misc', filePath: '', fileLabel: '', notes: '' }
+  const currency = state.planner?.mode === 'sponsor'
+    ? (state.planner?.org?.sponsorCurrency || 'AUD')
+    : (state.planner?.personal?.currency || 'AUD')
+  return { id: makeItemId('rc'), name: '', date: '', amount: '', currency, category: 'misc', filePath: '', fileLabel: '', notes: '' }
 }
 
 function receiptCardHtml(receipt) {
@@ -1800,7 +2070,8 @@ function destroyCharts(...keys) {
   keys.forEach((k) => { if (_charts[k]) { _charts[k].destroy(); delete _charts[k] } })
 }
 
-function buildEventBudgetData(planner) {
+function buildEventBudgetData(planner, filterMemberId = null, conv = null) {
+  const cvt = conv ?? ((n) => n)
   const cats = {
     travel:        { label: 'Travel',        budget: 0, actual: 0, items: [], receipts: [] },
     accommodation: { label: 'Accommodation', budget: 0, actual: 0, items: [], receipts: [] },
@@ -1815,8 +2086,11 @@ function buildEventBudgetData(planner) {
 
   // Team assignments → travel
   ;(org.teamAssignments || []).forEach((a) => {
+    if (filterMemberId && a.memberId !== filterMemberId) return
     const m = state.global?.teamMembers.find((tm) => tm.id === a.memberId)
-    const b = parseBudget(a.budget); const ac = parseBudget(a.budgetActual)
+    const aCurr = a.currency || 'AUD'
+    const b = cvt(parseBudget(a.budget), aCurr)
+    const ac = cvt(parseBudget(a.budgetActual), aCurr)
     cats.travel.budget += b; cats.travel.actual += ac
     if (b || ac) cats.travel.items.push({ label: m?.name || 'Unnamed', budget: b, actual: ac })
   })
@@ -1824,34 +2098,55 @@ function buildEventBudgetData(planner) {
   // Accommodation stays → accommodation
   ;(org.accommodations || []).forEach((acc) => {
     ;(acc.assignments || []).forEach((stay) => {
+      if (filterMemberId && stay.memberId !== filterMemberId) return
       const m = state.global?.teamMembers.find((tm) => tm.id === stay.memberId)
-      const b = parseBudget(stay.budget); const ac = parseBudget(stay.budgetActual)
+      const sCurr = stay.currency || 'AUD'
+      const b = cvt(parseBudget(stay.budget), sCurr)
+      const ac = cvt(parseBudget(stay.budgetActual), sCurr)
       cats.accommodation.budget += b; cats.accommodation.actual += ac
       if (b || ac) cats.accommodation.items.push({ label: `${m?.name || 'Unnamed'} @ ${acc.name || 'Accommodation'}`, budget: b, actual: ac })
     })
   })
 
-  // Sponsor
-  const sb = parseBudget(org.sponsorBudget); const sa = parseBudget(org.sponsorActual)
-  cats.sponsor.budget += sb; cats.sponsor.actual += sa
-  if (sb || sa) cats.sponsor.items.push({ label: 'Company / Sponsor', budget: sb, actual: sa })
+  // Org-level itinerary events (team dinners, activities, etc.)
+  if (!filterMemberId) {
+    ;(org.itinerary || []).forEach((item) => {
+      if (!item.budget && !item.actual) return
+      const iCurr = item.currency || 'AUD'
+      const b  = cvt(parseBudget(item.budget), iCurr)
+      const ac = cvt(parseBudget(item.actual), iCurr)
+      cats.team.budget += b; cats.team.actual += ac
+      if (b || ac) cats.team.items.push({ label: item.title || 'Team event', budget: b, actual: ac, isManual: true })
+    })
+  }
 
-  // Swag items
-  ;(org.swag || []).forEach((item) => {
-    const b = parseBudget(item.budget); const ac = parseBudget(item.actual)
-    cats.swag.budget += b; cats.swag.actual += ac
-    if (b || ac) cats.swag.items.push({ label: item.name || 'Swag item', budget: b, actual: ac })
-  })
+  // The following fields are org-wide, not member-specific — skip when filtering by member
+  if (!filterMemberId) {
+    const spCurr = org.sponsorCurrency || 'AUD'
+    const sb = cvt(parseBudget(org.sponsorBudget), spCurr)
+    const sa = cvt(parseBudget(org.sponsorActual), spCurr)
+    cats.sponsor.budget += sb; cats.sponsor.actual += sa
+    if (sb || sa) cats.sponsor.items.push({ label: 'Company / Sponsor', budget: sb, actual: sa })
 
-  // Manual budget items (sponsor)
-  ;(org.budgetItems || []).forEach((item) => {
-    const cat = item.category || 'misc'
-    const b = parseBudget(item.budget); const ac = parseBudget(item.actual)
-    if (cats[cat]) {
-      cats[cat].budget += b; cats[cat].actual += ac
-      if (b || ac) cats[cat].items.push({ label: item.name || 'Budget item', budget: b, actual: ac, isManual: true })
-    }
-  })
+    ;(org.swag || []).forEach((item) => {
+      const iCurr = item.currency || 'AUD'
+      const b = cvt(parseBudget(item.budget), iCurr)
+      const ac = cvt(parseBudget(item.actual), iCurr)
+      cats.swag.budget += b; cats.swag.actual += ac
+      if (b || ac) cats.swag.items.push({ label: item.name || 'Swag item', budget: b, actual: ac })
+    })
+
+    ;(org.budgetItems || []).forEach((item) => {
+      const iCurr = item.currency || 'AUD'
+      const cat = item.category || 'misc'
+      const b = cvt(parseBudget(item.budget), iCurr)
+      const ac = cvt(parseBudget(item.actual), iCurr)
+      if (cats[cat]) {
+        cats[cat].budget += b; cats[cat].actual += ac
+        if (b || ac) cats[cat].items.push({ label: item.name || 'Budget item', budget: b, actual: ac, isManual: true })
+      }
+    })
+  }
 
   // Receipts are tracked for drilldown display only — amounts are not added to
   // actual totals to avoid double-counting with manually entered actual fields.
@@ -1866,7 +2161,8 @@ function buildEventBudgetData(planner) {
   return cats
 }
 
-function buildPersonalBudgetData(planner) {
+function buildPersonalBudgetData(planner, conv = null) {
+  const cvt = conv ?? ((n) => n)
   const cats = {
     travel:        { label: 'Travel',        budget: 0, actual: 0, items: [], receipts: [] },
     accommodation: { label: 'Accommodation', budget: 0, actual: 0, items: [], receipts: [] },
@@ -1876,21 +2172,37 @@ function buildPersonalBudgetData(planner) {
     misc:          { label: 'Misc',          budget: 0, actual: 0, items: [], receipts: [] },
   }
   const personal = planner.personal || {}
+  const pCurr = personal.currency || 'AUD'
 
-  const tb = parseBudget(personal.budget); const ta = parseBudget(personal.budgetActual)
+  const tb = cvt(parseBudget(personal.budget), pCurr)
+  const ta = cvt(parseBudget(personal.budgetActual), pCurr)
   cats.travel.budget += tb; cats.travel.actual += ta
   if (tb || ta) cats.travel.items.push({ label: 'My travel', budget: tb, actual: ta })
 
   ;(personal.accommodations || []).forEach((acc) => {
-    const ab = parseBudget(acc.budget); const aa = parseBudget(acc.budgetActual)
+    const aCurr = acc.currency || 'AUD'
+    const ab = cvt(parseBudget(acc.budget), aCurr)
+    const aa = cvt(parseBudget(acc.budgetActual), aCurr)
     cats.accommodation.budget += ab; cats.accommodation.actual += aa
     if (ab || aa) cats.accommodation.items.push({ label: acc.name || 'Accommodation', budget: ab, actual: aa })
   })
 
+  // Personal itinerary items with budget
+  ;(personal.itinerary || []).forEach((item) => {
+    if (!item.budget && !item.actual) return
+    const iCurr = item.currency || 'AUD'
+    const b  = cvt(parseBudget(item.budget), iCurr)
+    const ac = cvt(parseBudget(item.actual), iCurr)
+    cats.misc.budget += b; cats.misc.actual += ac
+    if (b || ac) cats.misc.items.push({ label: item.title || 'Itinerary item', budget: b, actual: ac, isManual: true })
+  })
+
   // Manual budget items (personal)
   ;(personal.budgetItems || []).forEach((item) => {
+    const iCurr = item.currency || 'AUD'
     const cat = item.category || 'misc'
-    const b = parseBudget(item.budget); const ac = parseBudget(item.actual)
+    const b = cvt(parseBudget(item.budget), iCurr)
+    const ac = cvt(parseBudget(item.actual), iCurr)
     if (cats[cat]) {
       cats[cat].budget += b; cats[cat].actual += ac
       if (b || ac) cats[cat].items.push({ label: item.name || 'Budget item', budget: b, actual: ac, isManual: true })
@@ -1919,7 +2231,7 @@ function renderSummaryTab() {
   }
 }
 
-function renderBudgetHealth(cats, totalBudget, totalActual) {
+function renderBudgetHealth(cats, totalBudget, totalActual, primaryCurr = '') {
   const el = document.getElementById('summaryBudgetHealth')
   if (!el) return
 
@@ -1933,7 +2245,12 @@ function renderBudgetHealth(cats, totalBudget, totalActual) {
   const remaining  = netBudget - netActual
   const barColor   = overBudget ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#10b981'
 
-  const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const _convBH = _buildConvFn(_currentRenderDate)
+  const fmt = (n) => {
+    const s = n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    if (_convBH && _summaryCurrency) return `≈${s} ${_summaryCurrency}`
+    return primaryCurr ? `${primaryCurr} ${s}` : s
+  }
 
   const catRows = activeCats.map(([, c]) => {
     const catPct   = c.budget > 0 ? Math.min((c.actual / c.budget) * 100, 100) : 0
@@ -1981,6 +2298,9 @@ function renderSummaryThisEvent() {
   const statsGrid = document.getElementById('summaryStatsGrid')
   if (!statsGrid) return
 
+  // Determine the event date for historical FX rate lookup
+  _currentRenderDate = state.eventMeta?.startDate?.slice(0, 10) || ''
+
   const isPersonal = state.planner?.mode === 'personal'
   document.getElementById('summaryMemberChartSection')?.classList.toggle('hidden', isPersonal)
 
@@ -2006,17 +2326,24 @@ function renderSummaryThisEvent() {
   }
 
   function renderCategoryChart(cats) {
+    const conv = _buildConvFn(_currentRenderDate)
     destroyCharts('category')
     const catCanvas = document.getElementById('budgetCategoryChart')
     const activeCats = Object.entries(cats).filter(([, c]) => c.budget > 0 || c.actual > 0)
     if (catCanvas && activeCats.length) {
+      const displayCurr = conv && _summaryCurrency ? `≈${_summaryCurrency}` : _primaryDisplayCurrency || 'as entered'
+      const chartCurrLabel = ` (${displayCurr})`
+      const fmtChartVal = (v) => {
+        const s = v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        return conv && _summaryCurrency ? `≈${s} ${_summaryCurrency}` : _primaryDisplayCurrency ? `${_primaryDisplayCurrency} ${s}` : s
+      }
       _charts.category = new Chart(catCanvas, {
         type: 'bar',
         data: {
           labels: activeCats.map(([, c]) => c.label),
           datasets: [
-            { label: 'Budget', data: activeCats.map(([, c]) => c.budget), backgroundColor: 'rgba(59,130,246,0.55)', borderColor: '#3b82f6', borderWidth: 1 },
-            { label: 'Actual', data: activeCats.map(([, c]) => c.actual), backgroundColor: 'rgba(16,185,129,0.55)', borderColor: '#10b981', borderWidth: 1 },
+            { label: `Budget${chartCurrLabel}`, data: activeCats.map(([, c]) => c.budget), backgroundColor: 'rgba(59,130,246,0.55)', borderColor: '#3b82f6', borderWidth: 1 },
+            { label: `Actual${chartCurrLabel}`, data: activeCats.map(([, c]) => c.actual), backgroundColor: 'rgba(16,185,129,0.55)', borderColor: '#10b981', borderWidth: 1 },
           ],
         },
         options: {
@@ -2024,10 +2351,15 @@ function renderSummaryThisEvent() {
           responsive: true,
           plugins: {
             legend: { position: 'top' },
-            tooltip: { callbacks: { footer: () => 'Click to drill down' } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.dataset.label?.split(' (')[0] ?? ''}: ${fmtChartVal(ctx.parsed.x)}`,
+                footer: () => 'Click to drill down',
+              },
+            },
           },
           aspectRatio: 3,
-          scales: { x: { beginAtZero: true } },
+          scales: { x: { beginAtZero: true, ticks: { callback: (v) => fmtChartVal(v) } } },
           onClick(_, elements) {
             if (!elements.length) return
             const [key] = activeCats[elements[0].index]
@@ -2054,10 +2386,17 @@ function renderSummaryThisEvent() {
     const itinDone = personalItinerary.filter((i) => i.done).length
     const itinOpen = personalItinerary.filter((i) => !i.done).length
 
-    const cats = buildPersonalBudgetData(state.planner)
+    const conv = _buildConvFn(_currentRenderDate)
+    const cats = buildPersonalBudgetData(state.planner, conv)
     let totalBudget = 0, totalActual = 0
     Object.values(cats).forEach((c) => { totalBudget += c.budget; totalActual += c.actual })
     const hasBudgetData = Object.values(cats).some((c) => c.budget !== 0 || c.actual !== 0)
+    const primaryCurr = personal.currency || 'AUD'
+    _primaryDisplayCurrency = primaryCurr
+    const fmtStat = (n) => conv && _summaryCurrency
+      ? `≈${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${_summaryCurrency}`
+      : `${primaryCurr} ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+    _showRateNotice(false, _summaryCurrency ? `${_summaryCurrency}:${_currentRenderDate || 'current'}` : '')
 
     statsGrid.innerHTML = [
       statCard('fas fa-plane',        'Travel legs',    totalLegs),
@@ -2067,11 +2406,11 @@ function renderSummaryThisEvent() {
       statCard('fas fa-address-book', 'Contacts',       contactCount),
       statCard('fas fa-file-lines',   'Sessions noted', notedCount),
       statCard('fas fa-receipt',      'Receipts',       receiptCount, receiptTotal ? receiptTotal.toLocaleString() : ''),
-      hasBudgetData ? statCard('fas fa-wallet', 'My budget', totalBudget.toLocaleString()) : '',
-      hasBudgetData ? statCard('fas fa-coins',  'My actual', totalActual.toLocaleString()) : '',
+      hasBudgetData ? statCard('fas fa-wallet', 'My budget', fmtStat(totalBudget)) : '',
+      hasBudgetData ? statCard('fas fa-coins',  'My actual', fmtStat(totalActual)) : '',
     ].filter(Boolean).join('')
 
-    renderBudgetHealth(cats, totalBudget, totalActual)
+    renderBudgetHealth(cats, totalBudget, totalActual, primaryCurr)
     renderCategoryChart(cats)
     destroyCharts('member')
     return
@@ -2094,10 +2433,17 @@ function renderSummaryThisEvent() {
   const itinDone  = itinerary.filter((i) => i.done).length
   const itinOpen  = itinerary.filter((i) => !i.done).length
 
-  const cats = buildEventBudgetData(state.planner)
+  const conv = _buildConvFn(_currentRenderDate)
+  const cats = buildEventBudgetData(state.planner, null, conv)
   let totalBudget = 0, totalActual = 0
   Object.values(cats).forEach((c) => { totalBudget += c.budget; totalActual += c.actual })
   const hasBudgetData = Object.values(cats).some((c) => c.budget !== 0 || c.actual !== 0)
+  const primaryCurr = org.sponsorCurrency || 'AUD'
+  _primaryDisplayCurrency = primaryCurr
+  const fmtStat = (n) => conv && _summaryCurrency
+    ? `≈${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${_summaryCurrency}`
+    : `${primaryCurr} ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+  _showRateNotice(false, _summaryCurrency ? `${_summaryCurrency}:${_currentRenderDate || 'current'}` : '')
 
   statsGrid.innerHTML = [
     statCard('fas fa-users',        'Members',        memberCount),
@@ -2108,11 +2454,11 @@ function renderSummaryThisEvent() {
     statCard('fas fa-address-book', 'Contacts',       contactCount),
     statCard('fas fa-file-lines',   'Sessions noted', notedCount),
     statCard('fas fa-receipt',      'Receipts',       receiptCount, receiptTotal ? receiptTotal.toLocaleString() : ''),
-    hasBudgetData ? statCard('fas fa-wallet', 'Total budget', totalBudget.toLocaleString()) : '',
-    hasBudgetData ? statCard('fas fa-coins',  'Total actual', totalActual.toLocaleString()) : '',
+    hasBudgetData ? statCard('fas fa-wallet', 'Total budget', fmtStat(totalBudget)) : '',
+    hasBudgetData ? statCard('fas fa-coins',  'Total actual', fmtStat(totalActual)) : '',
   ].filter(Boolean).join('')
 
-  renderBudgetHealth(cats, totalBudget, totalActual)
+  renderBudgetHealth(cats, totalBudget, totalActual, primaryCurr)
   renderCategoryChart(cats)
 
   // ── Per-member chart ─────────────────────────────────────────────────────────
@@ -2120,24 +2466,34 @@ function renderSummaryThisEvent() {
   const memberCanvas = document.getElementById('budgetMemberChart')
   const memberData = assignments.map((a) => {
     const m    = state.global?.teamMembers.find((tm) => tm.id === a.memberId)
-    const b    = parseBudget(a.budget)
-    const ac   = parseBudget(a.budgetActual)
+    const aCurr = a.currency || 'AUD'
+    const b    = (conv ?? ((n) => n))(parseBudget(a.budget), aCurr)
+    const ac   = (conv ?? ((n) => n))(parseBudget(a.budgetActual), aCurr)
     let accomB = 0, accomAc = 0
     ;(org.accommodations || []).forEach((acc) => {
       const stay = (acc.assignments || []).find((s) => s.memberId === a.memberId)
-      if (stay) { accomB += parseBudget(stay.budget); accomAc += parseBudget(stay.budgetActual) }
+      if (stay) {
+        const sCurr = stay.currency || 'AUD'
+        accomB  += (conv ?? ((n) => n))(parseBudget(stay.budget), sCurr)
+        accomAc += (conv ?? ((n) => n))(parseBudget(stay.budgetActual), sCurr)
+      }
     })
     return { name: m?.name || 'Unnamed', budget: b + accomB, actual: ac + accomAc, memberId: a.memberId, memberBudget: b, memberActual: ac, accomBudget: accomB, accomActual: accomAc }
   }).filter((d) => d.budget || d.actual)
 
   if (memberCanvas && memberData.length) {
+    const memberCurrLabel = conv && _summaryCurrency ? ` (≈${_summaryCurrency})` : ` (${primaryCurr})`
+    const fmtMemberVal = (v) => {
+      const s = v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      return conv && _summaryCurrency ? `≈${s} ${_summaryCurrency}` : `${primaryCurr} ${s}`
+    }
     _charts.member = new Chart(memberCanvas, {
       type: 'bar',
       data: {
         labels: memberData.map((d) => d.name),
         datasets: [
-          { label: 'Budget', data: memberData.map((d) => d.budget), backgroundColor: 'rgba(99,102,241,0.55)', borderColor: '#6366f1', borderWidth: 1 },
-          { label: 'Actual', data: memberData.map((d) => d.actual), backgroundColor: 'rgba(245,158,11,0.55)', borderColor: '#f59e0b', borderWidth: 1 },
+          { label: `Budget${memberCurrLabel}`, data: memberData.map((d) => d.budget), backgroundColor: 'rgba(99,102,241,0.55)', borderColor: '#6366f1', borderWidth: 1 },
+          { label: `Actual${memberCurrLabel}`, data: memberData.map((d) => d.actual), backgroundColor: 'rgba(245,158,11,0.55)', borderColor: '#f59e0b', borderWidth: 1 },
         ],
       },
       options: {
@@ -2145,10 +2501,15 @@ function renderSummaryThisEvent() {
         responsive: true,
         plugins: {
           legend: { position: 'top' },
-          tooltip: { callbacks: { footer: () => 'Click to drill down' } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` ${ctx.dataset.label?.split(' (')[0] ?? ''}: ${fmtMemberVal(ctx.parsed.x)}`,
+              footer: () => 'Click to drill down',
+            },
+          },
         },
         aspectRatio: 3,
-        scales: { x: { beginAtZero: true } },
+        scales: { x: { beginAtZero: true, ticks: { callback: (v) => fmtMemberVal(v) } } },
         onClick(_, elements) {
           if (!elements.length) return
           const d = memberData[elements[0].index]
@@ -2161,113 +2522,289 @@ function renderSummaryThisEvent() {
   }
 }
 
-function renderSummaryAllEvents() {
+async function renderSummaryAllEvents() {
   const container = document.getElementById('summaryAllEvents')
   if (!container) return
 
-  // Gather all planner entries from localStorage
-  const events = []
+  // ── Step 1: Gather raw planner metadata from localStorage ───────────────────
+  const rawPlanners = []
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i)
     if (!key?.startsWith(STORAGE_PREFIX) || key === `${STORAGE_PREFIX}global`) continue
     try {
       const data = JSON.parse(localStorage.getItem(key) || '{}')
-      const slug = key.slice(STORAGE_PREFIX.length)
-      const label = data._displayName || (data._eventFile || slug).replace('.json', '')
-      const rawDate = data._lastModified || ''
-      const plannerMode = data.mode === 'individual' ? 'personal' : (data.mode || 'personal')
-
-      let budget = 0, actual = 0, catData = {}
-      // Use each planner's own mode — not the currently open planner's mode — so that
-      // personal and sponsor planners are each processed by the correct budget builder.
-      if (plannerMode === 'sponsor') {
-        const cats = buildEventBudgetData(data)
-        Object.values(cats).forEach((c) => { budget += c.budget; actual += c.actual })
-        catData = cats
-      } else {
-        const cats = buildPersonalBudgetData(data)
-        Object.values(cats).forEach((c) => { budget += c.budget; actual += c.actual })
-        catData = cats
-      }
-
-      events.push({ label, slug, date: rawDate, mode: plannerMode, budget, actual, catData, eventFile: data._eventFile || '' })
+      rawPlanners.push({ data, slug: key.slice(STORAGE_PREFIX.length) })
     } catch { /* skip corrupt */ }
   }
-  events.sort((a, b) => a.date.localeCompare(b.date))
+
+  // ── Step 2: Pre-fetch event start dates for all planners with event files ───
+  await Promise.all(
+    rawPlanners
+      .filter((p) => p.data._eventFile && !_eventStartDateCache.has(p.data._eventFile))
+      .map((p) => fetchEventWednesday(p.data._eventFile))
+  )
+
+  // ── Step 3: Pre-fetch historical rates for each unique event date ────────────
+  if (_summaryCurrency) {
+    const uniqueDates = [...new Set(
+      rawPlanners
+        .map((p) => p.data._eventFile ? (_eventStartDateCache.get(p.data._eventFile) || '') : '')
+        .filter(Boolean)
+    )]
+    await Promise.all(
+      uniqueDates.map((d) => _fetchRates(_summaryCurrency, d).catch(() => null))
+    )
+    // Also load current rates as fallback for events without a known date
+    await _fetchRates(_summaryCurrency, '').catch(() => null)
+  }
+
+  // ── Step 4: Build per-event budget data using date-appropriate rates ─────────
+  const rawEvents = rawPlanners.map(({ data, slug }) => {
+    const label       = data._displayName || (data._eventFile || slug).replace('.json', '')
+    const plannerMode = data.mode === 'individual' ? 'personal' : (data.mode || 'personal')
+    const eventDate   = data._eventFile ? (_eventStartDateCache.get(data._eventFile) || '') : ''
+    const conv        = _buildConvFn(eventDate)
+
+    let budget = 0, actual = 0, catData = {}
+    if (plannerMode === 'sponsor') {
+      const cats = buildEventBudgetData(data, null, conv)
+      Object.values(cats).forEach((c) => { budget += c.budget; actual += c.actual })
+      catData = cats
+    } else {
+      const cats = buildPersonalBudgetData(data, conv)
+      Object.values(cats).forEach((c) => { budget += c.budget; actual += c.actual })
+      catData = cats
+    }
+
+    const yearMatch = (label + ' ' + (data._eventFile || slug)).match(/\b(20\d{2})\b/)
+    const eventYear = yearMatch ? parseInt(yearMatch[1], 10) : 0
+    return { label, slug, mode: plannerMode, budget, actual, catData, eventFile: data._eventFile || '', eventYear, rawPlanner: data, eventDate }
+  })
+
+  // Update rate notice — show historical note if any event used a dated rate
+  if (_summaryCurrency) {
+    const anyHistorical = rawEvents.some((e) => e.eventDate && _rateCache.has(`${_summaryCurrency}:${e.eventDate}`))
+    const anyLoaded     = [..._rateCache.keys()].some((k) => k.startsWith(`${_summaryCurrency}:`))
+    const notice = document.getElementById('summaryRateNotice')
+    const text   = document.getElementById('summaryRateNoticeText')
+    if (notice && text) {
+      notice.classList.remove('hidden')
+      if (!anyLoaded) {
+        text.textContent = `Exchange rates for ${_summaryCurrency} not loaded — values shown as entered.`
+      } else if (anyHistorical) {
+        text.textContent =
+          `Values shown as approximate ${_summaryCurrency} equivalents using historical ECB rates for each event's date. ` +
+          `Currencies outside ECB coverage are shown as-entered. Suitable for budgeting; use actual transaction rates for formal bookkeeping.`
+      } else {
+        const cur = _rateCache.get(`${_summaryCurrency}:current`)
+        text.textContent =
+          `Values shown as approximate ${_summaryCurrency} equivalents using ECB rates from ${cur?.rateDate || 'latest available'}. ` +
+          `Currencies outside ECB coverage are shown as-entered. Suitable for budgeting; use actual transaction rates for formal bookkeeping.`
+      }
+    }
+  } else {
+    document.getElementById('summaryRateNotice')?.classList.add('hidden')
+  }
+
+  // Sort chronologically by event year, then alphabetically within the same year
+  rawEvents.sort((a, b) => {
+    const ya = a.eventYear || 9999
+    const yb = b.eventYear || 9999
+    if (ya !== yb) return ya - yb
+    return a.label.localeCompare(b.label)
+  })
+
+  const { start, end, hidden, person } = _globalSummaryFilter
+  const startYear = start ? parseInt(start.slice(0, 4), 10) : null
+  const endYear   = end   ? parseInt(end.slice(0, 4),   10) : null
+
+  // 1. Date range filter
+  const dateFiltered = rawEvents.filter((e) => {
+    if (e.eventYear > 0) {
+      if (startYear !== null && e.eventYear < startYear) return false
+      if (endYear   !== null && e.eventYear > endYear)   return false
+    }
+    return true
+  })
+
+  // 2. Person filter — '' = everyone, 'me' = personal only, memberId = sponsor costs for that member
+  let allEvents
+  if (!person) {
+    allEvents = dateFiltered
+  } else if (person === 'me') {
+    allEvents = dateFiltered.filter((e) => e.mode === 'personal')
+  } else {
+    allEvents = dateFiltered
+      .filter((e) => {
+        if (e.mode !== 'sponsor') return false
+        const org = e.rawPlanner.org || {}
+        return (org.teamAssignments || []).some((a) => a.memberId === person)
+          || (org.accommodations || []).some((acc) => (acc.assignments || []).some((s) => s.memberId === person))
+      })
+      .map((e) => {
+        const eConv = _buildConvFn(e.eventDate || '')
+        const cats  = buildEventBudgetData(e.rawPlanner, person, eConv)
+        let b = 0, a = 0
+        Object.values(cats).forEach((c) => { b += c.budget; a += c.actual })
+        return { ...e, budget: b, actual: a, catData: cats }
+      })
+  }
+
+  // 3. Per-event visibility toggle (manual hide/show via chart pills)
+  const events = allEvents.filter((e) => !hidden.has(e.slug))
+
+  // Keep "View as" dropdown in sync with current state (team members may vary per render)
+  const personSelect = document.getElementById('globalPersonFilter')
+  if (personSelect) {
+    const teamMembers = state.global?.teamMembers || []
+    personSelect.innerHTML =
+      `<option value="">Everyone</option>` +
+      `<option value="me"${person === 'me' ? ' selected' : ''}>Me (personal)</option>` +
+      teamMembers.map((m) =>
+        `<option value="${esc(m.id)}"${m.id === person ? ' selected' : ''}>${esc(m.name || 'Unnamed')}${m.role ? ` — ${esc(m.role)}` : ''}</option>`
+      ).join('')
+  }
+
+  // Render event toggle pills (drawn from date-filtered set so users can un-hide)
+  const filterEl = document.getElementById('globalChartEventFilter')
+  if (filterEl) {
+    if (allEvents.length > 1) {
+      filterEl.style.display = 'flex'
+      filterEl.innerHTML = allEvents.map((e) => {
+        const isHidden = hidden.has(e.slug)
+        return `<label class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full border cursor-pointer select-none transition-colors text-[0.65rem] ${isHidden ? 'border-gray-200 text-gray-300 bg-white' : 'border-gray-200 text-gray-600 bg-gray-50 hover:bg-gray-100'}">
+          <input type="checkbox" class="sr-only" ${isHidden ? '' : 'checked'} data-slug="${esc(e.slug)}">
+          <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:${isHidden ? '#d1d5db' : 'var(--color-primary, #3b82f6)'}"></span>
+          <span>${esc(e.label)}</span>
+        </label>`
+      }).join('')
+      filterEl.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+        cb.addEventListener('change', (ev) => {
+          const slug = ev.target.dataset.slug
+          if (ev.target.checked) _globalSummaryFilter.hidden.delete(slug)
+          else _globalSummaryFilter.hidden.add(slug)
+          renderSummaryAllEvents()
+        })
+      })
+    } else {
+      filterEl.style.display = 'none'
+      filterEl.innerHTML = ''
+    }
+  }
 
   const totalBudget = events.reduce((s, e) => s + e.budget, 0)
   const totalActual = events.reduce((s, e) => s + e.actual, 0)
   const variance    = totalBudget - totalActual
   const over        = variance < 0
 
-  function statCard(icon, label, value) {
+  function statCard(icon, label, value, sub) {
     return `<div class="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center min-w-[100px]">
       <p class="text-[0.65rem] text-gray-400 uppercase tracking-widest mb-1">${esc(label)}</p>
       <p class="text-xl font-semibold text-gray-800">${esc(String(value))}</p>
+      ${sub ? `<p class="text-[0.6rem] text-gray-400">${esc(sub)}</p>` : ''}
       <i class="${icon} text-gray-300 text-xs mt-0.5 block"></i>
     </div>`
   }
+
+  // True if any rates are loaded for the target currency (at least one event will be converted)
+  const isConverting = !!(_summaryCurrency && [..._rateCache.keys()].some((k) => k.startsWith(_summaryCurrency + ':')))
+
+  const fmtN = (n) => {
+    if (!n) return '—'
+    const s = n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    return isConverting ? `≈${s} ${_summaryCurrency}` : s
+  }
+  const asEnteredSub = isConverting ? null : 'as entered'
 
   const statsRow = document.getElementById('globalSummaryStatsRow')
   if (statsRow) {
     statsRow.innerHTML = [
       statCard('fas fa-calendar-check', 'Events tracked', events.length),
-      statCard('fas fa-wallet',  'Total budget', totalBudget ? totalBudget.toLocaleString() : '—'),
-      statCard('fas fa-coins',   'Total actual', totalActual ? totalActual.toLocaleString() : '—'),
+      statCard('fas fa-wallet',  'Total budget', fmtN(totalBudget), asEnteredSub),
+      statCard('fas fa-coins',   'Total actual', fmtN(totalActual), asEnteredSub),
       totalBudget
         ? `<div class="rounded-lg border ${over ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50'} p-3 text-center min-w-[100px]">
             <p class="text-[0.65rem] ${over ? 'text-red-400' : 'text-emerald-600'} uppercase tracking-widest mb-1">${over ? 'Over budget' : 'Remaining'}</p>
-            <p class="text-xl font-semibold ${over ? 'text-red-600' : 'text-emerald-700'}">${Math.abs(variance).toLocaleString()}</p>
+            <p class="text-xl font-semibold ${over ? 'text-red-600' : 'text-emerald-700'}">${fmtN(Math.abs(variance))}</p>
+            ${asEnteredSub ? `<p class="text-[0.6rem] text-gray-400">${asEnteredSub}</p>` : ''}
             <i class="fas ${over ? 'fa-triangle-exclamation text-red-300' : 'fa-circle-check text-emerald-300'} text-xs mt-0.5 block"></i>
           </div>`
         : '',
     ].filter(Boolean).join('')
   }
 
-  // Per-event breakdown table
+  // Per-event breakdown table — improved design
   const tableEl = document.getElementById('globalEventTable')
   if (tableEl) {
-    if (!events.length) {
+    if (!rawEvents.length) {
       tableEl.innerHTML = '<p class="text-sm text-gray-400 text-center py-4 italic">No planner data found.</p>'
+    } else if (!events.length) {
+      tableEl.innerHTML = '<p class="text-sm text-gray-400 text-center py-4 italic">No events match the current filters.</p>'
     } else {
-      const fmt = (n) => n ? n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'
+      const pfx = isConverting ? '≈' : ''
+      const sfx = isConverting ? ` ${_summaryCurrency}` : ''
+      const fmt = (n) => n
+        ? `${pfx}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${sfx}`
+        : '—'
+      const currLabel = isConverting ? ` (≈${_summaryCurrency})` : ' (as entered)'
       tableEl.innerHTML = `
-        <table class="w-full text-sm">
+        <table class="w-full text-sm border-collapse">
           <thead>
-            <tr class="text-[0.65rem] text-gray-400 uppercase tracking-widest border-b border-gray-100">
-              <th class="text-left py-2 pr-3 font-medium">Event</th>
-              <th class="text-left py-2 pr-3 font-medium hidden sm:table-cell">Mode</th>
-              <th class="text-right py-2 pr-3 font-medium">Budget</th>
-              <th class="text-right py-2 pr-3 font-medium">Actual</th>
-              <th class="text-right py-2 font-medium hidden md:table-cell">Variance</th>
+            <tr class="bg-gray-50" style="border-bottom:2px solid var(--color-primary,#3b82f6)">
+              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-gray-500">Event</th>
+              <th class="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-gray-500 hidden sm:table-cell">Mode</th>
+              <th class="text-right px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-gray-500">Budget${currLabel}</th>
+              <th class="text-right px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-gray-500">Actual${currLabel}</th>
+              <th class="text-right px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-gray-500 hidden md:table-cell">Variance${currLabel}</th>
             </tr>
           </thead>
           <tbody>
-            ${events.map((e) => {
+            ${events.map((e, idx) => {
               const v = e.budget - e.actual
+              const rowOver = v < 0 && e.budget
               const isThis = e.slug === state.plannerKey
-              return `<tr class="border-b border-gray-50 ${isThis ? 'bg-blue-50/40' : ''}">
-                <td class="py-2 pr-3 text-gray-700">
-                  ${isThis ? '<i class="fas fa-circle text-[0.4rem] text-blue-400 mr-1.5 align-middle"></i>' : ''}${esc(e.label)}
-                  ${e.eventFile ? `<span class="text-[0.6rem] text-gray-300 ml-1">${esc(e.eventFile.replace('.json',''))}</span>` : '<span class="text-[0.6rem] text-gray-300 ml-1 italic">no schedule</span>'}
+              const rowBg = isThis
+                ? 'style="background:rgba(59,130,246,0.05)"'
+                : idx % 2 === 1 ? 'class="bg-gray-50/60"' : ''
+              return `<tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors" ${rowBg}>
+                <td class="px-4 py-2.5 text-gray-700">
+                  <div class="flex items-start gap-1.5">
+                    ${isThis ? `<i class="fas fa-circle mt-1 text-[0.4rem] flex-shrink-0" style="color:var(--color-primary,#3b82f6)"></i>` : ''}
+                    <div>
+                      <span class="${isThis ? 'font-medium' : ''}">${esc(e.label)}</span>
+                      <p class="text-[0.6rem] text-gray-300 mt-0.5">${e.eventFile ? esc(e.eventFile.replace('.json', '')) : '<i>no schedule</i>'}</p>
+                    </div>
+                  </div>
                 </td>
-                <td class="py-2 pr-3 hidden sm:table-cell">
-                  <span class="text-[0.6rem] px-1.5 py-px rounded ${e.mode === 'sponsor' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}">${e.mode}</span>
+                <td class="px-3 py-2.5 hidden sm:table-cell">
+                  <span class="text-[0.6rem] font-medium px-2 py-0.5 rounded-full ${e.mode === 'sponsor' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}">${esc(e.mode)}</span>
                 </td>
-                <td class="py-2 pr-3 text-right tabular-nums text-gray-600">${fmt(e.budget)}</td>
-                <td class="py-2 pr-3 text-right tabular-nums ${e.actual > e.budget && e.budget ? 'text-red-500' : 'text-gray-600'}">${fmt(e.actual)}</td>
-                <td class="py-2 text-right tabular-nums hidden md:table-cell ${v < 0 ? 'text-red-400' : 'text-gray-400'}">${fmt(Math.abs(v))}${v < 0 ? ' ↑' : v > 0 ? ' ↓' : ''}</td>
+                <td class="px-3 py-2.5 text-right tabular-nums text-gray-600">${fmt(e.budget)}</td>
+                <td class="px-3 py-2.5 text-right tabular-nums ${rowOver ? 'text-red-500 font-medium' : 'text-gray-600'}">${fmt(e.actual)}</td>
+                <td class="px-3 py-2.5 text-right hidden md:table-cell">
+                  ${e.budget || e.actual
+                    ? `<span class="inline-flex items-center gap-1 text-[0.7rem] px-2 py-0.5 rounded-full ${v < 0 ? 'bg-red-50 text-red-500' : v > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-50 text-gray-400'}">
+                        ${v !== 0 ? `<i class="fas fa-arrow-${v < 0 ? 'up' : 'down'} text-[0.5rem]"></i>` : ''}
+                        ${fmt(Math.abs(v))}
+                      </span>`
+                    : '<span class="text-gray-300 text-xs">—</span>'}
+                </td>
               </tr>`
             }).join('')}
           </tbody>
           ${events.length > 1 ? `
           <tfoot>
-            <tr class="font-semibold text-gray-800 border-t border-gray-200">
-              <td class="pt-2 pr-3">Total</td>
+            <tr class="bg-gray-50 border-t-2 border-gray-200">
+              <td class="px-4 py-2.5 font-semibold text-gray-700">Total</td>
               <td class="hidden sm:table-cell"></td>
-              <td class="pt-2 pr-3 text-right tabular-nums">${fmt(totalBudget)}</td>
-              <td class="pt-2 pr-3 text-right tabular-nums ${totalActual > totalBudget && totalBudget ? 'text-red-500' : ''}">${fmt(totalActual)}</td>
-              <td class="pt-2 text-right tabular-nums hidden md:table-cell ${over ? 'text-red-400' : 'text-gray-500'}">${fmt(Math.abs(variance))}${over ? ' ↑' : ' ↓'}</td>
+              <td class="px-3 py-2.5 text-right tabular-nums font-semibold text-gray-700">${fmt(totalBudget)}</td>
+              <td class="px-3 py-2.5 text-right tabular-nums font-semibold ${totalActual > totalBudget && totalBudget ? 'text-red-500' : 'text-gray-700'}">${fmt(totalActual)}</td>
+              <td class="px-3 py-2.5 text-right hidden md:table-cell">
+                <span class="inline-flex items-center gap-1 text-[0.7rem] px-2 py-0.5 rounded-full font-medium ${over ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'}">
+                  <i class="fas fa-arrow-${over ? 'up' : 'down'} text-[0.5rem]"></i>
+                  ${fmt(Math.abs(variance))}
+                </span>
+              </td>
             </tr>
           </tfoot>` : ''}
         </table>`
@@ -2287,12 +2824,15 @@ function renderSummaryAllEvents() {
   const catEl = document.getElementById('globalCategoryBreakdown')
   if (catEl) {
     if (activeCats.length) {
-      const fmt = (n) => n ? n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'
+      const catPfx = isConverting ? '≈' : ''
+      const catSfx = isConverting ? ` ${_summaryCurrency}` : ''
+      const catCurrLabel = isConverting ? ` (≈${_summaryCurrency})` : ' (as entered)'
+      const fmt = (n) => n ? `${catPfx}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${catSfx}` : '—'
       catEl.innerHTML = `
         <div class="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1 text-sm">
           <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 pb-0.5">Category</span>
-          <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 text-right pb-0.5">Budget</span>
-          <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 text-right pb-0.5">Actual</span>
+          <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 text-right pb-0.5">Budget${catCurrLabel}</span>
+          <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 text-right pb-0.5">Actual${catCurrLabel}</span>
           ${activeCats.map(([, c]) => `
             <span class="text-gray-600 truncate">${esc(c.label)}</span>
             <span class="tabular-nums text-right text-gray-500">${fmt(c.budget)}</span>
@@ -2304,30 +2844,84 @@ function renderSummaryAllEvents() {
     }
   }
 
-  // Line chart — lower aspectRatio to reduce height
+  // Chart — fetch real event dates, group by Wednesday of each event week
+  const chartEvents = events.filter((e) => e.budget > 0 || e.actual > 0)
+
+  // Fetch start dates in parallel (cached after first load, fast on repeat renders)
+  await Promise.all(
+    chartEvents
+      .filter((e) => e.eventFile && !_eventDateCache.has(e.eventFile))
+      .map((e) => fetchEventWednesday(e.eventFile))
+  )
+
+  // Group events that share the same event-week Wednesday into one data point
+  const dateGroups = new Map()
+  chartEvents.forEach((e) => {
+    const wed = e.eventFile ? (_eventDateCache.get(e.eventFile) ?? null) : null
+    // Fall back to mid-year Wednesday when no event file date is available
+    const key = wed ?? (e.eventYear ? toWednesdayOfWeek(`${e.eventYear}-07-01`) : 'unknown')
+    if (!dateGroups.has(key)) dateGroups.set(key, { wed: key, budget: 0, actual: 0, events: [] })
+    const g = dateGroups.get(key)
+    g.budget += e.budget
+    g.actual += e.actual
+    g.events.push(e)
+  })
+
+  const groups = [...dateGroups.values()].sort((a, b) => a.wed.localeCompare(b.wed))
+
+  const fmtWedLabel = (wedStr) => {
+    if (!wedStr || wedStr === 'unknown') return 'Unknown date'
+    const d = new Date(`${wedStr}T00:00:00Z`)
+    return d.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+  }
+
   destroyCharts('global')
   const canvas = document.getElementById('globalBudgetChart')
   if (!canvas) return
 
-  if (events.length) {
+  if (groups.length) {
+    const globalCurrLabel = isConverting ? ` (≈${_summaryCurrency})` : ' (as entered)'
+    const fmt2 = (n) => {
+      if (!n) return '—'
+      const s = n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      return isConverting ? `≈${s} ${_summaryCurrency}` : s
+    }
     _charts.global = new Chart(canvas, {
       type: 'line',
       data: {
-        labels: events.map((e) => e.label),
+        labels: groups.map((g) => fmtWedLabel(g.wed)),
         datasets: [
-          { label: 'Budget', data: events.map((e) => e.budget), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.3, fill: true, pointRadius: 5, pointHoverRadius: 7 },
-          { label: 'Actual', data: events.map((e) => e.actual), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.3, fill: true, pointRadius: 5, pointHoverRadius: 7 },
+          { label: `Budget${globalCurrLabel}`, data: groups.map((g) => g.budget), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.3, fill: true, pointRadius: 5, pointHoverRadius: 7 },
+          { label: `Actual${globalCurrLabel}`, data: groups.map((g) => g.actual), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.3, fill: true, pointRadius: 5, pointHoverRadius: 7 },
         ],
       },
       options: {
         responsive: true,
         aspectRatio: 4,
-        plugins: { legend: { position: 'top' } },
-        scales: { y: { beginAtZero: true } },
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` ${ctx.dataset.label?.split(' (')[0] ?? ''}: ${fmt2(ctx.parsed.y)}`,
+              afterBody: (items) => {
+                const g = groups[items[0]?.dataIndex]
+                if (!g || g.events.length <= 1) return []
+                const lines = ['', 'Events at this point:']
+                g.events.forEach((e) => {
+                  lines.push(`  ${e.label}`)
+                  lines.push(`    Budget: ${fmt2(e.budget)}  ·  Actual: ${fmt2(e.actual)}`)
+                })
+                return lines
+              },
+            },
+          },
+        },
+        scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmt2(v) } } },
       },
     })
   } else {
-    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
+    const ctx = canvas.getContext('2d')
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height)
   }
 }
 
@@ -2339,6 +2933,12 @@ function openDrilldown(catKey, catData) {
 
   if (title) title.textContent = catData.label
 
+  const _convD   = _buildConvFn(_currentRenderDate)
+  const pfx      = _convD && _summaryCurrency ? '≈' : ''
+  const sfx      = _convD && _summaryCurrency ? ` ${_summaryCurrency}` : _primaryDisplayCurrency ? ` ${_primaryDisplayCurrency}` : ''
+  const currHdr  = _convD && _summaryCurrency ? ` (≈${_summaryCurrency})` : _primaryDisplayCurrency ? ` (${_primaryDisplayCurrency})` : ' (as entered)'
+  const fmt = (n) => n ? `${pfx}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${sfx}` : '—'
+
   let html = ''
 
   // Line items
@@ -2348,29 +2948,29 @@ function openDrilldown(catKey, catData) {
       <table class="w-full text-sm">
         <thead><tr class="text-xs text-gray-400 border-b border-gray-100">
           <th class="text-left py-1 pr-3 font-medium">Item</th>
-          <th class="text-right py-1 pr-3 font-medium">Budget</th>
-          <th class="text-right py-1 font-medium">Actual</th>
+          <th class="text-right py-1 pr-3 font-medium">Budget${currHdr}</th>
+          <th class="text-right py-1 font-medium">Actual${currHdr}</th>
         </tr></thead>
         <tbody>${catData.items.map((item) => `
           <tr class="border-b border-gray-50">
             <td class="py-1.5 pr-3 text-gray-700">${esc(item.label)}</td>
-            <td class="py-1.5 pr-3 text-right text-gray-600">${item.budget ? item.budget.toLocaleString() : '—'}</td>
-            <td class="py-1.5 text-right ${item.actual > item.budget && item.budget ? 'text-red-500' : 'text-gray-600'}">${item.actual ? item.actual.toLocaleString() : '—'}</td>
+            <td class="py-1.5 pr-3 text-right text-gray-600">${fmt(item.budget)}</td>
+            <td class="py-1.5 text-right ${item.actual > item.budget && item.budget ? 'text-red-500' : 'text-gray-600'}">${fmt(item.actual)}</td>
           </tr>`).join('')}
         </tbody>
         <tfoot><tr class="font-semibold text-gray-800 border-t border-gray-200">
           <td class="pt-2 pr-3">Total</td>
-          <td class="pt-2 pr-3 text-right">${catData.budget ? catData.budget.toLocaleString() : '—'}</td>
-          <td class="pt-2 text-right ${catData.actual > catData.budget && catData.budget ? 'text-red-500' : ''}">${catData.actual ? catData.actual.toLocaleString() : '—'}</td>
+          <td class="pt-2 pr-3 text-right">${fmt(catData.budget)}</td>
+          <td class="pt-2 text-right ${catData.actual > catData.budget && catData.budget ? 'text-red-500' : ''}">${fmt(catData.actual)}</td>
         </tr></tfoot>
       </table>
     </div>`
   }
 
-  // Receipts
+  // Receipts (shown in original currency — not converted, as they are reference records)
   if (catData.receipts.length) {
     html += `<div>
-      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Receipts</p>
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Receipts (as entered)</p>
       <table class="w-full text-sm">
         <thead><tr class="text-xs text-gray-400 border-b border-gray-100">
           <th class="text-left py-1 pr-3 font-medium">Description</th>
@@ -2381,12 +2981,12 @@ function openDrilldown(catKey, catData) {
           <tr class="border-b border-gray-50">
             <td class="py-1.5 pr-3 text-gray-700">${esc(r.label)}</td>
             <td class="py-1.5 pr-3 text-gray-500 text-xs">${esc(r.date)}</td>
-            <td class="py-1.5 text-right text-gray-600">${r.amount.toLocaleString()} ${esc(r.currency)}</td>
+            <td class="py-1.5 text-right text-gray-600">${r.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${esc(r.currency)}</td>
           </tr>`).join('')}
         </tbody>
         <tfoot><tr class="font-semibold text-gray-800 border-t border-gray-200">
           <td class="pt-2 pr-3" colspan="2">Total receipts</td>
-          <td class="pt-2 text-right">${catData.receipts.reduce((s, r) => s + r.amount, 0).toLocaleString()}</td>
+          <td class="pt-2 text-right">${catData.receipts.reduce((s, r) => s + r.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         </tr></tfoot>
       </table>
     </div>`
@@ -2407,16 +3007,29 @@ function openMemberDrilldown(memberData, planner) {
 
   if (title) title.textContent = memberData.name
 
+  const _convM  = _buildConvFn(_currentRenderDate)
+  const cvt     = _convM ?? ((n) => n)
+  const pfx     = _convM && _summaryCurrency ? '≈' : ''
+  const sfx     = _convM && _summaryCurrency ? ` ${_summaryCurrency}` : _primaryDisplayCurrency ? ` ${_primaryDisplayCurrency}` : ''
+  const currHdr = _convM && _summaryCurrency ? ` (≈${_summaryCurrency})` : _primaryDisplayCurrency ? ` (${_primaryDisplayCurrency})` : ' (as entered)'
+  const fmt = (n) => n ? `${pfx}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${sfx}` : '—'
+
   const org = planner.org || {}
 
-  // Accommodation stays for this member
+  // Accommodation stays for this member (apply conversion)
   const stays = []
   ;(org.accommodations || []).forEach((acc) => {
     const stay = (acc.assignments || []).find((s) => s.memberId === memberData.memberId)
-    if (stay) stays.push({ property: acc.name || 'Accommodation', budget: parseBudget(stay.budget), actual: parseBudget(stay.budgetActual) })
+    if (stay) {
+      const sCurr = stay.currency || 'AUD'
+      stays.push({
+        property: acc.name || 'Accommodation',
+        budget: cvt(parseBudget(stay.budget), sCurr),
+        actual: cvt(parseBudget(stay.budgetActual), sCurr),
+      })
+    }
   })
 
-  // Receipts (not per-member currently, so omit)
   const rows = [
     { label: 'Travel allocation', budget: memberData.memberBudget, actual: memberData.memberActual },
     ...stays.map((s) => ({ label: `Accommodation: ${s.property}`, budget: s.budget, actual: s.actual })),
@@ -2425,20 +3038,20 @@ function openMemberDrilldown(memberData, planner) {
   let html = `<table class="w-full text-sm">
     <thead><tr class="text-xs text-gray-400 border-b border-gray-100">
       <th class="text-left py-1 pr-3 font-medium">Category</th>
-      <th class="text-right py-1 pr-3 font-medium">Budget</th>
-      <th class="text-right py-1 font-medium">Actual</th>
+      <th class="text-right py-1 pr-3 font-medium">Budget${currHdr}</th>
+      <th class="text-right py-1 font-medium">Actual${currHdr}</th>
     </tr></thead>
     <tbody>${rows.map((r) => `
       <tr class="border-b border-gray-50">
         <td class="py-1.5 pr-3 text-gray-700">${esc(r.label)}</td>
-        <td class="py-1.5 pr-3 text-right text-gray-600">${r.budget ? r.budget.toLocaleString() : '—'}</td>
-        <td class="py-1.5 text-right ${r.actual > r.budget && r.budget ? 'text-red-500' : 'text-gray-600'}">${r.actual ? r.actual.toLocaleString() : '—'}</td>
+        <td class="py-1.5 pr-3 text-right text-gray-600">${fmt(r.budget)}</td>
+        <td class="py-1.5 text-right ${r.actual > r.budget && r.budget ? 'text-red-500' : 'text-gray-600'}">${fmt(r.actual)}</td>
       </tr>`).join('')}
     </tbody>
     <tfoot><tr class="font-semibold text-gray-800 border-t border-gray-200">
       <td class="pt-2 pr-3">Total</td>
-      <td class="pt-2 pr-3 text-right">${memberData.budget ? memberData.budget.toLocaleString() : '—'}</td>
-      <td class="pt-2 text-right ${memberData.actual > memberData.budget && memberData.budget ? 'text-red-500' : ''}">${memberData.actual ? memberData.actual.toLocaleString() : '—'}</td>
+      <td class="pt-2 pr-3 text-right">${fmt(memberData.budget)}</td>
+      <td class="pt-2 text-right ${memberData.actual > memberData.budget && memberData.budget ? 'text-red-500' : ''}">${fmt(memberData.actual)}</td>
     </tr></tfoot>
   </table>`
 
@@ -2746,6 +3359,13 @@ function wireEventAssocModal() {
   });
 }
 
+function _updateGlobalFilterClearBtn() {
+  const btn = document.getElementById('globalFilterClear')
+  if (!btn) return
+  const active = _globalSummaryFilter.start || _globalSummaryFilter.end || _globalSummaryFilter.person
+  btn.classList.toggle('hidden', !active)
+}
+
 function wireSummaryPanel() {
   // This/All toggle
   document.getElementById('summaryToggleThis')?.addEventListener('click', () => {
@@ -2760,6 +3380,68 @@ function wireSummaryPanel() {
     document.getElementById('summaryThisEvent')?.classList.add('hidden')
     document.getElementById('summaryToggleAll')?.classList.add('is-active')
     document.getElementById('summaryToggleThis')?.classList.remove('is-active')
+    renderSummaryAllEvents()
+  })
+
+  // Date range filters
+  document.getElementById('globalFilterStart')?.addEventListener('input', (e) => {
+    _globalSummaryFilter.start = e.target.value
+    _updateGlobalFilterClearBtn()
+    renderSummaryAllEvents()
+  })
+  document.getElementById('globalFilterEnd')?.addEventListener('input', (e) => {
+    _globalSummaryFilter.end = e.target.value
+    _updateGlobalFilterClearBtn()
+    renderSummaryAllEvents()
+  })
+
+  // Currency selector — destroy all charts and fully re-render both sub-tabs on change
+  document.getElementById('summaryCurrencySelect')?.addEventListener('change', async (e) => {
+    _summaryCurrency = e.target.value
+    destroyCharts('category', 'member', 'global')
+
+    if (_summaryCurrency) {
+      const notice = document.getElementById('summaryRateNotice')
+      const text   = document.getElementById('summaryRateNoticeText')
+      if (notice && text) {
+        notice.classList.remove('hidden')
+        text.textContent = 'Fetching exchange rates…'
+      }
+      // Fetch rates for the current event's date first so This Event renders immediately;
+      // All Events will fetch its own per-event historical rates when it renders.
+      const eventDate = state.eventMeta?.startDate?.slice(0, 10) || ''
+      try {
+        await _fetchRates(_summaryCurrency, eventDate)
+      } catch {
+        _showRateNotice(true)
+      }
+    } else {
+      _showRateNotice(false)
+    }
+
+    renderSummaryThisEvent()
+    renderSummaryAllEvents()
+  })
+
+  // View-as person filter
+  document.getElementById('globalPersonFilter')?.addEventListener('change', (e) => {
+    _globalSummaryFilter.person = e.target.value
+    _updateGlobalFilterClearBtn()
+    renderSummaryAllEvents()
+  })
+
+  // Clear all active filters
+  document.getElementById('globalFilterClear')?.addEventListener('click', () => {
+    _globalSummaryFilter.start = ''
+    _globalSummaryFilter.end = ''
+    _globalSummaryFilter.person = ''
+    const s = document.getElementById('globalFilterStart')
+    const f = document.getElementById('globalFilterEnd')
+    const p = document.getElementById('globalPersonFilter')
+    if (s) s.value = ''
+    if (f) f.value = ''
+    if (p) p.value = ''
+    _updateGlobalFilterClearBtn()
     renderSummaryAllEvents()
   })
 
@@ -3624,6 +4306,7 @@ function renderBudgetItems(ctx) {
     const b  = parseBudget(item.budget)
     const ac = parseBudget(item.actual)
     const over = ac > b && b > 0
+    const cur = item.currency || 'AUD'
     return `<div class="flex items-center gap-2 py-1.5 px-2.5 rounded-md border border-gray-200 bg-white" data-bi-id="${esc(item.id)}">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-1.5 flex-wrap">
@@ -3631,10 +4314,9 @@ function renderBudgetItems(ctx) {
           <span class="text-[0.6rem] px-1.5 py-px rounded bg-gray-100 text-gray-500 flex-shrink-0">${esc(catLabel)}</span>
         </div>
         <div class="flex gap-3 text-xs mt-0.5">
-          ${item.currency ? `<span class="text-gray-400 font-medium">${esc(item.currency)}</span>` : ''}
-          ${b  ? `<span class="text-gray-400">Budget: <span class="tabular-nums text-gray-600">${fmt(b)}</span></span>` : ''}
-          ${ac ? `<span class="text-gray-400">Actual: <span class="tabular-nums ${over ? 'text-red-500' : 'text-gray-600'}">${fmt(ac)}</span></span>` : ''}
-          ${!b && !ac ? '<span class="text-gray-300 italic">No amounts set</span>' : ''}
+          ${b  ? `<span class="text-gray-400">Budget: <span class="tabular-nums text-gray-600">${esc(cur)} ${fmt(b)}</span></span>` : ''}
+          ${ac ? `<span class="text-gray-400">Actual: <span class="tabular-nums ${over ? 'text-red-500' : 'text-gray-600'}">${esc(cur)} ${fmt(ac)}</span></span>` : ''}
+          ${!b && !ac ? `<span class="text-gray-300 italic">${esc(cur)} —</span>` : ''}
         </div>
       </div>
       <button type="button" class="edit-budget-item-btn h-7 w-7 flex items-center justify-center rounded-md border border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0"
@@ -3670,6 +4352,8 @@ function openBudgetItemModal(ctx, id = null) {
   document.getElementById('budgetItemNotes').value  = item?.notes  || ''
   if (catSelect && item?.category) catSelect.value  = item.category
 
+  document.getElementById('budgetItemBudget')?.classList.remove('!border-red-400')
+  document.getElementById('budgetItemActual')?.classList.remove('!border-red-400')
   document.getElementById('budgetItemModalDelete')?.classList.toggle('hidden', !id)
   _budgetItemModal.open('budgetItemName')
 }
@@ -3719,6 +4403,24 @@ const _budgetItemModal = createModal('budgetItemModal', {
 })
 
 function wireBudgetItemsPanel() {
+  // Validate required fields before the modal's own Done handler fires
+  document.getElementById('budgetItemModalDone')?.addEventListener('click', (e) => {
+    const budgetEl = document.getElementById('budgetItemBudget')
+    const actualEl = document.getElementById('budgetItemActual')
+    if (budgetEl?.value === '') {
+      budgetEl.classList.add('!border-red-400')
+      budgetEl.focus()
+      e.stopImmediatePropagation()
+      return
+    }
+    if (actualEl?.value === '') {
+      actualEl.classList.add('!border-red-400')
+      actualEl.focus()
+      e.stopImmediatePropagation()
+      return
+    }
+  })
+
   _budgetItemModal.wire()
 
   document.getElementById('addPersonalBudgetItemBtn')?.addEventListener('click', () => openBudgetItemModal('personal'))
@@ -3835,7 +4537,7 @@ function openPersonalAccomModal(id) {
   document.getElementById('personalAccomModalBudget').value       = accom.budget       || '';
   document.getElementById('personalAccomModalActual').value       = accom.budgetActual || '';
   const currEl = document.getElementById('personalAccomModalCurrency');
-  if (currEl) { currEl.innerHTML = currencyOptions(); currEl.value = accom.currency || 'AUD'; }
+  if (currEl) { currEl.innerHTML = currencyOptions(); currEl.value = accom.currency || state.planner?.personal?.currency || 'AUD'; }
   renderAccomDocStatus(accom, 'personalAccomDocStatus', 'personalAccomAttachDocBtn');
   _personalAccomModal.open('personalAccomModalName');
 }
@@ -3927,7 +4629,7 @@ function wirePersonalPanel() {
   // Add accommodation
   document.getElementById('addPersonalAccomBtn')?.addEventListener('click', () => {
     const personal   = ensurePersonal()
-    const newAccom = { id: makeItemId('ia'), name: '', address: '', checkIn: '', checkOut: '', confirmation: '', budget: '', budgetActual: '', currency: 'AUD', notes: '' }
+    const newAccom = { id: makeItemId('ia'), name: '', address: '', checkIn: '', checkOut: '', confirmation: '', budget: '', budgetActual: '', currency: personal.currency || 'AUD', notes: '' }
     personal.accommodations = [...(personal.accommodations || []), newAccom]
     scheduleAutoSave()
     renderPersonalAccomList()
@@ -4273,7 +4975,7 @@ function wireOrgPanel() {
       if (!already) {
         state.planner.org.teamAssignments = [
           ...(state.planner.org.teamAssignments || []),
-          { memberId, outboundLegs: [], returnLegs: [], budget: '', budgetActual: '', currency: 'AUD', notes: '' },
+          { memberId, outboundLegs: [], returnLegs: [], budget: '', budgetActual: '', currency: state.planner?.org?.sponsorCurrency || 'AUD', notes: '' },
         ];
         renderOrgTab();
         scheduleAutoSave();
@@ -4336,7 +5038,26 @@ function wireOrgPanel() {
       state.planner.org.deliverables = state.planner.org.deliverables.filter((x) => x.id !== id);
       renderOrgTab(); scheduleAutoSave();
     }
+
+    const editOrgEvent = e.target.closest('.edit-org-event-btn');
+    if (editOrgEvent) { openOrgEventModal(editOrgEvent.dataset.eventId); return; }
+    const delOrgEvent = e.target.closest('.delete-org-event-btn');
+    if (delOrgEvent) {
+      state.planner.org.itinerary = (state.planner.org.itinerary || []).filter((i) => i.id !== delOrgEvent.dataset.eventId);
+      renderOrgItinerary(); scheduleAutoSave();
+      if (state.activeTab === 'summary') renderSummaryTab();
+    }
   });
+
+  panel.addEventListener('change', (e) => {
+    if (e.target.classList.contains('org-event-done-check')) {
+      const id   = e.target.dataset.eventId;
+      const item = (state.planner.org?.itinerary || []).find((i) => i.id === id);
+      if (item) { item.done = e.target.checked; scheduleAutoSave(); }
+    }
+  });
+
+  document.getElementById('addOrgEventBtn')?.addEventListener('click', () => openOrgEventModal());
 
   document.getElementById('addAccommodationBtn')?.addEventListener('click', () => {
     const acc = { id: makeItemId('acc'), name: '', address: '', confirmation: '', notes: '', assignments: [] };
@@ -4347,7 +5068,7 @@ function wireOrgPanel() {
   });
 
   document.getElementById('addSwagBtn')?.addEventListener('click', () => {
-    const item = { id: makeItemId('sw'), name: '', quantity: 1, budget: '', actual: '', currency: 'AUD', done: false, notes: '' };
+    const item = { id: makeItemId('sw'), name: '', quantity: 1, budget: '', actual: '', currency: state.planner?.org?.sponsorCurrency || 'AUD', done: false, notes: '' };
     state.planner.org.swag.push(item);
     renderOrgTab();
     scheduleAutoSave();
@@ -4481,7 +5202,7 @@ function wireOrgPanel() {
         acc.assignments = acc.assignments || [];
         let stay = acc.assignments.find((s) => s.memberId === memberId);
         if (!stay) {
-          stay = { memberId, checkIn: '', checkOut: '', budget: '', budgetActual: '', currency: 'AUD' };
+          stay = { memberId, checkIn: '', checkOut: '', budget: '', budgetActual: '', currency: state.planner?.org?.sponsorCurrency || 'AUD' };
           acc.assignments.push(stay);
           // Mark option with ✓ and show remove button
           const opt = accomModal.querySelector(`#accomMemberSelect option[value="${CSS.escape(memberId)}"]`);
@@ -5189,6 +5910,9 @@ async function init() {
 
   // Start building the search catalog in the background — runs in parallel with schedule load.
   const searchCatalogPromise = buildPlannerSearchCatalog(catalog);
+
+  // Pre-warm exchange rate cache from localStorage (avoids a fetch on first summary open)
+  _loadRatesFromStorage();
 
   // Restore from disk if localStorage has no entry (cleared storage, new browser, etc.)
   await Promise.all([seedFromDiskIfMissing(plannerKey), seedGlobalFromDiskIfMissing()]);
