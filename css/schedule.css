@@ -45,6 +45,37 @@
             color: var(--text-1) !important;
         }
 
+/* ── Header overflow menu button ────────────────────────────────────────── */
+        .header-menu-btn {
+            display: none;
+        }
+        @media (min-width: 1024px) {
+            .header-menu-btn {
+                display: inline-flex;
+                color: #f6fbff;
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                transition: background-color 140ms ease;
+            }
+            .header-menu-btn:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 0.375rem;
+            }
+        }
+
+/* ── Editor menu item (inside header overflow menu) ─────────────────────── */
+        .header-editor-item:disabled,
+        .header-editor-item.is-disabled {
+            color: #9ca3af;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .header-editor-item:disabled i,
+        .header-editor-item.is-disabled i {
+            color: #d1d5db;
+        }
+
 /* ── Editor access button (on schedule viewer header) ───────────────────── */
         .editor-access-button {
             border: 1px solid rgba(255, 255, 255, 0.3);

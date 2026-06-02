@@ -483,13 +483,14 @@ function plannerDisplayName(planner, plannerKey) {
 
 // ── Tab system ───────────────────────────────────────────────────────────────
 
-const TABS = ['sponsor', 'team', 'documents', 'tasks', 'contacts', 'personal', 'receipts', 'summary'];
+const TABS = ['sponsor', 'team', 'documents', 'tasks', 'contacts', 'personal', 'notes', 'receipts', 'summary'];
 
 const PANEL_IDS = {
   contacts:  'plannerContactsPanel',
   tasks:     'plannerTasksPanel',
   sponsor:   'plannerSponsorPanel',
   personal:  'plannerPersonalPanel',
+  notes:     'plannerNotesPanel',
   team:      'plannerTeamPanel',
   documents: 'plannerDocumentsPanel',
   receipts:  'plannerReceiptsPanel',
@@ -501,6 +502,7 @@ const TAB_BTN_IDS = {
   tasks:     'showTasksTab',
   sponsor:   'showSponsorTab',
   personal:  'showPersonalTab',
+  notes:     'showNotesTab',
   team:      'showTeamTab',
   documents: 'showDocumentsTab',
   receipts:  'showReceiptsTab',
@@ -527,10 +529,7 @@ function setActiveTab(tab) {
 function starRatingHtml(sessionId, rating) {
   return [1, 2, 3, 4, 5].map((n) => {
     const filled = n <= rating;
-    return `<button type="button" class="star-btn text-lg leading-none transition-colors ${filled ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-300'}"
-      data-note-id="${esc(sessionId)}" data-rating="${n}" aria-label="Rate ${n} star${n > 1 ? 's' : ''}">
-      <i class="${filled ? 'fas' : 'far'} fa-star"></i>
-    </button>`;
+    return `<button type="button" class="star-btn appearance-none bg-transparent border-0 p-0 cursor-pointer leading-none text-base transition-colors ${filled ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-300'}" data-note-id="${esc(sessionId)}" data-rating="${n}" aria-label="Rate ${n} star${n > 1 ? 's' : ''}"><i class="${filled ? 'fas' : 'far'} fa-star"></i></button>`;
   }).join('');
 }
 
@@ -563,7 +562,7 @@ function noteCardHtml(session, note) {
           <div class="flex items-center gap-1" role="group" aria-label="Rating">
             <span class="text-sm text-gray-500 mr-1">Rating:</span>
             ${starRatingHtml(sid, note.rating)}
-            ${note.rating ? `<button type="button" class="ml-1 text-xs text-gray-400 hover:text-gray-600 clear-rating-btn" data-note-id="${esc(sid)}" title="Clear rating">✕</button>` : ''}
+            ${note.rating ? `<button type="button" class="clear-rating-btn appearance-none bg-transparent border-0 p-0 ml-1 cursor-pointer leading-none text-gray-300 hover:text-gray-500 transition-colors" data-note-id="${esc(sid)}" title="Clear rating"><i class="fas fa-times text-[0.6rem]"></i></button>` : ''}
           </div>
         </div>
         <label class="block">
@@ -582,11 +581,8 @@ function renderNotesTab() {
   const results  = document.getElementById('notesSearchResults');
   if (!withData) return;
 
-  // Sessions that have non-empty notes data
-  const noted = state.allSessions.filter((s) => {
-    const note = state.planner.sessionNotes[s.id];
-    return note && (note.notes || note.rating || note.attended);
-  });
+  // Sessions that have been added to the notes list (even if fields are still blank)
+  const noted = state.allSessions.filter((s) => !!state.planner.sessionNotes?.[s.id]);
 
   // Clear search results when re-rendering
   if (results) { results.innerHTML = ''; results.classList.add('hidden'); }
@@ -1885,7 +1881,18 @@ function makeReceipt() {
   const currency = state.planner?.mode === 'sponsor'
     ? (state.planner?.org?.sponsorCurrency || 'AUD')
     : (state.planner?.personal?.currency || 'AUD')
-  return { id: makeItemId('rc'), name: '', date: '', amount: '', currency, category: 'misc', filePath: '', fileLabel: '', notes: '' }
+  return { id: makeItemId('rc'), name: '', date: '', amount: '', currency, category: 'misc', budgetItemId: '', filePath: '', fileLabel: '', notes: '' }
+}
+
+function budgetItemDropdownOptions(selectedId) {
+  const personal = state.planner?.personal?.budgetItems || []
+  const org      = state.planner?.org?.budgetItems      || []
+  const opt = (i) => `<option value="${esc(i.id)}"${selectedId === i.id ? ' selected' : ''}>${esc(i.name || 'Budget item')}</option>`
+  return [
+    '<option value="">— No budget item —</option>',
+    personal.length ? `<optgroup label="Personal">${personal.map(opt).join('')}</optgroup>` : '',
+    org.length      ? `<optgroup label="Org / Sponsor">${org.map(opt).join('')}</optgroup>`  : '',
+  ].join('')
 }
 
 function receiptCardHtml(receipt) {
@@ -1932,6 +1939,13 @@ function receiptCardHtml(receipt) {
             <select data-receipt-id="${esc(receipt.id)}" data-receipt-field="currency"
               class="h-9 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3">
               ${currencyOptions(receipt.currency || 'AUD')}
+            </select>
+          </label>
+          <label class="editor-form-field sm:col-span-2">
+            <span class="editor-field-label">Budget item</span>
+            <select data-receipt-id="${esc(receipt.id)}" data-receipt-field="budgetItemId"
+              class="h-9 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3">
+              ${budgetItemDropdownOptions(receipt.budgetItemId || '')}
             </select>
           </label>
           <label class="editor-form-field">
@@ -2007,6 +2021,7 @@ function wireReceiptsPanel() {
     if (!receipt) return
     receipt[field] = e.target.value
     if (field === 'category' || field === 'amount' || field === 'currency') { renderPersonalBudgetBreakdown(); renderSponsorBudgetBreakdown(); }
+    if (field === 'budgetItemId') { renderBudgetItems('personal'); renderBudgetItems('sponsor'); }
     scheduleAutoSave()
   })
 
@@ -2140,7 +2155,10 @@ function buildEventBudgetData(planner, filterMemberId = null, conv = null) {
       const iCurr = item.currency || 'AUD'
       const cat = item.category || 'misc'
       const b = cvt(parseBudget(item.budget), iCurr)
-      const ac = cvt(parseBudget(item.actual), iCurr)
+      const linked = (planner.receipts || []).filter((r) => r.budgetItemId === item.id)
+      const ac = linked.length
+        ? linked.reduce((s, r) => s + cvt(parseBudget(r.amount), r.currency || iCurr), 0)
+        : cvt(parseBudget(item.actual), iCurr)
       if (cats[cat]) {
         cats[cat].budget += b; cats[cat].actual += ac
         if (b || ac) cats[cat].items.push({ label: item.name || 'Budget item', budget: b, actual: ac, isManual: true })
@@ -2148,9 +2166,9 @@ function buildEventBudgetData(planner, filterMemberId = null, conv = null) {
     })
   }
 
-  // Receipts are tracked for drilldown display only — amounts are not added to
-  // actual totals to avoid double-counting with manually entered actual fields.
+  // Unlinked receipts go to category drilldown only; linked ones already count via their budget item.
   ;(planner.receipts || []).forEach((r) => {
+    if (r.budgetItemId) return
     const cat = r.category || 'misc'
     const amt = parseBudget(r.amount)
     if (amt && cats[cat]) {
@@ -2202,16 +2220,19 @@ function buildPersonalBudgetData(planner, conv = null) {
     const iCurr = item.currency || 'AUD'
     const cat = item.category || 'misc'
     const b = cvt(parseBudget(item.budget), iCurr)
-    const ac = cvt(parseBudget(item.actual), iCurr)
+    const linked = (planner.receipts || []).filter((r) => r.budgetItemId === item.id)
+    const ac = linked.length
+      ? linked.reduce((s, r) => s + cvt(parseBudget(r.amount), r.currency || iCurr), 0)
+      : cvt(parseBudget(item.actual), iCurr)
     if (cats[cat]) {
       cats[cat].budget += b; cats[cat].actual += ac
       if (b || ac) cats[cat].items.push({ label: item.name || 'Budget item', budget: b, actual: ac, isManual: true })
     }
   })
 
-  // Receipts are tracked for drilldown display only — amounts are not added to
-  // actual totals to avoid double-counting with manually entered actual fields.
+  // Unlinked receipts go to category drilldown only; linked ones already count via their budget item.
   ;(planner.receipts || []).forEach((r) => {
+    if (r.budgetItemId) return
     const cat = r.category || 'misc'
     const amt = parseBudget(r.amount)
     if (amt && cats[cat]) {
@@ -4304,19 +4325,25 @@ function renderBudgetItems(ctx) {
   container.innerHTML = items.map((item) => {
     const catLabel = cats.find((c) => c.value === item.category)?.label || item.category || 'Misc'
     const b  = parseBudget(item.budget)
-    const ac = parseBudget(item.actual)
-    const over = ac > b && b > 0
     const cur = item.currency || 'AUD'
+    const linked = (state.planner.receipts || []).filter((r) => r.budgetItemId === item.id)
+    const receiptTotal = linked.reduce((s, r) => s + parseBudget(r.amount), 0)
+    const effectiveActual = linked.length ? receiptTotal : parseBudget(item.actual)
+    const over = b > 0 && effectiveActual > b
+    const bSet  = item.budget !== '' && item.budget != null
+    const acSet = !linked.length && item.actual !== '' && item.actual != null
     return `<div class="flex items-center gap-2 py-1.5 px-2.5 rounded-md border border-gray-200 bg-white" data-bi-id="${esc(item.id)}">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-1.5 flex-wrap">
           <span class="text-sm font-medium text-gray-700 truncate">${esc(item.name || 'Budget item')}</span>
           <span class="text-[0.6rem] px-1.5 py-px rounded bg-gray-100 text-gray-500 flex-shrink-0">${esc(catLabel)}</span>
         </div>
-        <div class="flex gap-3 text-xs mt-0.5">
-          ${b  ? `<span class="text-gray-400">Budget: <span class="tabular-nums text-gray-600">${esc(cur)} ${fmt(b)}</span></span>` : ''}
-          ${ac ? `<span class="text-gray-400">Actual: <span class="tabular-nums ${over ? 'text-red-500' : 'text-gray-600'}">${esc(cur)} ${fmt(ac)}</span></span>` : ''}
-          ${!b && !ac ? `<span class="text-gray-300 italic">${esc(cur)} —</span>` : ''}
+        <div class="flex gap-3 text-xs mt-0.5 flex-wrap">
+          ${bSet ? `<span class="text-gray-400">Budget: <span class="tabular-nums text-gray-600">${esc(cur)} ${fmt(b)}</span></span>` : ''}
+          ${linked.length
+            ? `<span class="text-gray-400"><i class="fas fa-receipt text-[0.55rem] mr-0.5"></i>Actual (${linked.length} receipt${linked.length !== 1 ? 's' : ''}): <span class="tabular-nums ${over ? 'text-red-500' : 'text-gray-600'}">${esc(cur)} ${fmt(receiptTotal)}</span></span>`
+            : acSet ? `<span class="text-gray-400">Actual: <span class="tabular-nums ${over ? 'text-red-500' : 'text-gray-600'}">${esc(cur)} ${fmt(effectiveActual)}</span></span>` : ''}
+          ${!bSet && !acSet && !linked.length ? `<span class="text-gray-300 italic">${esc(cur)} —</span>` : ''}
         </div>
       </div>
       <button type="button" class="edit-budget-item-btn h-7 w-7 flex items-center justify-center rounded-md border border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0"
@@ -4387,6 +4414,7 @@ function afterBudgetItemClose() {
   renderBudgetItems(ctx)
   if (ctx === 'personal') renderPersonalBudgetBreakdown()
   else renderSponsorBudgetBreakdown()
+  renderReceiptsTab()
   if (state.activeTab === 'summary') renderSummaryTab()
 }
 
@@ -4397,6 +4425,8 @@ const _budgetItemModal = createModal('budgetItemModal', {
     const list = getBudgetItemList(_budgetItemCtx)
     const idx  = list.findIndex((i) => i.id === _budgetItemId)
     if (idx !== -1) list.splice(idx, 1)
+    // Clear stale references so linked receipts aren't lost from accounting
+    ;(state.planner.receipts || []).forEach((r) => { if (r.budgetItemId === _budgetItemId) r.budgetItemId = '' })
     scheduleAutoSave()
   },
   onClose: afterBudgetItemClose,
@@ -4774,7 +4804,7 @@ function wireNotesPanel() {
           ratingGroup.innerHTML = `
             <span class="text-sm text-gray-500 mr-1">Rating:</span>
             ${starRatingHtml(id, note.rating)}
-            ${note.rating ? `<button type="button" class="ml-1 text-xs text-gray-400 hover:text-gray-600 clear-rating-btn" data-note-id="${esc(id)}" title="Clear rating">✕</button>` : ''}`;
+            ${note.rating ? `<button type="button" class="clear-rating-btn appearance-none bg-transparent border-0 p-0 ml-1 cursor-pointer leading-none text-gray-300 hover:text-gray-500 transition-colors" data-note-id="${esc(id)}" title="Clear rating"><i class="fas fa-times text-[0.6rem]"></i></button>` : ''}`;
         }
       }
       return;
@@ -5463,8 +5493,8 @@ function wireTeamPanel() {
 // ── Mode toggle (sponsor / personal) ─────────────────────────────────────────
 
 // Tabs visible in each mode
-const SPONSOR_TABS  = new Set(['contacts', 'tasks', 'sponsor', 'team', 'documents', 'summary']);
-const PERSONAL_TABS = new Set(['personal', 'receipts', 'documents', 'summary']);
+const SPONSOR_TABS  = new Set(['contacts', 'tasks', 'sponsor', 'team', 'notes', 'documents', 'summary']);
+const PERSONAL_TABS = new Set(['personal', 'notes', 'contacts', 'tasks', 'receipts', 'documents', 'summary']);
 
 function applyMode(mode) {
   state.planner.mode = mode;
@@ -5772,6 +5802,7 @@ function wireToolbar() {
   document.getElementById('showSponsorTab')?.addEventListener('click', () => { setActiveTab('sponsor'); renderSponsorBudgetBreakdown(); });
   document.getElementById('showPersonalTab')?.addEventListener('click', () => { setActiveTab('personal'); renderPersonalBudgetBreakdown(); });
   document.getElementById('showTeamTab')?.addEventListener('click', () => setActiveTab('team'));
+  document.getElementById('showNotesTab')?.addEventListener('click', () => { setActiveTab('notes'); renderNotesTab(); });
   document.getElementById('showDocumentsTab')?.addEventListener('click', () => setActiveTab('documents'));
   document.getElementById('showReceiptsTab')?.addEventListener('click', () => setActiveTab('receipts'));
   document.getElementById('showSummaryTab')?.addEventListener('click', () => { setActiveTab('summary'); renderSummaryTab(); });
@@ -5992,6 +6023,7 @@ async function init() {
   wireSwagModal();
   wirePersonalLegModal();
   wirePersonalAccomModal();
+  wireNotesPanel();
   wireTeamPanel();
   wireItineraryPanel();
   wireDocumentsPanel();

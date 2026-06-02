@@ -24,6 +24,33 @@ function setupMobileAccordion(toggleId, contentId) {
   });
 }
 
+function setupHeaderMenu() {
+  const btn = document.getElementById('headerMenuBtn');
+  const menu = document.getElementById('headerMenu');
+  if (!btn || !menu) return;
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = menu.classList.toggle('hidden');
+    btn.setAttribute('aria-expanded', String(!open));
+  });
+
+  document.addEventListener('click', () => {
+    if (!menu.classList.contains('hidden')) {
+      menu.classList.add('hidden');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !menu.classList.contains('hidden')) {
+      menu.classList.add('hidden');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.focus();
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     setupEventsDelegation();
@@ -32,6 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupMobileAccordion('usageInstructionsToggle', 'usageInstructionsContent');
     setupMobileAccordion('sessionFiltersToggle', 'sessionFiltersContent');
     initNowIndicator();
+    setupHeaderMenu();
   } finally {
     hideLoadingOverlay();
   }

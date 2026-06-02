@@ -110,19 +110,22 @@
             <button id="showTeamTab" type="button" class="editor-tab-button hidden" role="tab" aria-selected="false" aria-controls="plannerTeamPanel">
               <i class="fas fa-users mr-2 text-[0.72rem]"></i>Team
             </button>
+            <button id="showPersonalTab" type="button" class="editor-tab-button is-active" role="tab" aria-selected="true" aria-controls="plannerPersonalPanel">
+              <i class="fas fa-person mr-2 text-[0.72rem]"></i>Personal
+            </button>
             <button id="showTasksTab" type="button" class="editor-tab-button hidden" role="tab" aria-selected="false" aria-controls="plannerTasksPanel">
               <i class="fas fa-list-check mr-2 text-[0.72rem]"></i>Tasks
             </button>
             <button id="showContactsTab" type="button" class="editor-tab-button hidden" role="tab" aria-selected="false" aria-controls="plannerContactsPanel">
               <i class="fas fa-address-book mr-2 text-[0.72rem]"></i>Contacts
             </button>
-            <button id="showPersonalTab" type="button" class="editor-tab-button is-active" role="tab" aria-selected="true" aria-controls="plannerPersonalPanel">
-              <i class="fas fa-person mr-2 text-[0.72rem]"></i>Personal
+            <button id="showNotesTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="plannerNotesPanel">
+              <i class="fas fa-file-lines mr-2 text-[0.72rem]"></i>Notes
             </button>
             <button id="showReceiptsTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="plannerReceiptsPanel">
               <i class="fas fa-receipt mr-2 text-[0.72rem]"></i>Receipts
             </button>
-            <button id="showDocumentsTab" type="button" class="editor-tab-button hidden" role="tab" aria-selected="false" aria-controls="plannerDocumentsPanel">
+            <button id="showDocumentsTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="plannerDocumentsPanel">
               <i class="fas fa-folder-open mr-2 text-[0.72rem]"></i>Documents
             </button>
             <button id="showSummaryTab" type="button" class="editor-tab-button" role="tab" aria-selected="false" aria-controls="plannerSummaryPanel">
@@ -205,10 +208,7 @@
               </a>
             </div>
           </section>
-          <div class="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 mb-4 text-sm text-amber-300 flex items-start gap-3">
-            <i class="fas fa-triangle-exclamation mt-0.5 flex-shrink-0"></i>
-            <span>This tab is a <strong>work in progress</strong> — structure may change as requirements are refined.</span>
-          </div>
+
           <section class="bg-white rounded-lg shadow-md p-4">
             <h2 class="text-lg font-semibold text-gray-800 mb-6">Org / Sponsor</h2>
             <div class="space-y-8">
@@ -492,6 +492,24 @@
           </section>
         </div>
 
+        <!-- Notes panel -->
+        <div id="plannerNotesPanel" class="hidden" role="tabpanel" aria-labelledby="showNotesTab">
+          <section class="bg-white rounded-lg shadow-md p-4">
+            <div class="mb-4">
+              <h2 class="text-lg font-semibold text-gray-800">Session Notes</h2>
+              <p class="text-sm text-gray-500">Rate sessions and record your thoughts. Search to add a session.</p>
+            </div>
+            <div class="relative mb-2">
+              <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+              <input id="notesSearchInput" type="text" placeholder="Find a session to add notes…"
+                class="h-9 w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white pl-8 pr-3" autocomplete="off">
+            </div>
+            <div id="notesSearchResults" class="hidden mb-3 rounded-md border border-gray-200 bg-white shadow-sm text-sm overflow-hidden max-h-48 overflow-y-auto"></div>
+            <div id="notesWithData" class="space-y-1"></div>
+            <p id="notesEmptyState" class="text-sm text-gray-400 text-center py-8">No session notes yet — search above to find a session and start taking notes.</p>
+          </section>
+        </div>
+
         <!-- Team panel -->
         <div id="plannerTeamPanel" class="hidden" role="tabpanel" aria-labelledby="showTeamTab">
           <section class="bg-white rounded-lg shadow-md p-4">
@@ -527,7 +545,6 @@
           </section>
         </div>
 
-        <!-- Itinerary panel -->
         <!-- Receipts panel -->
         <div id="plannerReceiptsPanel" class="hidden" role="tabpanel" aria-labelledby="showReceiptsTab">
           <section class="bg-white rounded-lg shadow-md p-4">

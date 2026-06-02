@@ -59,6 +59,7 @@ export function makeEmptyPlanner(plannerKey, eventFile = '') {
       autoAddedSponsoredSessions: [],
       documents: [],
       budgetItems: [],
+      itinerary: [],
     },
     itinerary: [],
     receipts: [],
