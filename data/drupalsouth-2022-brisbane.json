@@ -7,7 +7,6 @@
     "region": "Australia – Brisbane",
     "endDate": "2022-10-21T05:00:00Z",
     "startDate": "2022-10-18T22:15:00Z",
-    "scheduleURL": "https://drupalsouth.org/events/drupalsouth-brisbane-2022/schedule",
     "venue": "The Westin, Brisbane",
     "timezone": "Australia/Brisbane",
     "enabled": true,
@@ -272,7 +271,10 @@
         "enabled": true
       }
     ],
-    "columns": 3
+    "columns": 3,
+    "scheduleURLs": [
+      "https://drupalsouth.org/events/drupalsouth-brisbane-2022/schedule"
+    ]
   },
   "items": [
     {
@@ -285,7 +287,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -300,7 +302,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -332,7 +334,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -385,9 +387,6 @@
       "speakers": [
         "Karl Hepworth"
       ],
-      "speaker_usernames": [
-        "fubarhouse"
-      ],
       "full_description": "Extracting and understanding key metrics in your application can provide powerful insight for product owners and developers.\n\nDiscover how you extend Drupal to create CloudWatch dashboards based on metrics from Drupal and see what insights they can provide.",
       "video_url": "https://youtu.be/dd3AkR2DN28",
       "sponsorIds": ""
@@ -402,7 +401,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -420,9 +419,6 @@
       "speakers": [
         "Akhil Bhandari",
         "Phillipa Martin"
-      ],
-      "speaker_usernames": [
-        "akhil-bhandari"
       ],
       "full_description": "The retirement of the Australian Government Design System (AGDS) left a void for a high quality Drupal design system that government agencies and other organisations could quickly adopt for Drupal website projects.\n\nThe lack of a high quality design system to provide a robust backbone and functional framework for building and managing Drupal websites left projects facing the problem of high development costs and long project timelines, especially when building sites based on bespoke visual designs.\nA great design system would be able to solve many of these problems as well as deliver a consistent user experience for site visitors, as well as the web publishers and administrators responsible for content creation and management.\n\nSalsa ventured forth to build the next generation design system for the Australian Government and a companion Drupal 9 theme. Naturally, it was easier said than done.\nThere were many challenges, most of which were not technical - that was the easy part! - but non-technical decisions that would shape the ultimate product.\n\nIn this presentation, we’ll take the audience through the development process, including:\n-User testing\n-The role of the Australian Design System\n-Creating an accessible design system\n-The component-based nature of CivicTheme\n-Product-led development\n-Lessons learnt so far\n\nCivicTheme is a new, open source component-based design system and Drupal 9 theme. It provides a quick, easy and cost-efficient solution to build new websites. Web publishers and administrators can create and manage pages and layout designs without any coding.\n\nIt was developed with a strong user experience focus coupled with project-led development (government clients helped shape and test CivicTheme as it was built).",
       "video_url": "https://youtu.be/hamMm4Une0U",
@@ -458,9 +454,6 @@
       "speakers": [
         "Daniel Veza"
       ],
-      "speaker_usernames": [
-        "danielveza"
-      ],
       "full_description": "Bundle classes and Layout Builder are a powerful combination for building modern Drupal sites. This presentation aims to demonstrate how you can use these along with twig to build and theme testable and clean sites with tried and true practises used on many production sites.",
       "video_url": "https://youtu.be/mhI9FDtR4wM",
       "sponsorIds": ""
@@ -492,7 +485,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -509,9 +502,6 @@
       ],
       "speakers": [
         "Adam Bramley"
-      ],
-      "speaker_usernames": [
-        "acbramley"
       ],
       "full_description": "Learn how we leveraged a highly available AWS OpenSearch service fronted by React to build lightning fast, dynamic search interfaces backed by Drupal using Search API.\n\nThis talk will cover:\n- Our architecture, why it was chosen, and how you can set it up for yourself\n- An overview of the Search API Opensearch module\n- A deep dive into the frontend technologies and methodologies we used to make building decoupled search apps a breeze.",
       "video_url": "https://youtu.be/lvbsz6V8KP8",
@@ -562,7 +552,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -628,7 +618,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -694,7 +684,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -711,9 +701,6 @@
       ],
       "speakers": [
         "Murray Woodman"
-      ],
-      "speaker_usernames": [
-        "murrayw"
       ],
       "full_description": "",
       "video_url": "https://youtu.be/iwxD7rMmnCQ",
@@ -750,9 +737,6 @@
         "Julia Topliss",
         "Matthew Pirani"
       ],
-      "speaker_usernames": [
-        "jct321"
-      ],
       "full_description": "IPEA is a government authority tasked with the management and reporting of parliamentarian expenditure. In this case study we will show how the Migrate and Solr modules were used to solve scalability and performance challenges by providing a user and editor friendly solution. The end result is that citizens and parliamentarians can access data expenditure more efficiently.\n\nMatt & Julia will discuss how to work on GovCMS SaaS to deliver improved experiences.\n\nThis presentation covers:\n1. Improving user experience with better performance on rendering complex datasets containing many rows of data using view modes and Solr.\n2. Improving website management experience by providing internal tools to add/update/publish reports which contain thousands of rows of data. Considering scalability in the implementation with the requirement to factor in future reporting periods.\n3. Providing stability and scalability with a solution that is delivered onto the GovCMS SaaS platform and the restrictions & challenges that come with working on a proscriptive platform.\n\nThis presentation will be of interest to:\nGovCMS agencies who want to get the most from GovCMS SaaS\nDevelopers looking for tips on how to build performance and scalable solutions.\nOpen data advocates interested in citizen access to government data.",
       "video_url": "https://youtu.be/_jN5mvglet4",
       "sponsorIds": ""
@@ -767,7 +751,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-15"
@@ -782,7 +766,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-16"
@@ -797,7 +781,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -829,7 +813,7 @@
       "track": [
         "Sponsor"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-16"
@@ -844,7 +828,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -910,7 +894,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -962,9 +946,6 @@
       "speakers": [
         "Andre Kakos"
       ],
-      "speaker_usernames": [
-        "andrekakos"
-      ],
       "full_description": "A user centric approach to website design and architecture generally involves user research, discovery of user goals and the definition of user pathways and journeys through the site. Content needs to be designed to support the user to complete their tasks and move them onto the next stage. The personalisation and customisation of content adds another dimension for the designer to consider and opens the way for an enhanced user experience to be designed and delivered.\n\nThis presentation will present a playbook which can be used by UX and content designers to deliver better user experiences. The playbook will cover concepts such as:\n- taxonomy to better categorise content along a number of dimensions.\n- microcontent for delivering personalised experiences\n- integration of personalisation into traditional approaches\n- the future role of content in a personalised world.\n\nFinally the presentation will review the Drupal contrib space and identify modules which can help with delivering personalised experiences.\n\nThe presentation will be of interest to:\n- UX designers\n- Content designers\n- Marketers\n- Site owners",
       "video_url": "https://youtu.be/AkcGw1lIogo",
       "sponsorIds": ""
@@ -979,7 +960,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1046,7 +1027,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1113,7 +1094,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1179,7 +1160,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1215,9 +1196,6 @@
         "Juliane Erben",
         "Alex Skrypnyk"
       ],
-      "speaker_usernames": [
-        "alex.skrypnyk"
-      ],
       "full_description": "The federal agency (who would like to be unidentified) was on an old version of MS SharePoint, which was used by authenticated users. The portal had a high cost of ownership, many functional gaps, was slow to respond, and was visually unappealing to the user. It was no longer fit for purpose. The federal agency engaged Salsa to:\n\n1 - Replace the old portal and migrate all of the existing data\n2 - Ingest reports from another portal\n3 - Integrate with an internal publishing system\n4 - Create analytical reports.\n\nThe portal’s purpose is to publish and distribute information to other government agencies. As of June 2022 the new, Salsa-built Drupal portal has replaced the old MS SharePoint solution. In this short presentation, we would like to address:\n\n- Ways of working together that ensured we could react to changes in scope.\n\n- Using the Salsa-built CivicTheme design system as the foundation for the build.\n\n- The outcomes for the content editors: a publishing workflow easily followed via a customised workbench, an editing experience that meets their expectations, and custom tools that allow them to import data from other sources and create compilations for their users in minutes.\n\n- Email alerts and subscription: Salsa custom built a subscription and alert functionality for the federal agency as out-of-the-box solutions (like Mailchimp) were not in question for security reasons.\n\n- The approach to migrating 1.2TB of data and dealing with a rapidly growing amount of data.\n\n- Searching through vast quantities of data using Solr and Elastic Search.\n\nDrupal is very capable of providing functionality far beyond a classic brochure website. This federal agency project showcases what can be achieved, even with a large range of security restrictions.\nJuliane Erben\nI was born and bred in Germany, however I have spent many years living overseas in various countries before settling in Australia in 2012. I have been working in the IT industry initially in sales and then in project management for 15 years and have managed Drupal projects for the past 5 years. I enjoy business analysis; I love how a project can feel like a puzzle and with every client discovery, every design, every JIRA ticket groomed, the puzzle evolves and finally the build will bring it all to life. My work satisfaction comes from delivering what the client needs, feeling like I have really done all I can to maximise the business benefit and ultimately seeing the outcomes for the end user. And I love the collaborative aspect of my role; bringing teams together to work towards a common goal.\nAdditional speakersThe second speaker is Alex Skrypnyk.\n\nBased in Melbourne, Alex works with Salsa and Salsa’s clients to design and build Drupal solutions, providing high level technology strategy and oversight.\n\nAs a solution architect, Alex oversees the technical direction at a strategic level. His continuous integration expertise ensures all projects merge development code into the pipeline early and often. This helps to reduce costs and risks in projects.\n\nAlex also works on Salsa projects as a technical lead, working closely with developers, business analysts and clients to provide a technical direction that meets our clients’ business needs.",
       "video_url": "https://youtu.be/A4QQIukLHEQ",
       "sponsorIds": ""
@@ -1249,7 +1227,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1284,9 +1262,6 @@
       "speakers": [
         "Sean Hamlin"
       ],
-      "speaker_usernames": [
-        "wiifm"
-      ],
       "full_description": "Have you ever wondered how popular Drupal is in your local state and at the Federal Government level? This talk will answer that question, using open source tooling. The hope is that you gain some insight to the relative popularity of Drupal and appreciate more the impact you and Drupal have in Australia.\n\nThis session will include:\n\n* How to get a list of every government web site in Australia\n* How to determine what CMS they are using\n* How to measure site impact\n* Trends we are seeing at the federal level, and by state\n* Taking this tool further\n* How to contribute",
       "video_url": "https://youtu.be/1jy9-e6uaEc",
       "sponsorIds": ""
@@ -1319,7 +1294,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1334,7 +1309,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1349,7 +1324,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-19"

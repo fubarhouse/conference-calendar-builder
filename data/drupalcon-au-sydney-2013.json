@@ -5,7 +5,6 @@
     "year": "2013",
     "website": "https://sydney2013.drupal.org/",
     "region": "Australia",
-    "scheduleURL": "https://sydney2013.drupal.org/program/schedule",
     "venue": "Coogee Bay Hotel",
     "timezone": "Australia/Sydney",
     "columns": 3,
@@ -362,6 +361,9 @@
         "aspect": "auto",
         "enabled": true
       }
+    ],
+    "scheduleURLs": [
+      "https://sydney2013.drupal.org/program/schedule"
     ]
   },
   "items": [
@@ -373,7 +375,7 @@
       "location": "Foyer (Registration)",
       "link": "https://sydney2013.drupal.org/registration",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -399,7 +401,7 @@
       "location": "Centennial",
       "link": "https://sydney2013.drupal.org/drupal-business-day",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "Drupal Business Day at DrupalCon Sydney is a full day event primarily aimed at business leaders and managers who are exploring incorporating Drupal into their technology suite.\n\nJoin us on February 6 as we share case studies from large corporations and government departments on how Drupal fits into their long term strategy, and how working collaboratively provides for maximum engagement with the Drupal development community. You will discover how adopting Drupal is much more than using a new piece of software - it gives you access to a network of global innovators.\n\nExperts will also share knowledge on enterprise support frameworks, risk management, total cost of ownership and resourcing.\n\nThe event will be punctuated by networking opportunities and drinks at the hotel bar after.\n\n## Schedule\n\n| Time | Description |\n| --- | --- |\n| 8:00am-9:00am | Registration + Coffee |\n| 9:10am-10:15am | Keynote: Pia Waugh |\n| 10:15am-10:45am | Coffee Break |\n| 10:45am-11:30am | Case Study: SBS |\n| 11:30am-11:45am | Panel Brainstorming |\n| 11:45am-1:00pm | Lunch |\n| 1:00pm-2:30pm | Panel: Answering Your Real Life Enterprise Challenges |\n| 2:30pm-2:45pm | Coffee Break |\n| 2:45pm-3:45pm | Case Study: Flight Centre |\n| 3:45pm-4:00pm | Event Wrap Up |\n| 4:00pm onwards | Informal drinks at Oceans Bar, on-site at the Crowne Plaza hotel. |\n\n## Why You Should Attend\n\nCome along if you want to know more about:\n\n- Benefits of an open source strategy for large organisations\n- Capabilities required for success\n- How large organisations can drive innovation through involvement with the Drupal community\n- Drupal 8 - The development roadmap for 2013 and beyond\n- Resourcing: Skilling up to adopt Drupal with in-house teams and external resources\n- Post-development support case studies\n- Collaborating with your peers to tackle technical challenges together\n\n## Audience\n\nThis event will focus on specific issues that affect decisions that leaders and managers make when setting business strategy for their company. Innovation specialists, IT strategists and consultants will also benefit from attendance.\n\n## Event Information\n\n**Venue**: Crowne Plaza Hotel, Centennial Room\n**Date**: Wednesday, February 6\n**Time**: 8am-4pm (program begins at 9)\n**Ticket**: $195 - includes coffee breaks, lunch, and networking opportunities",
       "sponsorIds": ""
     },
@@ -411,7 +413,7 @@
       "location": "",
       "link": "https://sydney2013.drupal.org/lunch",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -422,7 +424,7 @@
       "location": "Oceans Bar",
       "link": "https://sydney2013.drupal.org/opening-night-drinks",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -433,7 +435,7 @@
       "location": "Foyer (Registration)",
       "link": "https://sydney2013.drupal.org/registration",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -444,7 +446,9 @@
       "location": "Oceanic Ballroom West",
       "link": "https://sydney2013.drupal.org/keynote/dries-buytaert",
       "track": [],
-      "speakers": "Dries Buytaert",
+      "speakers": [
+        "Dries Buytaert"
+      ],
       "full_description": "## The True State of Drupal 8\n\nDries Buytaert is a man of many interests. He holds a doctorate in computer science and engineering. He is a photographer. He is a husband and father. He is Belgian. However, you may know him best as the original creator and project lead for the Drupal open source Web publishing platform or “the reason there is a DrupalCon in the first place”.\n\nIn addition to serving as the president of the Drupal Association, he is also the co-founder and CTO of Acquia, a company that offers hosting, technical support, and services for the Drupal platform, and the co-founder of Mollom, a web service that helps identify content quality and stop website spam.\n\nDries Buytaert has announced he is introducing a new phase into the Drupal core development cycle: \"Feature Completion Phase\" timed to embrace the core sprints taking place at DrupalCon Sydney, giving those people working hard on major strategic initiatives more time to complete their work. His Sydney keynote will unveil the true state of Drupal 8, and the next steps on the road to it's release.",
       "video_url": "https://www.youtube.com/watch?v=YkW0zAnXqLk",
       "sponsorIds": ""
@@ -457,7 +461,7 @@
       "location": "",
       "link": "https://sydney2013.drupal.org/break",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -570,7 +574,7 @@
       "location": "",
       "link": "https://sydney2013.drupal.org/lunch",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -788,7 +792,7 @@
       "location": "",
       "link": "https://sydney2013.drupal.org/break",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1006,7 +1010,7 @@
       "location": "Foyer (Registration)",
       "link": "https://sydney2013.drupal.org/registration",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1017,7 +1021,7 @@
       "location": "Oceanic Ballroom West",
       "link": "https://sydney2013.drupal.org/keynote/senator-kate-lundy",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "## From Open Source to Open Government\n\nWhen first elected to the Senate in 1996, the Senator had her own separate phone line installed so that she could connect directly to the Internet by modem from her offices and update her own website via FTP, external to the network at Australian Parliament House.\n\nSenator Lundy participated in every Senate Inquiry relating to telecommunications and Information Technology when in opposition. In the Labor Government’s first term she spearheaded Gov 2.0 initiatives such as her Public Sphere events to facilitate online public collaboration on policy development.\n\nIn 2010 she was presented with an International eDemocracy Award by French Foreign Minister Bernard Kouchner - for her work changing the world of Internet and politics.\n\nIn March 2012 Senator Lundy was appointed as the Minister Assisting for Industry and Innovation, with a specific emphasis on the ICT industry, as well as Minister for Sport and Minister for Multicultural Affairs.\n\nSenator Lundy continues to be a strong advocate for the use of the Internet, digital technology and ICT innovation to strengthen the Australian economy for future growth, to transform public engagement in government processes and to enhance social inclusion within our communities.\n\nSenator Lundy is also patron for CASE: Computer Assistance Support Education, a non-profit group that provides smart, open technology support to community organisations.\n\nTechnology plays a critical role in the Australian economy. It is transforming public engagement in government processes and enhances social inclusion within communities across the continent. Senator Lundy will discuss the lessons governments are learning from open source software, technologies, and communities, exploring how diverse communities can collaborate effectively online. She will also talk about Open Government in Australia and the extraordinary progress made in recent years.",
       "video_url": "https://www.youtube.com/watch?v=_ZxNTQzd7Qk",
       "sponsorIds": ""
@@ -1030,7 +1034,7 @@
       "location": "",
       "link": "https://sydney2013.drupal.org/sponsor-fair-0",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1041,7 +1045,7 @@
       "location": "",
       "link": "https://sydney2013.drupal.org/break",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1157,7 +1161,7 @@
       "location": "",
       "link": "https://sydney2013.drupal.org/lunch",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1237,7 +1241,7 @@
       "location": "Bronte",
       "link": "https://sydney2013.drupal.org/core-conversations",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "Core Conversations are a place for people actively working and contributing to Drupal core or drupal.org to meet, discuss, and plan the future of Drupal.\n\n## 1:00-2:00pm - Upgrading your modules to Drupal 8\n\nThis talk, led by webchick, will demonstrate how to take the code from a Drupal 7 module and convert it to Drupal 8. You'll learn about many of the new Drupal core APIs that are coming down the pipe, as well as some \"gotchas\" to be aware of. The hope is that this talk can be both fun and educational, but also serve as \"usability testing\" for the Drupal 8 developer experience, since we will still have time to refine APIs before Drupal 8's release (hopefully with *your* help!).\n\nhttps://www.youtube.com/watch?v=mGqK205g7c0\n\n## 2:15-3:15pm - Core Call to Action\n\nJoin us for lightning talks from Drupal 8 initiative leads and learn how you can get involved!\n\n## 3:45-4:45pm - Q+A with Core Maintainers featuring Dries Buytaert\n\nThis open Q+A will feature Dries Buytaert, Drupal project lead, and many core initiative leads. Bring your questions and be prepared to discuss the future of Drupal.\n\nhttps://www.youtube.com/watch?v=mlG06yptvzw",
       "video_url": "https://www.youtube.com/watch?v=mlG06yptvzw",
       "sponsorIds": ""
@@ -1307,9 +1311,6 @@
       "speakers": [
         "murrayw"
       ],
-      "speaker_usernames": [
-        "murrayw"
-      ],
       "full_description": "The aim of this presentation is to make you a better site builder. By thinking clearly about the data you need to capture and manage, you will be more easily able to meet your website architecture goals. The talk will be fast moving and touch on a number of different areas including aspects, types, relationships and facets. Traditional data modelling concepts will be introduced and then related to Drupal concepts.\n\nThe talk is aimed at an intermediate audience who:\n\n- is familiar with the basic building blocks of Drupal (content types, nodes, vocabularies, terms, fields) and\n- would like to learn more about how they can be best put together.\n\n## Aspects\n\n**Exploring different ways of thinking about site building.**\n\n- Separation of concerns.\n- Horizontal vs Vertical components.\n- Implications for content types, presentation and features.\n\n## Types\n\n**Schemas on the web are multi typed.**\n\n- Inspiration from Schema.org and Freebase.org.\n- Modelling multi typed things in Drupal.\n- Field groups, field reuse, entity relationships.\n\n## Relationships\n\n**Building complex entities with Nary relations.**\n\n- How is it done on the web: RDF and Topic Maps.\n- EntityReference vs Relation approaches.\n- Building other structures with EntityReference.\n\n## Faceted classification\n\n**The use of facets**\n\n- Taxonomy hierarchies and their problems.\n- What are facets?\n- Tips for facet design.\n- Facet candidates.\n\nIt'd be great to start a conversation about other patterns from which we can draw inspiration. Bring your ideas along and we can talk about them in question time or after the talk.",
       "video_url": "https://www.youtube.com/watch?v=NfGr4mZtQG0",
       "sponsorIds": ""
@@ -1356,7 +1357,7 @@
       "location": "",
       "link": "https://sydney2013.drupal.org/break",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1452,7 +1453,7 @@
       "location": "Oceanic Ballroom West",
       "link": "https://sydney2013.drupal.org/closing-plenary",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "video_url": "https://www.youtube.com/watch?v=cDmRIqJioxs",
       "sponsorIds": ""
     },
@@ -1464,7 +1465,7 @@
       "location": "Bronte",
       "link": "https://sydney2013.drupal.org/sprints/community-tools-workshop",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "This half-day workshop will get you up and running with the basic tools that the Drupal community uses to tackle problems together. We’ll start the morning looking at our communication tools, with hands-on work with the Drupal.org issue queue and IRC. Then we’ll dive in to getting a local development environment set up on your laptops (a web server with Drupal 8 running), and finish with installing Git and explaining some of the basics of what Git is and why we use it.\n\nOnce you have these tools in place, you’ll be able to sit with a core mentor at the “Get Involved with Core” sprint to get you started on your first Drupal issues. This workshop is intended for people who have worked with a Drupal site before, but don’t understand the tools we use or how to get them set up. You don’t have to be a coder in order to benefit from these tools, or to start contributing to Drupal. Everyone can get involved in many aspects, including documentation, UX, design, teating, and development.",
       "sponsorIds": ""
     },
@@ -1476,7 +1477,7 @@
       "location": "Centennial",
       "link": "https://sydney2013.drupal.org/code-sprint",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "With Drupal being one of the world's leading open-source projects, code sprints are an opportunity for anyone to pitch in and help make Drupal better, whether it’s by writing code, reviewing patches, developing new modules and themes, or helping improve content and documentation on the Drupal.org website.\n\nGiven that DrupalCon Sydney will be happening in the middle of the [Drupal 8 feature freeze](http://buytaert.net/updated-drupal-8-release-schedule), we're expecting the code sprint will be one of the key focal points in the Drupal 8 development cycle.\n\nFor anyone new to code sprints, we're excited to have the \"Get Involved with Core Sprint\" being run as an introduction to contributing.\n\n## Get Involved with Core Sprint\n\nThe ninth Get Involved with Core sprint will be held on Saturday 9th February from 9:00 to 5:00 at DrupalCon Sydney. Previous sprints were held at DrupalCon Munich, Denver and several North American Drupal events. Not sure how to get started or is it your first time contributing? Come to the [Community Tools Workshop](http://sydney2013.drupal.org/sprints/community-tools-workshop.html) on Saturday morning to get up and running with the basic tools that the Drupal community uses to tackle problems together.\n\n## Why come\n\nIf you're like most Drupal developers, you've been telling yourself for months that you should start contributing to Drupal core. This sprint is your chance to get started with in-person training and mentoring from friendly, experienced core contributors. If you've already started to work on core, come meet other contributors, hang out in person, and work on manageable tasks in the Drupal core queue. The goal is to help you help with core.\n\n## Who it's for\n\nAnyone with Drupal site building experience can contribute to Drupal core. We'll have tasks suitable for programmers and non-programmers alike.\n\n## What to expect\n\nWe'll kick things off with a brief introduction, and then will help match people with issues that are right for their skill levels and areas of interest. Free training is also provided to help new contributors set up a development environment and learn about the contribution process.\n\n## What to bring\n\n- An interest in Drupal contribution\n- A laptop with a Drupal 8 development environment\n\n## How to get set up\n\nDon't have your development environment yet? No problem! Come to the coders lounge to get help setting up by experienced volunteers.\n\nYou're also encouraged to set up your development environment on your own if you prefer. Here's what you'll need:\n\n1. A local web server. Some options:\n - Installing the Acquia Dev Desktop (Mac or Windows)\n - Installing MAMP (Mac)\n - Installing WAMP (Windows)\n - Installing a web server on Ubuntu (Linux)\n2. Git (install and configure).\n3. A code-friendly text editor. (Sublime Text 2 is a free, cross-platform text editor.)\n\nAlso recommended:\n\n- Drush\n- Dreditor\n- An IRC client\n\n## Who you'll meet\n\n### Sprint leads\n\n- Global lead: Jess (xjm)\n- Global lead: Andrea Soper (zendoodles)\n- Local coordinator: Kim Pepper (kim.pepper)\n\n### Sprint mentors\n\n- Lee Rowlands (larowlan)\n- Stuart Clarke (deciphered)\n- Brian Gilbert (realityloop)\n- Ryan Cross (rcross)\n- Simon Hobbs (sime)\n- Justin Randall (beejeebus)\n\n### Trainers\n\n- Addison Berry (add1sun)\n- Joe Shindelar (eojthebrave)\n\n## Core and Contrib Sprints\n\nBased on the current list of responses to the [registration form](http://sydney2013.drupal.org/webform/code-sprint.html) there will be sprints on the following:\n- Drupal 8: Twig - lead: Jen Lampton jenlampton\n- Drupal 8: Mobile Initiative - lead: John Albin Wilkins JohnAlbin\n- Drupal 8: Blocks & Layouts Everywhere Initiative - SCOTCH\n- Drupal 8: Config Management Initiative\n- Drupal 8: Views in Core Initiative\n- Documentation\n\nJess (xjm) will be organising the sprints on the day, and so please come along and help make Drupal better!",
       "sponsorIds": ""
     },
@@ -1488,7 +1489,7 @@
       "location": "",
       "link": "https://sydney2013.drupal.org/break",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1499,7 +1500,7 @@
       "location": "",
       "link": "https://sydney2013.drupal.org/lunch",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1510,7 +1511,7 @@
       "location": "",
       "link": "https://sydney2013.drupal.org/break",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     }
   ],

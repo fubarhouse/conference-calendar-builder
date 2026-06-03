@@ -7,7 +7,6 @@
     "region": "Australia",
     "startDate": "2023-11-22T22:00:00Z",
     "endDate": "2023-11-23T05:00:00Z",
-    "scheduleURL": "https://drupalsouth.org/events/drupalsouth-community-day-2023/schedule",
     "venue": "Canberra Rex Hotel, Canberra",
     "timezone": "Australia/Sydney",
     "enabled": true,
@@ -116,7 +115,10 @@
         "enabled": true
       }
     ],
-    "columns": 3
+    "columns": 3,
+    "scheduleURLs": [
+      "https://drupalsouth.org/events/drupalsouth-community-day-2023/schedule"
+    ]
   },
   "items": [
     {
@@ -165,9 +167,6 @@
       "speakers": [
         "Simon Hobbs"
       ],
-      "speaker_usernames": [
-        "sime"
-      ],
       "full_description": "Let's take a tour around a vanilla GovCMS PaaS setup. This talk is targetted the team that has been delivered a fresh new PaaS site, but will have a lot of value for existing PaaS developers and teams, and also can help evaluators understand some of the technical (application level) the differences between GovCMS SaaS and PaaS.\nThis talk is not endorsed by Finance and only discusses open source components.\nAudience requirements:\nBasic understanding about setting up a Drupal site",
       "sponsorIds": ""
     },
@@ -184,9 +183,6 @@
       "speakers": [
         "Margery Tongway"
       ],
-      "speaker_usernames": [
-        "p_stampy"
-      ],
       "full_description": "Share back experiences for site migrations or consolidations, starting with prep work that should happen before any migration work is started.\nIntroduction\nHave you done a migration recently?\nNon technical migration considerations\nHow have you done this?\nTypes of migrations we've done\nWhat has been your most challenging migration?\nMigration methods\nWhat's worked best for you?\nScheduled break\nGroup discussion/Ask me anything\nAudience requirements:\nNo prior knowledge\nSome prior knowledge",
       "sponsorIds": ""
     },
@@ -200,7 +196,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -234,10 +230,6 @@
         "Akhil Bhandari",
         "Alex Skrypnyk"
       ],
-      "speaker_usernames": [
-        "alex.skrypnyk",
-        "akhil-bhandari"
-      ],
       "full_description": "CivicTheme is an open source, inclusive and component-based 'true design system'. It was created so governments and organisations can rapidly assemble modern, consistent and compliant digital experiences for its audiences. Based on atomic design, the design system includes 60 WCAG 2.1 compliant components, as both Figma visual design UI library and exactly matched codified Drupal functional components, out of the box.\nCivicTheme has been recognised as part of the Digital Transformation Agency’s Australian Government Architecture (AGA) and is optimised to work on GovCMS SaaS Drupal website projects.\nToday we'll run 3x 20-40min sessions for Technical and Non-technical audiences to learn what CivicTheme is, how to install it and how to contribute to the open source project.\nSession #1: What is CivicTheme design system\nDuration: 30 min\nPresenter: Akhil Bhandari\nSession outline:\nWhat is CivicTheme design system and how to use in Drupal projects from Design to Build\nWorking with CivicTheme Figma design files\nQnA - Ask us anything about: CivicTheme\nAudience: Non-Technical\nSession #2: How to work with and install a CivicTheme project\nDuration: 40 min\nPresenter: Alex Skrypnyk\nSession outline:\nHow a CivicTheme project works\nHow to install a CivicTheme project\nDemo of a typical installation\nQnA - Ask us anything about: CivicTheme installations\nBring your own laptops if you want to follow along\nAudience: Technical\nSession #3: How to contribute to the CivicTheme open-source project\nDuration: 20 min\nPresenter: Akhil Bhandari and Alex Skrypnyk\nSession outline:\nHow to contribute to the CivicTheme open-source project\nOpen to the floor - nominate practical topics / features that could be added to the CivicTheme roadmap\nAudience: Non-Technical",
       "sponsorIds": ""
     },
@@ -254,9 +246,6 @@
       "speakers": [
         "Murray Woodman"
       ],
-      "speaker_usernames": [
-        "murrayw"
-      ],
       "full_description": "Get hands on with generative AI\nThis session will provide a practical introduction to generative AI systems such as ChatGPT and will demonstrate how they can be leveraged in Drupal. This session will be hands on - participants will be given access to a demo Drupal site where they can build their own integrations to AI tools and expose them to editors via the UI. By the end of the session, participants should be aware of the possibilities and have a good insight as to how that can practically be introduced to Drupal.\nAn outline of the session is as follows:\nBrief introduction to generative AI and relevance to CMS.\nBrief introduction to the Augmentor module and the pricnples behind it.\nDemonstration of a simple Augmentor in the editor interface.\nIdeation session where particiapnts design an Augmentor for themselves.\nPractical session\nGetting everyone logged in\nWalking through the Augmentor interface\nTroubleshooting help will be available in a slack channel and also via Zoom\nDemonstration of some of the Augmentors which have been created.\nRecap of what was done and discussion of some of the findings.\nHopefully we will come up with some interesting things together!\nAudience requirements:\nNo prior knowledge\nOwn laptop",
       "sponsorIds": ""
     },
@@ -272,9 +261,6 @@
       ],
       "speakers": [
         "Julia Topliss"
-      ],
-      "speaker_usernames": [
-        "jct321"
       ],
       "full_description": "",
       "sponsorIds": ""
