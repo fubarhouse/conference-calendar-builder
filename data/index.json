@@ -1,15 +1,17 @@
 {
-  "defaultFile": "ddd-2026-athens.json",
+  "defaultFile": "drupalsouth-2026-wellington.json",
   "files": [
     {
-      "file": "ddd-2026-athens.json",
-      "default": true
+      "file": "ddd-2026-athens.json"
     },
     {
       "file": "drupalcamp-den-2019-nagoya.json"
     },
     {
       "file": "drupalcamp-den-2022-osaka.json"
+    },
+    {
+      "file": "drupalcamp-den-2023-iwakuni.json"
     },
     {
       "file": "drupalcamp-pune-2025.json"
@@ -144,7 +146,8 @@
       "file": "drupalsouth-2025-melbourne.json"
     },
     {
-      "file": "drupalsouth-2026-wellington.json"
+      "file": "drupalsouth-2026-wellington.json",
+      "default": true
     },
     {
       "file": "drupalsouth-community-day-2023-canberra.json"
