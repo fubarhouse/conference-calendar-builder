@@ -71,6 +71,7 @@ const EVENT_META_FIELDS = [
   'venue',
   'website',
   'scheduleURLs',
+  'other_urls',
   'startDate',
   'endDate',
   'logo',
@@ -106,7 +107,11 @@ const EVENT_META_FIELD_CONFIG = {
   },
   scheduleURLs: {
     label: 'Schedule URLs',
-    description: 'The source schedule URLs used when this dataset was created or checked.'
+    description: 'One or more source schedule URLs used when this dataset was created or checked.'
+  },
+  other_urls: {
+    label: 'Other URLs',
+    description: 'Additional URLs associated with this event. These are only shown in the sitemap.'
   },
   logo: {
     label: 'Event logo',
@@ -1128,6 +1133,12 @@ function toStringValue(value) {
   return value == null ? '' : String(value);
 }
 
+function normalizeUrlArray(value) {
+  if (Array.isArray(value)) return value.map((v) => String(v || '').trim());
+  const s = String(value || '').trim();
+  return s ? [s] : [];
+}
+
 function parseMultiValue(value) {
   return String(value || '')
     .split(/\n|,/)
@@ -1629,6 +1640,8 @@ function normalizeDatasetShape() {
   }
   if (!state.dataset.event.timezone) state.dataset.event.timezone = 'UTC';
   if (state.dataset.event.columns == null || state.dataset.event.columns === '') state.dataset.event.columns = 3;
+  state.dataset.event.scheduleURLs = normalizeUrlArray(state.dataset.event.scheduleURLs);
+  state.dataset.event.other_urls = normalizeUrlArray(state.dataset.event.other_urls || []);
   const hexPattern = /^#[0-9a-fA-F]{6}$/;
   // Migrate legacy string theme and top-level color fields into the theme object
   if (typeof state.dataset.event.theme === 'string') {
@@ -1754,6 +1767,7 @@ function createDatasetScaffold(pathValue) {
       venue: '',
       website: '',
       scheduleURLs: [],
+      other_urls: [],
       logo: normalizeLogoObject(),
       flickr: normalizeFlickrObject(),
       sponsors: [],
@@ -2394,6 +2408,39 @@ function renderFlickrForm() {
   bindFlickrFormEvents(els.flickrForm);
 }
 
+function renderUrlMultifieldHtml(scope, field, config, urls) {
+  const spanClass = 'md:col-span-2 xl:col-span-3';
+  const rows = urls.map((url, i) => `
+    <div class="url-multifield-row">
+      <input type="text"
+        class="url-multifield-input"
+        data-url-field="${escapeAttr(field)}"
+        data-url-index="${i}"
+        value="${escapeAttr(url)}"
+        placeholder="https://"
+        ${fieldDescriptionAttr(scope, field, config)}>
+      <button type="button"
+        class="url-multifield-remove"
+        data-url-remove="${escapeAttr(field)}"
+        data-url-index="${i}"
+        aria-label="Remove URL">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `).join('');
+
+  return `
+    <div class="editor-form-field ${spanClass}">
+      ${renderFieldIntro(scope, field, config)}
+      <div class="url-multifield-list" data-url-list="${escapeAttr(field)}">
+        ${rows || '<p class="url-multifield-empty">No URLs configured.</p>'}
+      </div>
+      <button type="button" class="url-multifield-add" data-url-add="${escapeAttr(field)}">
+        <i class="fas fa-plus"></i> Add URL
+      </button>
+    </div>
+  `;
+}
 
 function setEventColor(field, value) {
   if (!state.dataset?.event) return;
@@ -2931,8 +2978,13 @@ function renderEventMetaForm() {
 
   const html = visibleFields.map((field) => {
     const config = EVENT_META_FIELD_CONFIG[field] || { label: field, description: '' };
-    const isWide = field === 'website' || field === 'scheduleURLs';
+    const isWide = field === 'website' || field === 'scheduleURLs' || field === 'other_urls';
     const spanClass = isWide ? 'md:col-span-2 xl:col-span-3' : '';
+
+    if (field === 'scheduleURLs' || field === 'other_urls') {
+      const urls = normalizeUrlArray(event[field]);
+      return renderUrlMultifieldHtml('event', field, config, urls);
+    }
 
     if (field === 'timezone') {
       const current = safeTimezone(event[field] || 'UTC');
@@ -3047,6 +3099,37 @@ function renderEventMetaForm() {
       }
     });
   });
+  els.eventMetaForm.querySelectorAll('[data-url-field]').forEach((input) => {
+    input.addEventListener('input', () => {
+      const field = input.dataset.urlField;
+      const index = Number(input.dataset.urlIndex);
+      if (!Array.isArray(state.dataset.event[field])) state.dataset.event[field] = [];
+      state.dataset.event[field][index] = input.value;
+      markDirty(true);
+    });
+  });
+
+  els.eventMetaForm.querySelectorAll('[data-url-add]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const field = btn.dataset.urlAdd;
+      if (!Array.isArray(state.dataset.event[field])) state.dataset.event[field] = [];
+      state.dataset.event[field].push('');
+      markDirty(true);
+      renderEventMetaForm();
+    });
+  });
+
+  els.eventMetaForm.querySelectorAll('[data-url-remove]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const field = btn.dataset.urlRemove;
+      const index = Number(btn.dataset.urlIndex);
+      if (!Array.isArray(state.dataset.event[field])) return;
+      state.dataset.event[field].splice(index, 1);
+      markDirty(true);
+      renderEventMetaForm();
+    });
+  });
+
   renderLogoForm();
   renderFlickrForm();
 }
@@ -4950,8 +5033,10 @@ function renderSitemap() {
     } catch {}
   });
 
-  const total = eventUrls.length + sessionEntries.length + sponsorEntries.length;
-  const allUrls = [...eventUrls, ...sessionEntries.map(e => e.url), ...sponsorEntries.map(e => e.url)].join('\n');
+  const otherUrls = normalizeUrlArray(meta.other_urls).filter(Boolean);
+
+  const total = eventUrls.length + sessionEntries.length + sponsorEntries.length + otherUrls.length;
+  const allUrls = [...eventUrls, ...sessionEntries.map(e => e.url), ...sponsorEntries.map(e => e.url), ...otherUrls].join('\n');
 
   function urlRow(url, label = '') {
     const display = url.replace(/^https?:\/\//, '');
@@ -4983,6 +5068,11 @@ function renderSitemap() {
       <section class="sitemap-section">
         <h3 class="sitemap-section-heading">Sponsors <span class="sitemap-count-badge">${sponsorEntries.length}</span></h3>
         <ul class="sitemap-url-list">${sponsorEntries.map(e => urlRow(e.url, e.title)).join('')}</ul>
+      </section>` : ''}
+    ${otherUrls.length ? `
+      <section class="sitemap-section">
+        <h3 class="sitemap-section-heading">Other URLs <span class="sitemap-count-badge">${otherUrls.length}</span></h3>
+        <ul class="sitemap-url-list">${otherUrls.map(u => urlRow(u)).join('')}</ul>
       </section>` : ''}
     ${total === 0 ? '<p class="text-sm text-gray-400 py-4">No URLs found for this domain in the dataset.</p>' : ''}
   `;
