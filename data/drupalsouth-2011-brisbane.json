@@ -5,7 +5,6 @@
     "year": "2011",
     "website": "http://2011.drupaldownunder.org/",
     "region": "Australia",
-    "scheduleURL": "http://2011.drupaldownunder.org/schedule",
     "venue": "Bardon Conference Centre, 390 Simpsons Rd, Bardon Queensland 4065, Australia",
     "timezone": "Australia/Sydney",
     "enabled": true,
@@ -194,6 +193,9 @@
         "aspect": "auto",
         "enabled": true
       }
+    ],
+    "scheduleURLs": [
+      "http://2011.drupaldownunder.org/schedule"
     ]
   },
   "items": [
@@ -364,7 +366,7 @@
       "track": [
         "General"
       ],
-      "speakers": "",
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },

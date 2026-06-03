@@ -5,7 +5,6 @@
     "year": "2008",
     "website": "http://christchurch2008.drupalsouth.net.nz",
     "region": "New Zealand – Christchurch",
-    "scheduleURL": "http://christchurch2008.drupalsouth.net.nz/programme",
     "venue": "The Twisted Hop, Christchurch",
     "timezone": "Pacific/Auckland",
     "enabled": true,
@@ -103,7 +102,10 @@
         "enabled": true
       }
     ],
-    "columns": 3
+    "columns": 3,
+    "scheduleURLs": [
+      "http://christchurch2008.drupalsouth.net.nz/programme"
+    ]
   },
   "items": [
     {
@@ -116,7 +118,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -131,7 +133,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -200,9 +202,6 @@
       "speakers": [
         "Chris Burgess"
       ],
-      "speaker_usernames": [
-        "xurizaemon"
-      ],
       "full_description": "Reach your audience with effective campaigns using Drupal and CiviCRM, based on experience with the NZ Greens and other advocacy organisations. The archived session page also notes it had not yet been allocated a slot at that capture date.",
       "video_url": "",
       "sponsorIds": ""
@@ -251,7 +250,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -266,7 +265,7 @@
       "track": [
         "Unconference"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -281,7 +280,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -296,7 +295,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -311,7 +310,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -428,7 +427,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -443,7 +442,7 @@
       "track": [
         "Unconference"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -458,7 +457,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -473,7 +472,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -488,7 +487,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""

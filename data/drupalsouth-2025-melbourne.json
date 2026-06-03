@@ -7,7 +7,6 @@
     "region": "Australia – Melbourne",
     "endDate": "2025-03-13T05:00:00Z",
     "startDate": "2025-03-10T22:00:00Z",
-    "scheduleURL": "https://drupalsouth.org/events/drupalsouth-melbourne-2025/schedule",
     "venue": "ACMI (Australian Centre for the Moving Image)",
     "timezone": "Australia/Melbourne",
     "enabled": true,
@@ -233,7 +232,10 @@
         "enabled": true
       }
     ],
-    "columns": 3
+    "columns": 3,
+    "scheduleURLs": [
+      "https://drupalsouth.org/events/drupalsouth-melbourne-2025/schedule"
+    ]
   },
   "items": [
     {
@@ -246,7 +248,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-16"
@@ -278,7 +280,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -293,7 +295,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -308,7 +310,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -323,7 +325,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -355,7 +357,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -421,7 +423,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -487,7 +489,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -553,7 +555,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -619,7 +621,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -654,9 +656,6 @@
       "speakers": [
         "Sean Hamlin"
       ],
-      "speaker_usernames": [
-        "wiifm"
-      ],
       "full_description": "Following on from the session back in Drupalsouth Sydney 2024 (blog post at https://www.pixelite.co.nz/article/drupal-and-the-open-web-in-the-australian-government-2024-edition/ ) , this session will review the CMS landscape in the Australian government in 2025.\n\nThe presentation will focus on the movers and shakers in the CMS landscape, find out which high profile government departments are moving to Drupal, or away from it.\n\nA state by state breakdown will be done, and we can even compare the total amount of Drupal running in each state, through a lens of PageRank. We will be able to see which states (and at the federal level) are making a broader adoption of Drupal.",
       "video_url": "https://youtu.be/5PELEIiYIe0",
       "sponsorIds": ""
@@ -671,7 +670,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -720,7 +719,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -735,7 +734,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-6"
@@ -750,7 +749,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -765,7 +764,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -780,7 +779,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -795,7 +794,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -827,7 +826,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -893,7 +892,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -910,9 +909,6 @@
       ],
       "speakers": [
         "Akhil Bhandari"
-      ],
-      "speaker_usernames": [
-        "akhil-bhandari"
       ],
       "full_description": "In the fast-evolving digital landscape, building and maintaining a cohesive design system for government platforms can feel daunting. Enter Starshot’s Experience Builder, a powerful tool integrated with CivicTheme to propel your design system to new heights within Drupal environments.\n\nThis talk explores how Starshot’s Experience Builder enhances CivicTheme’s capabilities, enabling non-technical and technical teams alike to create seamless, reusable components and UI patterns that scale effortlessly. Join us as we delve into practical use cases, from ideation through implementation, showing how Australian government agencies can accelerate their digital transformation with an efficient, open-source and highly adaptable design system built on Drupal.\n\nWalk away with insights on streamlining workflows, reducing development overhead and future-proofing your organisation’s digital assets—all while ensuring a consistent user experience across platforms.",
       "video_url": "https://youtu.be/vhxv5uwWxO4",
@@ -962,7 +958,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -979,9 +975,6 @@
       ],
       "speakers": [
         "Daniel Veza"
-      ],
-      "speaker_usernames": [
-        "danielveza"
       ],
       "full_description": "In 2024, I became a Drupal core maintainer for Layout Builder, and this session will focus on the journey that led me there. The goal of this session is to encourage others to find their own niche within Drupal core and consider a path toward core maintainership.\n\nThe Drupal core codebase is large, and it's impossible to know everything. I'll discuss how focusing on a specific area (like Layout Builder for me), can lead to becoming a subject matter expert. I’ll outline the steps I took to reach this role, why I chose Layout Builder, and give tips for finding other areas in Drupal core that need maintainers and could use some more people getting involved to help move them forward.\n\nThis session is ideal for anyone interested in getting more involved in Drupal core and learning how to make an impact by focusing on a specific area.",
       "video_url": "https://youtu.be/qixVBDWutvk",
@@ -1034,9 +1027,6 @@
       "speakers": [
         "Adam Bramley"
       ],
-      "speaker_usernames": [
-        "acbramley"
-      ],
       "full_description": "Traditional Drupal theming can lead to several maintenance issues in the long term.\n\nWhile Twig debugging helps to track down specific templates, pinpointing how certain pieces of data make their way onto a page can be tricky. Pinto eliminates all this guesswork by encapsulating theming logic into reusable PHP classes.\n\nThis new module, written by PNXer Daniel Phin, dramatically improves the developer experience and velocity for theming sites. In fact, we now use it in all of our new projects.\n\nIn this lightning talk, learn how the brand-new Pinto module can elevate your Drupal theming to the next level.\n\nWe’ll touch on some of the common issues with traditional Drupal theming that Pinto bypasses, the basics of setting it up, plus example components and rendering Pinto Theme objects.",
       "video_url": "https://youtu.be/dnBKvq9dbb8",
       "sponsorIds": ""
@@ -1054,9 +1044,6 @@
       "speakers": [
         "Karl Hepworth"
       ],
-      "speaker_usernames": [
-        "fubarhouse"
-      ],
       "full_description": "Come and hear the captivating story of The Pygmy Stack, a local development tool owned by amazee.io, redeveloped and maintained for a while by someone working for a customer and competitor. To this day, it's a passion project and continues to fall outside of official responsibilities. It's a tale of collaboration and passion, showcasing how the project evolved, underwent redevelopment, and continues to be maintained. From using Pygmy as a customer to supporting the project from a competing agency, this showcase is a testament to the power of open-source, cross-agency initiatives.\n\nThe presentation aims to enlighten attendees about the Pygmy project, its purpose, and its remarkable journey. It delves into Pygmy's history, unveiling the driving forces behind its creation and evolution. Furthermore, it sheds light on the redevelopment project, exploring the reasons for redevelopment and how it gradually replaced the legacy application.\n\nAttendees will gain insights into Pygmy's day-to-day maintenance from the unique perspective of a competing agency. This showcase promises to be an engaging and informative experience for anyone interested in open-source collaborations, cross-agency initiatives, and the Pygmy project.\n\nLearning Objectives\n\n- An informed understanding of what Pygmy is and its purpose.\n\n- Showcase the rich history and evolution of Pygmy.\n\n- Unveil the motivations and process behind the redevelopment project, highlighting the succession of the original Pygmy.\n\n- Demonstrate the intricacies of maintaining Pygmy from the perspective of a competing agency, offering a unique and insightful viewpoint.",
       "video_url": "https://youtu.be/RnzHEyz4hzU",
       "sponsorIds": ""
@@ -1071,7 +1058,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1106,9 +1093,6 @@
       "speakers": [
         "Alex Skrypnyk"
       ],
-      "speaker_usernames": [
-        "alex.skrypnyk"
-      ],
       "full_description": "Building and maintaining Drupal projects can be overwhelming with the sheer number of configurations, tools, and workflows involved. What if you could skip the tedious setup and jump straight into development? Enter Vortex—a project template designed to handle the heavy lifting, so you can focus on what really matters: building great websites.\n\nVortex is a Drupal project template designed to handle the tedious yet essential parts of project and tooling setup so you don’t have to. With over 50 pre-configured features and configurations, it covers everything from code quality tools and automated testing to deployment workflows and CI integrations. Production-grade container images and streamlined CI setups ensure that all pieces work seamlessly together out of the box, letting you focus on development instead of troubleshooting tooling.\n\nOne of the standout benefits of Vortex is its ease of onboarding. Comprehensive documentation guides developers through every aspect of the template, making it simple for new team members to get started quickly. Whether switching between projects or joining an ongoing one, Vortex reduces the learning curve, ensuring everyone is productive from day one. Its unified developer experience minimizes inconsistencies and surprises, while still allowing room for customizations when needed.\n\nIf you’re tired of spending days setting up CI, deployment scripts, and tooling for every project, this session is for you. We will discuss how Vortex’s extensive features and detailed documentation simplify workflows, reduce overhead, and help you deliver projects faster and with greater confidence.\n\nhttps://vortex.drevops.com/",
       "video_url": "https://youtu.be/2yJ3JNEGyys",
       "sponsorIds": ""
@@ -1123,7 +1107,7 @@
       "track": [
         "People & Culture"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "https://youtu.be/if8zdGN9NkQ",
       "sponsorIds": ""
@@ -1138,7 +1122,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1174,9 +1158,6 @@
       "speakers": [
         "Akhil Bhandari"
       ],
-      "speaker_usernames": [
-        "akhil-bhandari"
-      ],
       "full_description": "Rev up your engines and put your knowledge to the test in Salsa Digital’s Drupal F1 Trivia!. Whether you’re a Drupal pro, an F1 fanatic, or just in it for the fun, this interactive session will keep you on your toes. Expect a mix of Drupal facts, F1 trivia, and crossover questions that blend the best of both worlds. Hands up for the right answers, win chocolate, and if you’ve got the best answer to our open-ended challenges, you’ll take home an F1 LEGO prize! No need to be an expert—just bring your best guesses and fastest reflexes. See you on the starting grid!",
       "video_url": "",
       "sponsorIds": "sponsor-9"
@@ -1208,7 +1189,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1275,7 +1256,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1341,7 +1322,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1356,7 +1337,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1371,7 +1352,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""

@@ -5,7 +5,6 @@
     "year": "2013",
     "website": "http://lanyrd.com/2013/drupalgov/",
     "region": "Australia",
-    "scheduleURL": "http://lanyrd.com/2013/drupalgov/schedule/",
     "venue": "University House, Cnr Balmain Crescent & Liversidge St, Acton, ACT 2601, Australia",
     "timezone": "Australia/Sydney",
     "enabled": true,
@@ -142,7 +141,10 @@
         "enabled": true
       }
     ],
-    "columns": 3
+    "columns": 3,
+    "scheduleURLs": [
+      "http://lanyrd.com/2013/drupalgov/schedule/"
+    ]
   },
   "items": [
     {
@@ -153,7 +155,7 @@
       "location": "Foyer, University House",
       "link": "http://lanyrd.com/2013/drupalgov/scmgyx/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -167,9 +169,6 @@
       "track": [],
       "speakers": [
         "Christopher Skene"
-      ],
-      "speaker_usernames": [
-        "xtfer"
       ],
       "full_description": "",
       "sponsorIds": ""
@@ -238,7 +237,7 @@
       "location": "Foyer, University House",
       "link": "http://lanyrd.com/2013/drupalgov/scmgyy/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -293,7 +292,7 @@
       "location": "Common Room, University House",
       "link": "http://lanyrd.com/2013/drupalgov/scmgyw/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "A recent initiative from Australian Defence Force Academy Midshipmen and Officer Cadets has seen the implementation of PreviousNext's aGov distribution to serve as a cadet intranet for the Academy. This session presents a case study on its implementation from both the business and technical perspective, and shares the experience of those who made it happen.",
       "sponsorIds": ""
     },
@@ -333,7 +332,7 @@
       "location": "Foyer, University House",
       "link": "http://lanyrd.com/2013/drupalgov/scpbdc/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -345,7 +344,7 @@
       "location": "Foyer, University House",
       "link": "http://lanyrd.com/2013/drupalgov/scmgyz/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },
@@ -357,7 +356,7 @@
       "location": "Common Room, University House",
       "link": "http://lanyrd.com/2013/drupalgov/scpbdd/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "Got something you want to share? 6 minute lightning talks start at 12:45 in the Common Room. Come along and see what pops up!",
       "sponsorIds": ""
     },
@@ -454,7 +453,7 @@
       "location": "Foyer, University House",
       "link": "http://lanyrd.com/2013/drupalgov/scmgzb/",
       "track": [],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "sponsorIds": ""
     },

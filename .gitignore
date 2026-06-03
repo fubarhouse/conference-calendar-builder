@@ -1,4 +1,5 @@
-.codex
+node_modules
 cache/*
+.codegraph/*
 .idea/*
 scripts/*

@@ -6,6 +6,12 @@
     },
     {
       "file": "drupalcamp-pune-2025.json"
+    {,
+    {
+      "file": "drupalcamp-den-2022-osaka.json"
+    },
+    {
+      "file": "drupalcamp-den-2019-nagoya.json"
     },
     {
       "file": "drupalcon-asia-mumbai-2016.json"
@@ -33,6 +39,9 @@
     },
     {
       "file": "drupalcon-eu-prague-2022.json"
+    },
+    {
+      "file": "drupalcon-eu-rotterdam-2026.json"
     },
     {
       "file": "drupalcon-eu-vienna-2025.json"
@@ -145,6 +154,12 @@
     },
     {
       "file": "drupalsouth-community-day-2025-canberra.json"
+    },
+    {
+      "file": "sponsors.json"
+    },
+    {
+      "file": "themes.json"
     }
   ]
 }

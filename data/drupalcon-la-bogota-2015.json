@@ -5,7 +5,6 @@
     "year": "2015",
     "website": "https://latinamerica2015.drupal.org/",
     "region": "Latin America",
-    "scheduleURL": "https://latinamerica2015.drupal.org/schedule.html",
     "venue": "Centro de Convenciones Gonzalo Jimenez de Quesada",
     "timezone": "America/Bogota",
     "startDate": "2015-02-09T13:00:00Z",
@@ -14,18 +13,17 @@
       "enabled": false,
       "groupUrl": "",
       "image": "",
-      "imageAlt": "",
-      "title": "",
-      "text": "",
-      "buttonLabel": "",
-      "mode": ""
+      "imageAlt": ""
     },
     "columns": 3,
     "enabled": false,
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://latinamerica2015.drupal.org/schedule.html"
+    ]
   },
   "items": [
     {
@@ -36,7 +34,7 @@
       "location": "Ground Floor 1 - RoyalPark Metrotel Convention Center Hotel",
       "link": "https://latinamerica2015.drupal.org/registration.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2015-02-09T13:00:00Z",
@@ -46,7 +44,7 @@
       "location": "Royal Park Metrotel Calle 74 # 13-27  Bogotá, Colombia",
       "link": "https://latinamerica2015.drupal.org/developer-contest-payu.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2015-02-10T14:00:00Z",
@@ -70,7 +68,7 @@
       "location": "Exhibit Hall",
       "link": "https://latinamerica2015.drupal.org/coffee-break-sponsored-cellar-door-media.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2015-02-10T15:45:00Z",
@@ -138,7 +136,7 @@
       "location": "Exhibit Hall",
       "link": "https://latinamerica2015.drupal.org/lunch-sponsored-four-kitchens.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2015-02-10T18:00:00Z",
@@ -387,7 +385,7 @@
       "location": "Exhibit Hall",
       "link": "https://latinamerica2015.drupal.org/coffee-break-sponsored-cellar-door-media-0.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2015-02-11T15:45:00Z",
@@ -454,7 +452,7 @@
       "location": "Exhibit Hall",
       "link": "https://latinamerica2015.drupal.org/lunch-sponsored-four-kitchens-0.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2015-02-11T18:00:00Z",
@@ -635,7 +633,7 @@
       "location": "Salon Auditorium - Just Digital",
       "link": "https://latinamerica2015.drupal.org/closing-session.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2015-02-12T14:00:00Z",
@@ -645,7 +643,7 @@
       "location": "Salon Olmo",
       "link": "https://latinamerica2015.drupal.org/first-time-sprinter-workshop.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2015-02-12T14:00:00Z",
@@ -655,7 +653,7 @@
       "location": "Salon Olmo",
       "link": "https://latinamerica2015.drupal.org/mentored-core-sprint-0.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     },
     {
       "startTime": "2015-02-12T14:00:00Z",
@@ -665,7 +663,7 @@
       "location": "Salon Olmo",
       "link": "https://latinamerica2015.drupal.org/contribution-sprints.html",
       "track": [],
-      "speakers": null
+      "speakers": []
     }
   ],
   "result": "success",

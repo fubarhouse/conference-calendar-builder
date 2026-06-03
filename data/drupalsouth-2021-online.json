@@ -7,7 +7,6 @@
     "region": "Online",
     "startDate": "2021-11-11T00:00:00Z",
     "endDate": "2021-11-12T05:00:00Z",
-    "scheduleURL": "https://drupalsouth.org/drupalsouth-21-schedule-11-November",
     "venue": "Online",
     "timezone": "Australia/Sydney",
     "columns": 5,
@@ -221,6 +220,9 @@
         "aspect": "auto",
         "enabled": true
       }
+    ],
+    "scheduleURLs": [
+      "https://drupalsouth.org/drupalsouth-21-schedule-11-November"
     ]
   },
   "items": [
@@ -234,7 +236,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -247,7 +249,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -328,9 +330,6 @@
       "speakers": [
         "Sean Hamlin"
       ],
-      "speaker_usernames": [
-        "wiifm"
-      ],
       "video_url": "https://www.youtube.com/watch?v=1TmJKcN97g4",
       "sponsorIds": ""
     },
@@ -350,9 +349,6 @@
         "Steve Coochin",
         "Chris Burgess"
       ],
-      "speaker_usernames": [
-        "xurizaemon"
-      ],
       "video_url": "https://www.youtube.com/watch?v=luwOif1mSmo",
       "sponsorIds": ""
     },
@@ -366,7 +362,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -399,9 +395,6 @@
       "speakers": [
         "Simon Hobbs",
         "Nathan ter Bogt"
-      ],
-      "speaker_usernames": [
-        "sime"
       ],
       "video_url": "https://www.youtube.com/watch?v=KFOriK84B6o",
       "sponsorIds": ""
@@ -462,7 +455,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -491,7 +484,7 @@
       "track": [
         "General"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -504,7 +497,7 @@
       "track": [
         "Sprint"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     }
   ],
