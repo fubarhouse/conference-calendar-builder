@@ -8,7 +8,6 @@
     "region": "Japan",
     "startDate": "2023-01-21T01:00:00Z",
     "endDate": "2023-01-21T07:55:00Z",
-    "scheduleURL": "https://drupal-camp2023.den-japan.org/session_list",
     "venue": "岩国市民文化会館 (Iwakuni Citizens' Cultural Hall)",
     "timezone": "Asia/Tokyo",
     "columns": 3,
@@ -339,7 +338,9 @@
       "image": "",
       "imageAlt": ""
     },
-    "scheduleURLs": "https://drupal-camp2023.den-japan.org/session_list"
+    "scheduleURLs": [
+      "https://drupal-camp2023.den-japan.org/session_list"
+    ]
   },
   "items": [
     {
