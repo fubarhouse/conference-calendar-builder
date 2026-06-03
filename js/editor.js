@@ -1,6 +1,20 @@
 import { loadEventCatalog } from './modules/eventCatalog.js';
 import { formatTextBlock } from './modules/markdown.js';
 import { isLocalhost, slugify } from './modules/utils.js';
+import { configureEventSearch, openEventSearchModal } from './modules/eventSearch.js';
+import { renderTimeline } from './modules/timeline.js';
+import { validateDataset, formatValidationErrors } from './modules/validator.js';
+import {
+  loadThemes,
+  getThemes,
+  setThemes,
+  getThemeById,
+  normalizeThemeId,
+  getCurrentThemeId,
+  setCurrentThemeId,
+  applyThemeClass,
+  applyEventColors,
+} from './modules/theme.js';
 
 const state = {
   dataset: null,
@@ -29,8 +43,20 @@ const state = {
   sessionStructureDirty: false,
   sponsorStructureDirty: false,
   timezones: [],
-  sponsorSessionPickerOpen: false
+  sponsorSessionPickerOpen: false,
+  sessionSponsorPickerOpen: false,
+  imageCacheBust: new Map(),
+  sponsorEventCounts: null,
+  apiEndpoint: localStorage.getItem('editorApiEndpoint') || ''
 };
+
+
+const UNDO_STACK = [];
+const UNDO_LIMIT = 50;
+const RECOVERY_KEY = '__editor_recovery__';
+const PHOTOS_BACKUP_KEY = '__photos_prev__';
+const LOGO_BACKUP_KEY = '__logo_prev__';
+const RECOVERY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const FILE_LINK_DB = 'dataset-editor-file-links';
 const FILE_LINK_STORE = 'links';
@@ -44,8 +70,10 @@ const EVENT_META_FIELDS = [
   'region',
   'venue',
   'website',
-  'scheduleURL',
+  'scheduleURLs',
   'other_urls',
+  'startDate',
+  'endDate',
   'logo',
   'flickr',
   'timezone',
@@ -77,8 +105,8 @@ const EVENT_META_FIELD_CONFIG = {
     label: 'Event website',
     description: 'The official event website URL.'
   },
-  scheduleURL: {
-    label: 'Schedule URL(s)',
+  scheduleURLs: {
+    label: 'Schedule URLs',
     description: 'One or more source schedule URLs used when this dataset was created or checked.'
   },
   other_urls: {
@@ -97,6 +125,14 @@ const EVENT_META_FIELD_CONFIG = {
     label: 'Schedule columns',
     description: 'The preferred number of columns for the public schedule layout.'
   },
+  startDate: {
+    label: 'Conference start date',
+    description: 'First day of the event. Populates the timeline day tabs even when no sessions are scheduled yet.'
+  },
+  endDate: {
+    label: 'Conference end date',
+    description: 'Last day of the event. All dates between start and end appear as timeline days.'
+  },
   enabled: {
     label: 'Show this event',
     description: 'Controls whether this dataset is available in the public planner.'
@@ -104,16 +140,20 @@ const EVENT_META_FIELD_CONFIG = {
 };
 const FLICKR_FIELD_CONFIG = {
   enabled: {
-    label: 'Show Flickr block',
-    description: 'Displays the Flickr callout on the public event page when a group URL is provided.'
+    label: 'Show photos block',
+    description: 'Displays the photo callout on the public event page when a URL is provided.'
+  },
+  provider: {
+    label: 'Photo provider',
+    description: 'Name of the photo platform shown in the callout (e.g. Flickr, Google Photos, SmugMug).'
   },
   groupUrl: {
-    label: 'Flickr group URL',
-    description: 'The public Flickr group or album link used by the call-to-action button.'
+    label: 'Photos URL',
+    description: 'The public link to the photo album, group, or gallery used by the call-to-action button.'
   },
   image: {
     label: 'Promo image path',
-    description: 'A relative path to the square promo image shown beside the Flickr text.'
+    description: 'A relative path to the square promo image shown beside the photos block text.'
   },
   imageAlt: {
     label: 'Image alternative text',
@@ -139,32 +179,25 @@ const SPONSOR_FIELDS = [
   { key: 'subtitle', label: 'Subtitle text', description: 'Optional display name shown on the schedule instead of the company name. Falls back to the sponsor title if blank.', type: 'text', span: 2 },
   { key: 'id', label: 'Sponsor ID', description: 'Stable identifier used by sessions to reference this sponsor.', type: 'text' },
   { key: 'tier', label: 'Tier', description: 'Grouping label such as Platinum, Gold, Silver, or Partner.', type: 'text' },
-  { key: 'row', label: 'Row', description: 'Integer row index used to control which sponsor row renders first.', type: 'number' },
-  { key: 'priority', label: 'Priority', description: 'Lower numbers sort earlier within a row.', type: 'number' },
+  { key: 'row', label: 'Display row', description: 'Which row this sponsor appears in. Lower numbers appear first.', type: 'number' },
+  { key: 'priority', label: 'Display order', description: 'Position within the row. Lower numbers appear earlier.', type: 'number' },
   { key: 'link', label: 'Sponsor URL', description: 'Optional external link for the sponsor logo or card.', type: 'text', span: 2 },
   { key: 'image', label: 'Image path', description: 'Relative path to the uploaded sponsor image asset.', type: 'text', span: 2 },
   { key: 'imageAlt', label: 'Image alternative text', description: 'Short accessible description for the sponsor image.', type: 'text', span: 2 },
-  { key: 'bgStyle', label: 'Background style', description: 'Controls how non-transparent logos are framed.', type: 'select', options: ['auto', 'transparent', 'light-plate', 'dark-plate', 'brand-fill'] },
-  { key: 'aspect', label: 'Aspect hint', description: 'Helps the renderer handle square and wide assets consistently.', type: 'select', options: ['auto', 'square', 'landscape', 'banner'] },
+  { key: 'bgStyle', label: 'Logo background', description: 'How the logo image background is treated. Use "light-plate" or "dark-plate" if the logo has no transparent background.', type: 'select', options: ['auto', 'transparent', 'light-plate', 'dark-plate', 'brand-fill'] },
+  { key: 'aspect', label: 'Image shape', description: 'The aspect ratio of the logo. Helps ensure it displays at the right size and proportions.', type: 'select', options: ['auto', 'square', 'landscape', 'banner'] },
   { key: 'enabled', label: 'Show sponsor', description: 'Controls whether this sponsor is available for rendering and session association.', type: 'checkbox' }
 ];
 const SESSION_FIELDS = [
   { key: 'title', label: 'Session title', description: 'The public title shown on schedule cards and detail views.', type: 'text', span: 2 },
-  { key: 'startTime', label: 'Start time', description: 'Enter the local event start time. It will be stored as UTC.', type: 'datetime-local' },
-  { key: 'endTime', label: 'End time', description: 'Enter the local event finish time. It will be stored as UTC.', type: 'datetime-local' },
+  { key: 'startTime', label: 'Start time', description: 'Enter the session start time in the event\'s local timezone.', type: 'datetime-local' },
+  { key: 'endTime', label: 'End time', description: 'Enter the session end time in the event\'s local timezone.', type: 'datetime-local' },
   { key: 'location', label: 'Room or location', description: 'The room, stage, or location for this session.', type: 'text' },
   { key: 'duration', label: 'Session duration', description: 'Calculated automatically from the start and end time.', type: 'text' },
   { key: 'track', label: 'Track or topic', description: 'Use commas to separate multiple tracks or topics.', type: 'text' },
   { key: 'speakers', label: 'Speaker names', description: 'Use commas or new lines to separate multiple speakers.', type: 'textarea', span: 2 },
-  {
-    key: 'speaker_usernames',
-    label: 'Speaker Drupal.org usernames',
-    description: 'Optional profile usernames. Use commas or new lines to match multiple speakers.',
-    type: 'textarea',
-    span: 2
-  },
   { key: 'full_description', label: 'Session description', description: 'The full public description. Markdown formatting is supported.', type: 'textarea', span: 2 },
-  { key: 'sponsorIds', label: 'Sponsor IDs', description: 'Optional sponsor references for this session. Use commas or new lines.', type: 'textarea', span: 2 },
+  { key: 'sponsorIds', label: 'Sponsors', description: 'Sponsors associated with this session.', type: 'sponsors', span: 2 },
   { key: 'link', label: 'Session page URL', description: 'The original or canonical web page for this session.', type: 'text', span: 2 },
   { key: 'video_url', label: 'Video URL', description: 'Optional recording URL shown with the session details.', type: 'text', span: 2 }
 ];
@@ -176,11 +209,21 @@ let eventCatalog = [];
 const els = {
   blocked: document.getElementById('editorBlocked'),
   app: document.getElementById('editorApp'),
+  welcome: document.getElementById('editorWelcome'),
+  saveToast: document.getElementById('saveToast'),
   datasetSelect: document.getElementById('datasetSelect'),
+  editorSearchEvents: document.getElementById('editorSearchEvents'),
   folderConnectionToggle: document.getElementById('folderConnectionToggle'),
   newDataset: document.getElementById('newDataset'),
   saveDataset: document.getElementById('saveDataset'),
+  saveDatasetToggle: document.getElementById('saveDatasetToggle'),
+  saveDatasetDropdown: document.getElementById('saveDatasetDropdown'),
   saveAsDataset: document.getElementById('saveAsDataset'),
+  previewDataset: document.getElementById('previewDataset'),
+  previewDatasetToggle: document.getElementById('previewDatasetToggle'),
+  previewDatasetDropdown: document.getElementById('previewDatasetDropdown'),
+  undoAction: document.getElementById('undoAction'),
+  revertDataset: document.getElementById('revertDataset'),
   exportDataset: document.getElementById('exportDataset'),
   currentFilenameInput: document.getElementById('currentFilenameInput'),
   dirtyState: document.getElementById('dirtyState'),
@@ -188,6 +231,7 @@ const els = {
   toggleEventMetaIcon: document.getElementById('toggleEventMetaIcon'),
   eventMetaBody: document.getElementById('eventMetaBody'),
   eventMetaForm: document.getElementById('eventMetaForm'),
+  appearanceForm: document.getElementById('appearanceForm'),
   eventWorkspacePanel: document.getElementById('eventWorkspacePanel'),
   logoForm: document.getElementById('logoForm'),
   flickrForm: document.getElementById('flickrForm'),
@@ -237,12 +281,38 @@ const els = {
   showSponsorsTab: document.getElementById('showSponsorsTab'),
   showSitemapTab: document.getElementById('showSitemapTab'),
   sitemapWorkspacePanel: document.getElementById('sitemapWorkspacePanel'),
+  showTimelineTab: document.getElementById('showTimelineTab'),
+  timelineWorkspacePanel: document.getElementById('timelineWorkspacePanel'),
+  timelineCanvas: document.getElementById('timelineCanvas'),
+  showAppearanceTab: document.getElementById('showAppearanceTab'),
+  appearanceWorkspacePanel: document.getElementById('appearanceWorkspacePanel'),
+
   sponsorSessionPickerModal: document.getElementById('sponsorSessionPickerModal'),
   sponsorSessionPickerList: document.getElementById('sponsorSessionPickerList'),
   sponsorSessionPickerCount: document.getElementById('sponsorSessionPickerCount'),
   closeSponsorSessionPicker: document.getElementById('closeSponsorSessionPicker'),
-  closeSponsorSessionPickerBack: document.getElementById('closeSponsorSessionPickerBack')
+  closeSponsorSessionPickerBack: document.getElementById('closeSponsorSessionPickerBack'),
+  sessionSponsorPickerModal: document.getElementById('sessionSponsorPickerModal'),
+  sessionSponsorPickerList: document.getElementById('sessionSponsorPickerList'),
+  sessionSponsorPickerCount: document.getElementById('sessionSponsorPickerCount'),
+  closeSessionSponsorPicker: document.getElementById('closeSessionSponsorPicker'),
+  closeSessionSponsorPickerBack: document.getElementById('closeSessionSponsorPickerBack')
 };
+
+// Ensure the search button is always enabled for quick event switching
+if (els.editorSearchEvents) {
+  els.editorSearchEvents.disabled = false;
+  els.editorSearchEvents.removeAttribute('disabled');
+
+  // Watch for any attempts to disable the button and immediately revert them
+  const observer = new MutationObserver(() => {
+    if (els.editorSearchEvents.disabled) {
+      els.editorSearchEvents.disabled = false;
+      els.editorSearchEvents.removeAttribute('disabled');
+    }
+  });
+  observer.observe(els.editorSearchEvents, { attributes: true, attributeFilter: ['disabled'] });
+}
 
 
 function outputBasename(pathValue) {
@@ -365,10 +435,7 @@ async function resolveFileHandleFromProjectDir(pathValue) {
 }
 
 async function connectProjectFolder() {
-  if (typeof window.showDirectoryPicker !== 'function') {
-    window.alert('Directory linking is not supported in this browser. Use Save As once per dataset.');
-    return;
-  }
+  if (!isFolderPickerSupported()) return;
   const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
   state.projectDirHandle = handle;
   state.folderConnectedInSession = true;
@@ -376,6 +443,25 @@ async function connectProjectFolder() {
   await renderDatasetOptionsFromConnectedFolder();
   setDatasetLoadingEnabled(true);
   setFolderConnectionButtonState();
+  showWelcomeScreen2();
+  await refreshEditorSearch();
+
+  const returnFile = localStorage.getItem('__editor_return_file__');
+  if (returnFile) {
+    localStorage.removeItem('__editor_return_file__');
+    const returnOption = Array.from(els.datasetSelect.options).find((o) => o.value === returnFile);
+    if (returnOption) {
+      closeWelcomeModal();
+      els.datasetSelect.value = returnFile;
+      state.lastDatasetSelectValue = returnFile;
+      try {
+        await loadDataset(returnFile);
+      } catch (error) {
+        window.alert(`Could not resume file: ${error.message}`);
+      }
+      return;
+    }
+  }
 
   const selectedFile = String(els.datasetSelect.value || '').trim();
   if (selectedFile) {
@@ -422,14 +508,14 @@ function disconnectProjectFolder() {
   setEditorButtonsEnabled(false);
   els.eventMetaForm.innerHTML = '';
   if (els.logoForm) {
-    els.logoForm.innerHTML = '<p class="text-sm text-gray-400">Connect folder to begin.</p>';
+    els.logoForm.innerHTML = '<p class="text-sm text-gray-400">Open a project folder to get started.</p>';
   }
   if (els.flickrForm) {
-    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Connect folder to begin.</p>';
+    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Open a project folder to get started.</p>';
   }
-  els.sessionList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Connect folder to begin.</li>';
+  els.sessionList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Open a project folder to get started.</li>';
   els.sessionForm.innerHTML = '<p class="text-sm text-gray-400">Select a session on the left to edit it.</p>';
-  els.sponsorList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Connect folder to begin.</li>';
+  els.sponsorList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Open a project folder to get started.</li>';
   els.sponsorForm.innerHTML = '<p class="text-sm text-gray-400">Select a sponsor row to edit it.</p>';
   if (els.sessionSearchInput) {
     els.sessionSearchInput.value = '';
@@ -441,6 +527,8 @@ function disconnectProjectFolder() {
   markSessionDirty(false);
   markSponsorDirty(false);
   setFolderConnectionButtonState();
+  syncWelcomePanel();
+  void refreshEditorSearch();
 }
 
 function setCurrentFilenameLabel() {
@@ -454,11 +542,14 @@ function setEditorButtonsEnabled(enabled) {
     els.exportDataset.disabled = !enabled;
   }
   els.saveDataset.disabled = !enabled;
-  els.saveAsDataset.disabled = !enabled;
-  els.saveSession.disabled = !enabled || state.selectedIndex < 0;
+  if (els.saveDatasetToggle) els.saveDatasetToggle.disabled = !enabled;
+  if (els.previewDataset) els.previewDataset.disabled = !enabled;
+  if (els.previewDatasetToggle) els.previewDatasetToggle.disabled = !enabled;
+  if (els.revertDataset) els.revertDataset.disabled = true;
+  if (els.saveSession) els.saveSession.disabled = !enabled || state.selectedIndex < 0;
   els.addSession.disabled = !enabled;
   els.deleteSession.disabled = !enabled || state.selectedIndex < 0;
-  els.saveSponsor.disabled = !enabled || state.selectedSponsorIndex < 0;
+  if (els.saveSponsor) els.saveSponsor.disabled = !enabled || state.selectedSponsorIndex < 0;
   els.addSponsor.disabled = !enabled;
   els.deleteSponsor.disabled = !enabled || state.selectedSponsorIndex < 0;
   syncQuickSessionEditToggle();
@@ -537,12 +628,42 @@ function setQuickSponsorEditEnabled(enabled) {
   renderSponsorForm();
 }
 
+function isFolderPickerSupported() {
+  return typeof window.showDirectoryPicker === 'function';
+}
+
 function setFolderConnectionButtonState() {
-  if (!els.folderConnectionToggle) return;
-  if (state.folderConnectedInSession && state.projectDirHandle) {
-    els.folderConnectionToggle.innerHTML = '<i class="fas fa-unlink mr-2"></i>Disconnect Folder';
-  } else {
-    els.folderConnectionToggle.innerHTML = '<i class="fas fa-link mr-2"></i>Connect Folder';
+  const welcomeBtn = document.getElementById('welcomeConnectFolder');
+  const unsupportedTitle = 'Folder access is not supported in this browser — use the API server instead';
+
+  if (isApiMode()) {
+    if (els.folderConnectionToggle) els.folderConnectionToggle.classList.add('hidden');
+    return;
+  }
+
+  if (els.folderConnectionToggle) {
+    els.folderConnectionToggle.classList.remove('hidden');
+    if (!isFolderPickerSupported()) {
+      els.folderConnectionToggle.disabled = true;
+      els.folderConnectionToggle.title = unsupportedTitle;
+      els.folderConnectionToggle.innerHTML = '<i class="fas fa-folder-open mr-2"></i>Connect Folder';
+    } else {
+      els.folderConnectionToggle.disabled = false;
+      els.folderConnectionToggle.title = '';
+      els.folderConnectionToggle.innerHTML = state.folderConnectedInSession && state.projectDirHandle
+        ? '<i class="fas fa-unlink mr-2"></i>Disconnect folder'
+        : '<i class="fas fa-folder-open mr-2"></i>Open project folder';
+    }
+  }
+
+  if (welcomeBtn) {
+    if (!isFolderPickerSupported()) {
+      welcomeBtn.disabled = true;
+      welcomeBtn.title = unsupportedTitle;
+    } else {
+      welcomeBtn.disabled = false;
+      welcomeBtn.title = '';
+    }
   }
 }
 
@@ -578,6 +699,7 @@ async function restorePersistedSnapshot() {
   markSessionDirty(false);
   markSponsorDirty(false);
   renderEventMetaForm();
+  renderAppearanceForm();
   renderLogoForm();
   renderFlickrForm();
   renderSessionList();
@@ -588,21 +710,305 @@ async function restorePersistedSnapshot() {
   syncSponsorSaveButton();
 }
 
-async function confirmDiscardPendingChanges(targetLabel = 'another form') {
-  if (!state.dirty) return true;
-  const proceed = window.confirm(
-    `You have pending changes in this form. They will not be saved if you move to ${targetLabel}. Continue and discard them?`
-  );
-  if (!proceed) return false;
-  await restorePersistedSnapshot();
-  return true;
+function saveRecoverySnapshot() {
+  if (!state.dataset) return;
+  try {
+    localStorage.setItem(RECOVERY_KEY, JSON.stringify({
+      dataset: state.dataset,
+      file: state.file,
+      outputPath: state.outputPath,
+      savedAt: Date.now(),
+    }));
+  } catch {
+    // localStorage full or unavailable
+  }
 }
+
+function clearRecoverySnapshot() {
+  try { localStorage.removeItem(RECOVERY_KEY); } catch {}
+}
+
+function loadRecoverySnapshot() {
+  try {
+    const raw = localStorage.getItem(RECOVERY_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data?.dataset || !data?.file) return null;
+    if (data.savedAt && Date.now() - data.savedAt > RECOVERY_MAX_AGE_MS) {
+      clearRecoverySnapshot();
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function applyRecovery(recovery) {
+  state.dataset = recovery.dataset;
+  state.file = recovery.file || '';
+  state.outputPath = recovery.outputPath || '';
+  state.selectedIndex = -1;
+  state.selectedSponsorIndex = -1;
+  state.sessionSearchQuery = '';
+  normalizeDatasetShape();
+  clearRecoverySnapshot();
+  undoClear();
+  markDirty(true);
+  markSessionDirty(false);
+  markSponsorDirty(false);
+  setEditorButtonsEnabled(true);
+  setCurrentFilenameLabel();
+  renderEventMetaForm();
+  renderAppearanceForm();
+  renderSessionList();
+  renderSessionForm();
+  renderSponsorList();
+  renderSponsorForm();
+  syncSessionSaveButton();
+  syncSponsorSaveButton();
+  closeWelcomeModal();
+}
+
+function showRecoveryBar(recovery) {
+  const bar = document.getElementById('recoveryBar');
+  const textEl = document.getElementById('recoveryBarText');
+  if (!bar || !textEl) return;
+  const ageMs = Date.now() - (recovery.savedAt || 0);
+  const ageMin = Math.round(ageMs / 60_000);
+  const ageText = ageMin < 1 ? 'just now' : ageMin === 1 ? '1 minute ago' : `${ageMin} minutes ago`;
+  textEl.textContent = `Unsaved work from ${ageText} found for "${recovery.file}".`;
+  bar.classList.remove('hidden');
+  document.getElementById('recoveryRestore')?.addEventListener('click', () => {
+    applyRecovery(recovery);
+    bar.classList.add('hidden');
+  });
+  document.getElementById('recoveryDismiss')?.addEventListener('click', () => {
+    if (!window.confirm('Discard the recovered work? This cannot be undone.')) return;
+    clearRecoverySnapshot();
+    bar.classList.add('hidden');
+  });
+}
+
+function undoPush() {
+  if (!state.dataset) return;
+  UNDO_STACK.push({
+    dataset: cloneJsonValue(state.dataset),
+    selectedIndex: state.selectedIndex,
+    selectedSponsorIndex: state.selectedSponsorIndex,
+  });
+  if (UNDO_STACK.length > UNDO_LIMIT) UNDO_STACK.shift();
+  updateUndoButton();
+}
+
+function undoClear() {
+  UNDO_STACK.length = 0;
+  updateUndoButton();
+}
+
+function updateUndoButton() {
+  if (els.undoAction) {
+    els.undoAction.disabled = UNDO_STACK.length === 0;
+    els.undoAction.title = UNDO_STACK.length > 0
+      ? `Undo (${UNDO_STACK.length} step${UNDO_STACK.length === 1 ? '' : 's'}) — Ctrl+Z`
+      : 'Nothing to undo';
+  }
+}
+
+async function performUndo() {
+  if (UNDO_STACK.length === 0) return;
+  const entry = UNDO_STACK.pop();
+  state.dataset = entry.dataset;
+  state.selectedIndex = entry.selectedIndex;
+  state.selectedSponsorIndex = entry.selectedSponsorIndex;
+  state.quickEditSessionChanges = new Set();
+  state.quickEditSponsorChanges = new Set();
+  normalizeDatasetShape();
+  markDirty(true);
+  markSessionDirty(false);
+  markSponsorDirty(false);
+  updateUndoButton();
+  renderEventMetaForm();
+  renderAppearanceForm();
+  renderSessionList();
+  renderSessionForm();
+  renderSponsorList();
+  renderSponsorForm();
+  syncSessionSaveButton();
+  syncSponsorSaveButton();
+  if (els.deleteSession) els.deleteSession.disabled = state.selectedIndex < 0;
+  if (els.deleteSponsor) els.deleteSponsor.disabled = state.selectedSponsorIndex < 0;
+}
+
+function confirmDiscardPendingChanges(targetLabel = 'another file') {
+  if (!state.dirty) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const modal = document.getElementById('unsavedChangesModal');
+    if (!modal) {
+      const proceed = window.confirm('You have unsaved changes. Discard and continue?');
+      if (proceed) restorePersistedSnapshot().then(() => resolve(true));
+      else resolve(false);
+      return;
+    }
+    const targetEl = document.getElementById('unsavedChangesTarget');
+    if (targetEl) targetEl.textContent = targetLabel;
+    modal.classList.remove('hidden');
+    document.body.classList.add('session-modal-open');
+
+    const close = () => {
+      modal.classList.add('hidden');
+      document.body.classList.remove('session-modal-open');
+    };
+
+    document.getElementById('unsavedModalSave').addEventListener('click', async () => {
+      close();
+      try { await saveDataset(); resolve(true); } catch { resolve(false); }
+    }, { once: true });
+
+    document.getElementById('unsavedModalDiscard').addEventListener('click', async () => {
+      close();
+      await restorePersistedSnapshot();
+      resolve(true);
+    }, { once: true });
+
+    document.getElementById('unsavedModalCancel').addEventListener('click', () => {
+      close(); resolve(false);
+    }, { once: true });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) { close(); resolve(false); }
+    }, { once: true });
+  });
+}
+
+let _lastSavedAt = null;
 
 function markDirty(nextDirty = true) {
   state.dirty = nextDirty;
-  const color = state.dirty ? 'text-amber-300' : 'text-emerald-300';
-  const label = state.dirty ? 'Unsaved changes' : 'No changes';
+  const color = nextDirty ? 'text-amber-300' : 'text-emerald-300';
+  let label;
+  if (nextDirty) {
+    label = 'Unsaved changes';
+  } else if (_lastSavedAt) {
+    label = `Saved ${_lastSavedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+  } else {
+    label = 'No changes';
+  }
   els.dirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-xs ${color}"></i><span>${label}</span>`;
+  els.dirtyState.dataset.dirty = String(nextDirty);
+  els.saveDataset.classList.toggle('is-dirty', nextDirty);
+  els.saveDataset.title = nextDirty ? 'Save changes (Ctrl+S)' : 'No unsaved changes';
+  if (els.revertDataset) {
+    els.revertDataset.disabled = !nextDirty || !state.persistedSnapshot;
+  }
+}
+
+let _saveToastTimer = null;
+function showSaveToast() {
+  if (!els.saveToast) return;
+  _lastSavedAt = new Date();
+  clearTimeout(_saveToastTimer);
+  els.saveToast.classList.add('is-visible');
+  _saveToastTimer = setTimeout(() => els.saveToast.classList.remove('is-visible'), 2500);
+}
+
+function syncWelcomePanel() {
+  if (!els.welcome) return;
+  const show = isApiMode()
+    ? !state.dataset
+    : (!state.folderConnectedInSession || !state.projectDirHandle) && !state.dataset;
+  if (show) {
+    document.getElementById('welcomeScreen1')?.classList.remove('hidden');
+    document.getElementById('welcomeScreen2')?.classList.add('hidden');
+    syncWelcomeScreen1State();
+  }
+  els.welcome.classList.toggle('hidden', !show);
+  els.welcome.setAttribute('aria-hidden', String(!show));
+  document.body.classList.toggle('session-modal-open', show);
+}
+
+function syncWelcomeScreen1State() {
+  const row = document.getElementById('welcomeApiConnectedRow');
+  const label = document.getElementById('welcomeApiConnectedLabel');
+  if (!row) return;
+  if (isApiMode()) {
+    if (label) label.textContent = state.apiEndpoint;
+    row.classList.remove('hidden');
+  } else {
+    row.classList.add('hidden');
+  }
+}
+
+function closeWelcomeModal() {
+  if (!els.welcome) return;
+  els.welcome.classList.add('hidden');
+  els.welcome.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('session-modal-open');
+}
+
+function showWelcomeScreen2() {
+  if (!els.welcome) return;
+  document.getElementById('welcomeScreen1')?.classList.add('hidden');
+  const screen2 = document.getElementById('welcomeScreen2');
+  if (screen2) {
+    screen2.classList.remove('hidden');
+    const lead = screen2.querySelector('.editor-welcome-lead');
+    if (lead) {
+      lead.textContent = isApiMode()
+        ? 'API server connected. Select an event to start editing, or create a new one.'
+        : 'Your project folder is connected. Select an event to start editing, or create a new one.';
+    }
+  }
+
+  const eventList = document.getElementById('welcomeEventList');
+  if (eventList) {
+    const extractYear = (text) => { const m = text.match(/\b(20\d{2}|19\d{2})\b/); return m ? parseInt(m[1], 10) : 0; };
+    const options = Array.from(els.datasetSelect.options)
+      .filter((o) => o.value.trim())
+      .sort((a, b) => extractYear(b.text) - extractYear(a.text));
+    eventList.innerHTML = options.length
+      ? options.map((o) => {
+          const isHidden = o.dataset.enabled === 'false';
+          return `
+          <button type="button" class="editor-welcome-event-btn" data-welcome-load="${escapeAttr(o.value)}">
+            <i class="fas fa-file-code welcome-btn-icon"></i>
+            <span class="welcome-btn-label">${escapeHtml(o.text)}</span>
+            ${isHidden ? '<span class="welcome-btn-hidden-badge"><i class="fas fa-eye-slash"></i> Hidden</span>' : ''}
+            <i class="fas fa-chevron-right welcome-btn-arrow"></i>
+          </button>`;
+        }).join('')
+      : '<p class="editor-welcome-empty">No event files found in this folder yet.</p>';
+
+    eventList.querySelectorAll('[data-welcome-load]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const file = btn.dataset.welcomeLoad;
+        closeWelcomeModal();
+        try {
+          els.datasetSelect.value = file;
+          state.lastDatasetSelectValue = file;
+          await loadDataset(file);
+        } catch (e) {
+          window.alert(`Could not load event: ${e.message}`);
+        }
+      });
+    });
+
+    const searchInput = document.getElementById('welcomeEventSearch');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
+    }
+  }
+
+  const newEventBtn = document.getElementById('welcomeNewEvent');
+  if (newEventBtn) {
+    newEventBtn.onclick = () => {
+      const pathValue = promptForNewFilename();
+      if (!pathValue) return;
+      closeWelcomeModal();
+      createDatasetScaffold(pathValue);
+    };
+  }
 }
 
 function markSessionDirty(nextDirty = true) {
@@ -617,7 +1023,7 @@ function markSessionDirty(nextDirty = true) {
       label = quickCount > 0 ? `${quickCount} item${quickCount === 1 ? '' : 's'} modified` : 'Unsaved quick edits';
     }
   } else if (state.sessionDirty || hasQuickChanges) {
-    label = 'Unsaved changes';
+    label = 'Modified';
   }
   els.sessionDirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-[0.55rem] ${color}"></i><span>${label}</span>`;
   syncSessionSaveButton();
@@ -635,7 +1041,7 @@ function markSponsorDirty(nextDirty = true) {
       label = quickCount > 0 ? `${quickCount} item${quickCount === 1 ? '' : 's'} modified` : 'Unsaved quick edits';
     }
   } else if (state.sponsorDirty || hasQuickChanges) {
-    label = 'Unsaved changes';
+    label = 'Modified';
   }
   els.sponsorDirtyState.innerHTML = `<i class="fas fa-circle mr-2 text-[0.55rem] ${color}"></i><span>${label}</span>`;
   syncSponsorSaveButton();
@@ -755,6 +1161,7 @@ function normalizeFlickrObject(raw = null) {
   const enabled = !(input.enabled === false || String(input.enabled || '').toLowerCase() === 'false');
   return {
     enabled,
+    provider: String(input.provider || '').trim(),
     groupUrl: String(input.groupUrl || '').trim(),
     image: String(input.image || '').trim(),
     imageAlt: String(input.imageAlt || '').trim()
@@ -876,11 +1283,15 @@ function deriveSessionDurationValue(startTime, endTime) {
   return durationToCanonical(minutes);
 }
 
+const _DURATION_RE = /^P\d+M$/;
 function syncSessionDuration(item) {
-  if (!item || typeof item !== 'object') return '';
-  const duration = deriveSessionDurationValue(item.startTime, item.endTime);
-  item.duration = duration;
-  return duration;
+  if (!item || typeof item !== 'object') return 'P0M';
+  const derived = deriveSessionDurationValue(item.startTime, item.endTime);
+  const existing = item.duration;
+  item.duration = _DURATION_RE.test(derived) ? derived
+    : _DURATION_RE.test(existing) ? existing
+    : 'P0M';
+  return item.duration;
 }
 
 function syncAllSessionDurations() {
@@ -1099,13 +1510,15 @@ async function loadDatasetMetaForGrouping(files) {
         return {
           file,
           group: getDatasetGroupName(eventMeta),
-          label: buildDatasetOptionLabel(file, eventMeta)
+          label: buildDatasetOptionLabel(file, eventMeta),
+          enabled: eventMeta.enabled !== false,
         };
       } catch {
         return {
           file,
           group: 'Other',
-          label: getManifestLabelByFile(file)
+          label: getManifestLabelByFile(file),
+          enabled: true,
         };
       }
     })
@@ -1119,21 +1532,58 @@ async function loadDatasetMetaForGrouping(files) {
   return records;
 }
 
+async function loadDatasetMetaForGroupingViaFetch(files) {
+  const records = await Promise.all(
+    files.map(async (file) => {
+      try {
+        const url = isApiMode() ? `${state.apiEndpoint}/api/data/${encodeURIComponent(file)}` : `./data/${file}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error();
+        const parsed = await res.json();
+        validateDatasetSchema(parsed, file);
+        const m = parsed && typeof parsed === 'object' ? parsed.event || {} : {};
+        return {
+          file,
+          group: getDatasetGroupName(m),
+          label: buildDatasetOptionLabel(file, m),
+          enabled: m.enabled !== false,
+          designation: String(m.designation || '').trim(),
+          location: String(m.location || '').trim(),
+          year: String(m.year || '').trim(),
+          region: String(m.region || '').trim(),
+          venue: String(m.venue || '').trim(),
+        };
+      } catch {
+        return { file, group: 'Other', label: getManifestLabelByFile(file), enabled: true, designation: '', location: '', year: '', region: '', venue: '' };
+      }
+    })
+  );
+  records.sort((a, b) => {
+    const groupCmp = a.group.localeCompare(b.group);
+    return groupCmp !== 0 ? groupCmp : a.label.localeCompare(b.label);
+  });
+  return records;
+}
+
 async function renderDatasetOptionsFromConnectedFolder(preferred = '') {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
     els.datasetSelect.innerHTML = '<option value="">Connect folder to load datasets</option>';
     els.datasetSelect.value = '';
     return;
   }
 
-  const files = await listDatasetFilesFromConnectedFolder();
+  const files = isApiMode()
+    ? eventCatalog.map((e) => e.file).filter((f) => f && isEditorDatasetFile(f)).sort((a, b) => a.localeCompare(b))
+    : await listDatasetFilesFromConnectedFolder();
   if (files.length === 0) {
     els.datasetSelect.innerHTML = '<option value="">No JSON files found in data/</option>';
     els.datasetSelect.value = '';
     return;
   }
 
-  const groupedRecords = await loadDatasetMetaForGrouping(files);
+  const groupedRecords = isApiMode()
+    ? await loadDatasetMetaForGroupingViaFetch(files)
+    : await loadDatasetMetaForGrouping(files);
   const groups = new Map();
   groupedRecords.forEach((record) => {
     if (!groups.has(record.group)) groups.set(record.group, []);
@@ -1143,7 +1593,7 @@ async function renderDatasetOptionsFromConnectedFolder(preferred = '') {
   els.datasetSelect.innerHTML = [...groups.entries()]
     .map(([groupName, records]) => {
       const options = records
-        .map((record) => `<option value="${escapeAttr(record.file)}">${escapeHtml(record.label)}</option>`)
+        .map((record) => `<option value="${escapeAttr(record.file)}" data-enabled="${record.enabled !== false}">${escapeHtml(record.label)}</option>`)
         .join('');
       return `<optgroup label="${escapeAttr(groupName)}">${options}</optgroup>`;
     })
@@ -1190,8 +1640,25 @@ function normalizeDatasetShape() {
   }
   if (!state.dataset.event.timezone) state.dataset.event.timezone = 'UTC';
   if (state.dataset.event.columns == null || state.dataset.event.columns === '') state.dataset.event.columns = 3;
-  state.dataset.event.scheduleURL = normalizeUrlArray(state.dataset.event.scheduleURL);
+  state.dataset.event.scheduleURLs = normalizeUrlArray(state.dataset.event.scheduleURLs);
   state.dataset.event.other_urls = normalizeUrlArray(state.dataset.event.other_urls || []);
+  const hexPattern = /^#[0-9a-fA-F]{6}$/;
+  // Migrate legacy string theme and top-level color fields into the theme object
+  if (typeof state.dataset.event.theme === 'string') {
+    state.dataset.event.theme = { id: state.dataset.event.theme };
+  } else if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') {
+    state.dataset.event.theme = {};
+  }
+  for (const colorField of ['primaryColor', 'secondaryColor', 'tertiaryColor']) {
+    const topLevel = state.dataset.event[colorField];
+    if (topLevel) {
+      if (!state.dataset.event.theme[colorField]) state.dataset.event.theme[colorField] = topLevel;
+      delete state.dataset.event[colorField];
+    }
+    const v = state.dataset.event.theme[colorField];
+    if (v != null && !hexPattern.test(v)) delete state.dataset.event.theme[colorField];
+  }
+  if (Object.keys(state.dataset.event.theme).length === 0) delete state.dataset.event.theme;
   syncAllSessionDurations();
   state.dataset.items.forEach((item) => {
     if (!item || typeof item !== 'object') return;
@@ -1201,17 +1668,30 @@ function normalizeDatasetShape() {
 }
 
 async function loadDataset(file) {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
     throw new Error('Connect folder first.');
+  }
+  if (localStorage.getItem(PHOTOS_BACKUP_KEY)) {
+    await revertPendingPhotoUpload();
+  }
+  if (localStorage.getItem(LOGO_BACKUP_KEY)) {
+    await revertPendingLogoUpload();
   }
   if (!isEditorDatasetFile(file)) {
     throw new Error(`${file} is not an editable dataset.`);
   }
   const targetPath = normalizeOutputPath(`data/${file}`);
-  const handle = await resolveFileHandleFromProjectDir(targetPath);
-  const fileBlob = await handle.getFile();
-  const content = await fileBlob.text();
-  const parsed = JSON.parse(content);
+  let handle = null;
+  let parsed;
+  if (isApiMode()) {
+    const res = await fetch(`${state.apiEndpoint}/api/data/${encodeURIComponent(file)}`);
+    if (!res.ok) throw new Error(`Failed to load ${file}: HTTP ${res.status}`);
+    parsed = await res.json();
+  } else {
+    handle = await resolveFileHandleFromProjectDir(targetPath);
+    const fileBlob = await handle.getFile();
+    parsed = JSON.parse(await fileBlob.text());
+  }
   validateDatasetSchema(parsed, file);
   state.dataset = parsed;
   state.file = file;
@@ -1222,24 +1702,32 @@ async function loadDataset(file) {
   state.selectedSponsorIndex = -1;
   state.sessionSearchQuery = '';
   normalizeDatasetShape();
-  await restoreLinkedHandleForCurrentPath();
-  if (!state.fileHandle && state.projectDirHandle) {
-    try {
-      const fromDir = await resolveFileHandleFromProjectDir(state.outputPath);
-      if (fromDir) {
-        state.fileHandle = fromDir;
-        await setLinkedHandle(getFileLinkKey(), fromDir);
+  if (!isApiMode()) {
+    await restoreLinkedHandleForCurrentPath();
+    if (!state.fileHandle && state.projectDirHandle) {
+      try {
+        const fromDir = await resolveFileHandleFromProjectDir(state.outputPath);
+        if (fromDir) {
+          state.fileHandle = fromDir;
+          await setLinkedHandle(getFileLinkKey(), fromDir);
+        }
+      } catch {
+        // Keep fallback behavior.
       }
-    } catch {
-      // Keep fallback behavior.
     }
   }
   markDirty(false);
   markSessionDirty(false);
   markSponsorDirty(false);
   capturePersistedSnapshot();
+  undoClear();
+  clearRecoverySnapshot();
   setCurrentFilenameLabel();
+  const themeObj = state.dataset?.event?.theme;
+  applyThemeClass(themeObj?.id ? normalizeThemeId(themeObj.id) : getCurrentThemeId());
+  applyEventColors(themeObj?.primaryColor, themeObj?.secondaryColor, themeObj?.tertiaryColor);
   renderEventMetaForm();
+  renderAppearanceForm();
   renderLogoForm();
   renderFlickrForm();
   renderSessionList();
@@ -1247,6 +1735,16 @@ async function loadDataset(file) {
   renderSponsorList();
   renderSponsorForm();
   if (state.activeEditorTab === 'sitemap') renderSitemap();
+  if (state.activeEditorTab === 'timeline' && els.timelineCanvas) {
+    renderTimeline(els.timelineCanvas, state.dataset, {
+      markDirty: () => markDirty(true),
+      trackQuickSessionChange,
+      undoPush,
+      utcIsoToLocalInput,
+      localInputToUtcIso,
+      getEventTimezone,
+    });
+  }
   setEditorButtonsEnabled(true);
   if (els.datasetSelect.value !== file) {
     els.datasetSelect.value = file;
@@ -1268,7 +1766,7 @@ function createDatasetScaffold(pathValue) {
       region: '',
       venue: '',
       website: '',
-      scheduleURL: [],
+      scheduleURLs: [],
       other_urls: [],
       logo: normalizeLogoObject(),
       flickr: normalizeFlickrObject(),
@@ -1292,6 +1790,7 @@ function createDatasetScaffold(pathValue) {
   capturePersistedSnapshot();
   setCurrentFilenameLabel();
   renderEventMetaForm();
+  renderAppearanceForm();
   renderLogoForm();
   renderFlickrForm();
   renderSessionList();
@@ -1344,9 +1843,101 @@ async function ensureDirectoryPath(baseDirHandle, segments) {
   return current;
 }
 
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+function dataUrlToBlob(dataUrl) {
+  const [header, base64] = dataUrl.split(',');
+  const mime = (header.match(/:(.*?);/) || [])[1] || 'image/jpeg';
+  const binary = atob(base64);
+  const buffer = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) buffer[i] = binary.charCodeAt(i);
+  return new Blob([buffer], { type: mime });
+}
+
+async function backupCurrentPhotoForRevert() {
+  const currentPath = String(state.dataset?.event?.flickr?.image || '').trim().replace(/^\.\//, '');
+  if (!currentPath || !state.projectDirHandle) return;
+  try {
+    const handle = await resolveFileHandleFromProjectDir(currentPath);
+    if (!handle) return;
+    const file = await handle.getFile();
+    const base64 = arrayBufferToBase64(await file.arrayBuffer());
+    localStorage.setItem(PHOTOS_BACKUP_KEY, JSON.stringify({
+      path: currentPath,
+      data: `data:${file.type || 'image/jpeg'};base64,${base64}`
+    }));
+  } catch {
+    // No existing file to back up, or too large — skip silently
+  }
+}
+
+async function revertPendingPhotoUpload() {
+  const raw = localStorage.getItem(PHOTOS_BACKUP_KEY);
+  localStorage.removeItem(PHOTOS_BACKUP_KEY);
+  if (!raw || !state.projectDirHandle) return;
+  try {
+    const { path, data } = JSON.parse(raw);
+    const segments = path.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const writable = await (await dir.getFileHandle(fileName, { create: true })).createWritable();
+    await writable.write(dataUrlToBlob(data));
+    await writable.close();
+  } catch {
+    // Revert failed — dataset path will still reload correctly from JSON
+  }
+}
+
+function clearPhotosBackup() {
+  localStorage.removeItem(PHOTOS_BACKUP_KEY);
+}
+
+async function backupCurrentLogoForRevert() {
+  const currentPath = String(state.dataset?.event?.logo?.image || '').trim().replace(/^\.\//, '');
+  if (!currentPath || !state.projectDirHandle) return;
+  try {
+    const handle = await resolveFileHandleFromProjectDir(currentPath);
+    if (!handle) return;
+    const file = await handle.getFile();
+    const base64 = arrayBufferToBase64(await file.arrayBuffer());
+    localStorage.setItem(LOGO_BACKUP_KEY, JSON.stringify({
+      path: currentPath,
+      data: `data:${file.type || 'image/png'};base64,${base64}`
+    }));
+  } catch {
+    // No existing file to back up, or too large — skip silently
+  }
+}
+
+async function revertPendingLogoUpload() {
+  const raw = localStorage.getItem(LOGO_BACKUP_KEY);
+  localStorage.removeItem(LOGO_BACKUP_KEY);
+  if (!raw || !state.projectDirHandle) return;
+  try {
+    const { path, data } = JSON.parse(raw);
+    const segments = path.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const writable = await (await dir.getFileHandle(fileName, { create: true })).createWritable();
+    await writable.write(dataUrlToBlob(data));
+    await writable.close();
+  } catch {
+    // Revert failed — dataset path will still reload correctly from JSON
+  }
+}
+
+function clearLogoBackup() {
+  localStorage.removeItem(LOGO_BACKUP_KEY);
+}
+
 async function uploadFlickrImageFromPicker() {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    window.alert('Connect folder first to upload Flickr images.');
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
+    window.alert('Connect folder or configure an API server to upload images.');
     return;
   }
   const picker = document.createElement('input');
@@ -1361,14 +1952,19 @@ async function uploadFlickrImageFromPicker() {
   const file = picker.files && picker.files[0] ? picker.files[0] : null;
   if (!file) return;
 
+  await backupCurrentPhotoForRevert();
   const relativePath = getFlickrImageTargetPath();
-  const segments = relativePath.split('/').filter(Boolean);
-  const fileName = segments.pop();
-  const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
-  const handle = await dir.getFileHandle(fileName, { create: true });
-  const writable = await handle.createWritable();
-  await writable.write(file);
-  await writable.close();
+  if (isApiMode()) {
+    await uploadViaApi(file, relativePath);
+  } else {
+    const segments = relativePath.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const handle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(file);
+    await writable.close();
+  }
 
   if (!state.dataset.event.flickr || typeof state.dataset.event.flickr !== 'object') {
     state.dataset.event.flickr = normalizeFlickrObject();
@@ -1378,12 +1974,16 @@ async function uploadFlickrImageFromPicker() {
     state.dataset.event.flickr.imageAlt = `${state.dataset.event.designation || 'Event'} Flickr image`;
   }
   markDirty(true);
-  renderEventMetaForm();
+  state.imageCacheBust.set(`./${relativePath}`, Date.now());
+  renderFlickrForm();
+  const blobUrl = URL.createObjectURL(file);
+  const frame = document.querySelector('.event-promo-image-frame');
+  if (frame) frame.innerHTML = `<img id="flickrImagePreview" class="event-promo-image" src="${blobUrl}" alt="${escapeAttr(state.dataset?.event?.flickr?.imageAlt || '')}">`;
 }
 
 async function uploadLogoImageFromPicker() {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    window.alert('Connect folder first to upload event logos.');
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
+    window.alert('Connect folder or configure an API server to upload images.');
     return;
   }
   const picker = document.createElement('input');
@@ -1398,14 +1998,20 @@ async function uploadLogoImageFromPicker() {
   const file = picker.files && picker.files[0] ? picker.files[0] : null;
   if (!file) return;
 
+  await backupCurrentLogoForRevert();
+
   const relativePath = getLogoImageTargetPath(file);
-  const segments = relativePath.split('/').filter(Boolean);
-  const fileName = segments.pop();
-  const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
-  const handle = await dir.getFileHandle(fileName, { create: true });
-  const writable = await handle.createWritable();
-  await writable.write(file);
-  await writable.close();
+  if (isApiMode()) {
+    await uploadViaApi(file, relativePath);
+  } else {
+    const segments = relativePath.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const handle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(file);
+    await writable.close();
+  }
 
   state.dataset.event.logo = normalizeLogoObject(state.dataset.event.logo);
   state.dataset.event.logo.image = `./${relativePath}`;
@@ -1413,12 +2019,15 @@ async function uploadLogoImageFromPicker() {
     state.dataset.event.logo.imageAlt = `${state.dataset.event.designation || 'Event'} logo`;
   }
   markDirty(true);
-  renderEventMetaForm();
+  state.imageCacheBust.set(`./${relativePath}`, Date.now());
+  renderLogoForm();
+  const logoPreview = document.getElementById('logoImagePreview');
+  if (logoPreview) { logoPreview.src = URL.createObjectURL(file); logoPreview.classList.remove('hidden'); }
 }
 
 async function uploadSponsorImageFromPicker(index) {
-  if (!state.projectDirHandle || !state.folderConnectedInSession) {
-    window.alert('Connect folder first to upload sponsor images.');
+  if (!isApiMode() && (!state.projectDirHandle || !state.folderConnectedInSession)) {
+    window.alert('Connect folder or configure an API server to upload images.');
     return;
   }
   const sponsor = state.dataset?.event?.sponsors?.[index];
@@ -1437,13 +2046,17 @@ async function uploadSponsorImageFromPicker(index) {
   if (!file) return;
 
   const relativePath = getSponsorImageTargetPath(file, sponsor);
-  const segments = relativePath.split('/').filter(Boolean);
-  const fileName = segments.pop();
-  const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
-  const handle = await dir.getFileHandle(fileName, { create: true });
-  const writable = await handle.createWritable();
-  await writable.write(file);
-  await writable.close();
+  if (isApiMode()) {
+    await uploadViaApi(file, relativePath);
+  } else {
+    const segments = relativePath.split('/').filter(Boolean);
+    const fileName = segments.pop();
+    const dir = await ensureDirectoryPath(state.projectDirHandle, segments);
+    const handle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(file);
+    await writable.close();
+  }
 
   sponsor.image = `./${relativePath}`;
   if (!sponsor.imageAlt) {
@@ -1451,9 +2064,15 @@ async function uploadSponsorImageFromPicker(index) {
   }
   markDirty(true);
   markSponsorDirty(true);
+  state.imageCacheBust.set(`./${relativePath}`, Date.now());
   renderSponsorList();
   renderSponsorForm();
   renderSessionForm();
+  const blobUrl = URL.createObjectURL(file);
+  const surface = document.getElementById('sponsorPreviewSurface');
+  if (surface) surface.innerHTML = `<img id="sponsorImagePreview" src="${blobUrl}" alt="${escapeAttr(sponsor?.imageAlt || '')}" class="sponsor-logo-image">`;
+  const inline = document.getElementById('sponsorInlinePreview');
+  if (inline) inline.innerHTML = `<img src="${blobUrl}" alt="${escapeAttr(sponsor?.imageAlt || '')}" class="sponsor-inline-image">`;
 }
 
 function fieldDescriptionId(scope, key) {
@@ -1497,132 +2116,140 @@ function getFlickrEventLabel(eventMeta = null) {
   return [eventMeta?.designation, eventMeta?.year, eventMeta?.location].filter(Boolean).join(' ').trim() || 'Event';
 }
 
-function getAutomatedFlickrCopy(eventMeta = null, items = []) {
+function getAutomatedFlickrCopy(eventMeta = null, items = [], provider = '') {
   const mode = inferFlickrMode(eventMeta, items);
   const eventLabel = getFlickrEventLabel(eventMeta);
+  const p = String(provider || '').trim() || 'Flickr';
   return {
     mode,
     heading: mode === 'archive' ? `${eventLabel} Photo Archive` : `Share Your ${eventLabel} Photos`,
     description:
       mode === 'archive'
-        ? `Browse the official Flickr group for photos from ${eventLabel}.`
-        : 'Join the official Flickr group and share your photos before, during, and after the event.',
-    buttonText: mode === 'archive' ? 'View Photo Archive' : 'Open Flickr Group'
+        ? `Browse the official ${p} page for photos from ${eventLabel}.`
+        : `Upload and share your photos on ${p} before, during, and after the event.`,
+    buttonText: mode === 'archive' ? 'View Photo Archive' : `Open on ${p}`
   };
 }
 
-function renderFlickrBlock(flickr) {
-  const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items);
+function renderFlickrCopyPreviewContent(automated) {
   return `
-    <fieldset class="editor-flickr-block md:col-span-2 xl:col-span-3">
-      <legend>
-        <span class="editor-flickr-title"><i class="fab fa-flickr" aria-hidden="true"></i> Flickr block</span>
-        <span class="editor-flickr-summary">Optional photo-sharing callout shown at the bottom of the event page.</span>
-      </legend>
-      <label class="editor-toggle-row">
-        <input data-flickr-field="enabled" type="checkbox" class="h-4 w-4" ${flickr.enabled ? 'checked' : ''}${fieldDescriptionAttr(
-          'flickr',
-          'enabled',
-          FLICKR_FIELD_CONFIG.enabled
-        )}>
-        <span>
-          ${renderFieldIntro('flickr', 'enabled', FLICKR_FIELD_CONFIG.enabled)}
-        </span>
-      </label>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+    <div><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Mode</span><span class="text-gray-800">${escapeHtml(automated.mode === 'archive' ? 'Photo archive' : 'Share photos')}</span></div>
+    <div><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Button</span><span class="text-gray-800">${escapeHtml(automated.buttonText)}</span></div>
+    <div class="col-span-2"><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Heading</span><span class="text-gray-800">${escapeHtml(automated.heading)}</span></div>
+    <div class="col-span-2"><span class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-0.5">Description</span><span class="text-gray-800">${escapeHtml(automated.description)}</span></div>
+  `;
+}
+
+function renderFlickrBlock(flickr) {
+  const automated = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickr.provider);
+  const imageSrc = (flickr.image || '').trim();
+  const providerLabel = (flickr.provider || 'Photos').toUpperCase();
+  return `
+    <div class="col-span-full flex gap-5 items-start">
+      <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label class="editor-form-field md:col-span-2">
+          ${renderFieldIntro('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}
+          <input data-flickr-field="provider" type="text" value="${escapeAttr(flickr.provider)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="Flickr"${fieldDescriptionAttr('flickr', 'provider', FLICKR_FIELD_CONFIG.provider)}>
+        </label>
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}
-          <input data-flickr-field="groupUrl" type="text" value="${escapeAttr(flickr.groupUrl)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white px-3" placeholder="https://flic.kr/g/..."${fieldDescriptionAttr(
-            'flickr',
-            'groupUrl',
-            FLICKR_FIELD_CONFIG.groupUrl
-          )}>
+          <input data-flickr-field="groupUrl" type="text" value="${escapeAttr(flickr.groupUrl)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="https://flic.kr/g/..."${fieldDescriptionAttr('flickr', 'groupUrl', FLICKR_FIELD_CONFIG.groupUrl)}>
         </label>
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('flickr', 'image', FLICKR_FIELD_CONFIG.image)}
-          <input data-flickr-field="image" type="text" value="${escapeAttr(flickr.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/flickr/.../image.jpg"${fieldDescriptionAttr(
-            'flickr',
-            'image',
-            FLICKR_FIELD_CONFIG.image
-          )}>
+          <input data-flickr-field="image" type="text" value="${escapeAttr(flickr.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/flickr/.../image.jpg"${fieldDescriptionAttr('flickr', 'image', FLICKR_FIELD_CONFIG.image)}>
         </label>
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('flickr', 'imageAlt', FLICKR_FIELD_CONFIG.imageAlt)}
-          <input data-flickr-field="imageAlt" type="text" value="${escapeAttr(flickr.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr(
-            'flickr',
-            'imageAlt',
-            FLICKR_FIELD_CONFIG.imageAlt
-          )}>
+          <input data-flickr-field="imageAlt" type="text" value="${escapeAttr(flickr.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr('flickr', 'imageAlt', FLICKR_FIELD_CONFIG.imageAlt)}>
         </label>
-        <div class="editor-form-field md:col-span-2 editor-flickr-defaults">
-          <span class="editor-field-label">Automated Flickr copy</span>
-          <span class="editor-field-description">The heading, description, button text, and mode are generated automatically from the event timing.</span>
-          <div class="editor-flickr-defaults-grid">
-            <div><span class="editor-flickr-defaults-label">Mode</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.mode === 'archive' ? 'Photo archive' : 'Share photos')}</span></div>
-            <div><span class="editor-flickr-defaults-label">Heading</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.heading)}</span></div>
-            <div><span class="editor-flickr-defaults-label">Description</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.description)}</span></div>
-            <div><span class="editor-flickr-defaults-label">Button text</span><span class="editor-flickr-defaults-value">${escapeHtml(automated.buttonText)}</span></div>
-          </div>
-        </div>
-        <div class="editor-form-field">
+        <div class="editor-form-field md:col-span-2">
           <span class="editor-field-label">Promo image upload</span>
           <span class="editor-field-description">Uploads to <code>img/flickr/${escapeHtml(
             slugify(state.dataset?.event?.designation || 'event') || 'event'
           )}</code> and stores a relative path.</span>
-          <button id="flickrImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-image mr-2"></i>Upload 250x250 Image
-          </button>
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="h-9 inline-flex items-center gap-2.5 rounded-md border border-gray-300 px-3 bg-white cursor-pointer select-none">
+              <input data-flickr-field="enabled" type="checkbox" class="h-4 w-4" ${flickr.enabled ? 'checked' : ''}${fieldDescriptionAttr('flickr', 'enabled', FLICKR_FIELD_CONFIG.enabled)}>
+              <span class="text-sm text-gray-700">Enabled</span>
+            </label>
+            <button id="flickrImageUpload" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-upload mr-1.5 text-[0.72rem]"></i>Upload image
+            </button>
+            <button id="flickrImageClear" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors whitespace-nowrap"${!imageSrc ? ' disabled' : ''}>
+              <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete image
+            </button>
+          </div>
         </div>
       </div>
-    </fieldset>
+
+      <aside class="flickr-editor-sidebar">
+        <div class="flickr-preview-stage">
+          <div id="flickrPreviewCard" class="event-promo-card rounded-lg border border-gray-200 bg-white p-3${flickr.enabled ? '' : ' opacity-50'}">
+            <div class="event-promo-image-frame">
+              ${imageSrc
+                ? `<img id="flickrImagePreview" class="event-promo-image" src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(flickr.imageAlt || '')}">`
+                : `<div class="flickr-preview-placeholder"><i class="fas fa-image"></i></div>`}
+            </div>
+            <div class="event-promo-body min-w-0">
+              <div class="flickr-preview-provider text-xs font-semibold tracking-wide text-gray-500 uppercase mb-0.5">${escapeHtml(providerLabel)}</div>
+              <div class="flickr-preview-heading text-sm font-semibold text-gray-900 leading-snug">${escapeHtml(automated.heading)}</div>
+              <p class="flickr-preview-desc text-xs text-gray-600 mt-1 leading-snug">${escapeHtml(automated.description)}</p>
+              <span class="event-promo-action flickr-preview-btn mt-2">${escapeHtml(automated.buttonText)}</span>
+            </div>
+          </div>
+        </div>
+        <p class="flickr-preview-caption">Page preview</p>
+      </aside>
+    </div>
   `;
 }
 
 function renderLogoBlock(logo) {
+  const imageSrc = (logo.image || '').trim();
+  const plateClass = logo.usePlate ? ' header-logo-use-plate' : '';
   return `
-    <fieldset class="editor-flickr-block md:col-span-2 xl:col-span-3">
-      <legend>
-        <span class="editor-flickr-title"><i class="fas fa-image" aria-hidden="true"></i> Event logo</span>
-        <span class="editor-flickr-summary">Controls the header logo shown on the public event page.</span>
-      </legend>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+    <div class="col-span-full flex gap-5 items-start">
+      <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-3">
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('logo', 'image', LOGO_FIELD_CONFIG.image)}
-          <input data-logo-field="image" type="text" value="${escapeAttr(logo.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/logos/.../logo.png"${fieldDescriptionAttr(
-            'logo',
-            'image',
-            LOGO_FIELD_CONFIG.image
-          )}>
+          <input data-logo-field="image" type="text" value="${escapeAttr(logo.image)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3" placeholder="./img/logos/.../logo.png"${fieldDescriptionAttr('logo', 'image', LOGO_FIELD_CONFIG.image)}>
         </label>
         <label class="editor-form-field md:col-span-2">
           ${renderFieldIntro('logo', 'imageAlt', LOGO_FIELD_CONFIG.imageAlt)}
-          <input data-logo-field="imageAlt" type="text" value="${escapeAttr(logo.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr(
-            'logo',
-            'imageAlt',
-            LOGO_FIELD_CONFIG.imageAlt
-          )}>
+          <input data-logo-field="imageAlt" type="text" value="${escapeAttr(logo.imageAlt)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${fieldDescriptionAttr('logo', 'imageAlt', LOGO_FIELD_CONFIG.imageAlt)}>
         </label>
-        <label class="editor-toggle-row md:col-span-2">
-          <input data-logo-field="usePlate" type="checkbox" class="h-4 w-4" ${logo.usePlate ? 'checked' : ''}${fieldDescriptionAttr(
-            'logo',
-            'usePlate',
-            LOGO_FIELD_CONFIG.usePlate
-          )}>
-          <span>
-            ${renderFieldIntro('logo', 'usePlate', LOGO_FIELD_CONFIG.usePlate)}
-          </span>
-        </label>
-        <div class="editor-form-field">
+        <div class="editor-form-field md:col-span-2">
           <span class="editor-field-label">Logo upload</span>
           <span class="editor-field-description">Uploads to <code>img/logos/${escapeHtml(
             slugify(state.dataset?.event?.designation || 'event') || 'event'
           )}</code> and stores a relative path.</span>
-          <button id="logoImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-upload mr-2"></i>Upload Logo
-          </button>
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="h-9 inline-flex items-center gap-2.5 rounded-md border border-gray-300 px-3 bg-white cursor-pointer select-none">
+              <input data-logo-field="usePlate" type="checkbox" class="h-4 w-4" ${logo.usePlate ? 'checked' : ''}${fieldDescriptionAttr('logo', 'usePlate', LOGO_FIELD_CONFIG.usePlate)}>
+              <span class="text-sm text-gray-700">Background plate</span>
+            </label>
+            <button id="logoImageUpload" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-upload mr-1.5 text-[0.72rem]"></i>Upload logo
+            </button>
+            <button id="logoImageClear" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors whitespace-nowrap"${!imageSrc ? ' disabled' : ''}>
+              <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete logo
+            </button>
+          </div>
         </div>
       </div>
-    </fieldset>
+
+      <aside class="logo-editor-sidebar">
+        <div class="logo-preview-stage">
+          <div id="logoPreviewContainer" class="header-logo${escapeAttr(plateClass)}">
+            <i class="fas fa-image${imageSrc ? ' hidden' : ''}"></i>
+            <img id="logoImagePreview" class="header-logo-image${imageSrc ? '' : ' hidden'}"
+              src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(logo.imageAlt || '')}">
+          </div>
+        </div>
+        <p class="logo-preview-caption">Header preview</p>
+      </aside>
+    </div>
   `;
 }
 
@@ -1639,6 +2266,42 @@ function bindFlickrFormEvents(container) {
       }
       state.dataset.event.flickr = normalizeFlickrObject(eventFlickr);
       markDirty(true);
+
+      const card = container.querySelector('#flickrPreviewCard');
+
+      if (key === 'enabled') {
+        if (card) card.classList.toggle('opacity-50', !input.checked);
+      }
+
+      if (key === 'provider' || key === 'groupUrl') {
+        const flickrNow = normalizeFlickrObject(state.dataset.event.flickr);
+        const auto = getAutomatedFlickrCopy(state.dataset?.event, state.dataset?.items, flickrNow.provider);
+        const providerEl = container.querySelector('.flickr-preview-provider');
+        const headingEl = container.querySelector('.flickr-preview-heading');
+        const descEl = container.querySelector('.flickr-preview-desc');
+        const btnEl = container.querySelector('.flickr-preview-btn');
+        if (providerEl) providerEl.textContent = (flickrNow.provider || 'Photos').toUpperCase();
+        if (headingEl) headingEl.textContent = auto.heading;
+        if (descEl) descEl.textContent = auto.description;
+        if (btnEl) btnEl.textContent = auto.buttonText;
+      }
+
+      if (key === 'image') {
+        const newSrc = input.value.trim();
+        const frame = container.querySelector('.event-promo-image-frame');
+        const clearBtn = container.querySelector('#flickrImageClear');
+        if (frame) {
+          frame.innerHTML = newSrc
+            ? `<img id="flickrImagePreview" class="event-promo-image" src="${escapeAttr(newSrc)}" alt="${escapeAttr(eventFlickr.imageAlt || '')}">`
+            : `<div class="flickr-preview-placeholder"><i class="fas fa-image"></i></div>`;
+        }
+        if (clearBtn) clearBtn.disabled = !newSrc;
+      }
+
+      if (key === 'imageAlt') {
+        const img = container.querySelector('#flickrImagePreview');
+        if (img) img.alt = input.value;
+      }
     };
     input.addEventListener('input', updateFlickrField);
     input.addEventListener('change', updateFlickrField);
@@ -1654,6 +2317,18 @@ function bindFlickrFormEvents(container) {
       }
     });
   }
+
+  const clearButton = container.querySelector('#flickrImageClear');
+  if (clearButton) {
+    clearButton.addEventListener('click', () => {
+      const eventFlickr = normalizeFlickrObject(state.dataset.event.flickr);
+      eventFlickr.image = '';
+      eventFlickr.imageAlt = '';
+      state.dataset.event.flickr = normalizeFlickrObject(eventFlickr);
+      markDirty(true);
+      renderFlickrForm();
+    });
+  }
 }
 
 function bindLogoFormEvents(container) {
@@ -1665,6 +2340,24 @@ function bindLogoFormEvents(container) {
       eventLogo[key] = key === 'usePlate' ? Boolean(input.checked) : input.value;
       state.dataset.event.logo = normalizeLogoObject(eventLogo);
       markDirty(true);
+
+      if (key === 'image') {
+        const newSrc = input.value.trim();
+        const img = container.querySelector('#logoImagePreview');
+        const icon = container.querySelector('#logoPreviewContainer > i');
+        const clearBtn = container.querySelector('#logoImageClear');
+        if (img) { img.src = newSrc; img.classList.toggle('hidden', !newSrc); }
+        if (icon) icon.classList.toggle('hidden', Boolean(newSrc));
+        if (clearBtn) clearBtn.disabled = !newSrc;
+      }
+      if (key === 'imageAlt') {
+        const img = container.querySelector('#logoImagePreview');
+        if (img) img.alt = input.value;
+      }
+      if (key === 'usePlate') {
+        const preview = container.querySelector('#logoPreviewContainer');
+        if (preview) preview.classList.toggle('header-logo-use-plate', input.checked);
+      }
     };
     input.addEventListener('input', updateLogoField);
     input.addEventListener('change', updateLogoField);
@@ -1678,6 +2371,17 @@ function bindLogoFormEvents(container) {
       } catch (error) {
         window.alert(`Logo upload failed: ${error.message}`);
       }
+    });
+  }
+
+  const logoClearButton = container.querySelector('#logoImageClear');
+  if (logoClearButton) {
+    logoClearButton.addEventListener('click', () => {
+      const eventLogo = normalizeLogoObject(state.dataset.event.logo);
+      eventLogo.image = '';
+      state.dataset.event.logo = normalizeLogoObject(eventLogo);
+      markDirty(true);
+      renderLogoForm();
     });
   }
 }
@@ -1696,7 +2400,7 @@ function renderLogoForm() {
 function renderFlickrForm() {
   if (!els.flickrForm) return;
   if (!state.dataset) {
-    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Load a dataset to edit the Flickr block.</p>';
+    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Load a dataset to edit the photos block.</p>';
     return;
   }
   const flickr = normalizeFlickrObject(state.dataset?.event?.flickr);
@@ -1738,16 +2442,546 @@ function renderUrlMultifieldHtml(scope, field, config, urls) {
   `;
 }
 
+function setEventColor(field, value) {
+  if (!state.dataset?.event) return;
+  if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') state.dataset.event.theme = {};
+  state.dataset.event.theme[field] = value;
+  markDirty(true);
+  const resetIds = { primaryColor: 'clearPrimaryColor', secondaryColor: 'clearSecondaryColor', tertiaryColor: 'clearTertiaryColor' };
+  document.getElementById(resetIds[field])?.classList.remove('hidden');
+  applyEventColors(state.dataset.event.theme.primaryColor, state.dataset.event.theme.secondaryColor, state.dataset.event.theme.tertiaryColor);
+}
+
+function clearEventColor(field, picker, hex, clearBtn, defaultColor) {
+  if (!state.dataset?.event) return;
+  if (state.dataset.event.theme) delete state.dataset.event.theme[field];
+  markDirty(true);
+  picker.value = defaultColor;
+  hex.value = '';
+  hex.placeholder = defaultColor;
+  clearBtn.classList.add('hidden');
+  applyEventColors(state.dataset.event.theme?.primaryColor, state.dataset.event.theme?.secondaryColor, state.dataset.event.theme?.tertiaryColor);
+}
+
+let _editingThemeId = null;
+let _editingThemeSnapshot = null;
+let _preEditThemeId = null;
+
+const _THEME_EDIT_FIELDS = [
+  { key: 'bg',        label: 'Background', def: '#010810' },
+  { key: 'primary',   label: 'Primary',    def: '#00cfff' },
+  { key: 'secondary', label: 'Secondary',  def: '#4a90d9' },
+  { key: 'tertiary',  label: 'Tertiary',   def: '#7c3aed' },
+  { key: 'text',      label: 'Text',       def: '#eaf2fc' },
+  { key: 'border',    label: 'Border',     def: '#162c4c' },
+];
+
+function _blendHex(hex, toward, amount) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex) || !/^#[0-9a-fA-F]{6}$/.test(toward)) return hex;
+  const lerp = (a, b) => Math.round(a + (b - a) * amount).toString(16).padStart(2, '0');
+  const r = lerp(parseInt(hex.slice(1, 3), 16), parseInt(toward.slice(1, 3), 16));
+  const g = lerp(parseInt(hex.slice(3, 5), 16), parseInt(toward.slice(3, 5), 16));
+  const b = lerp(parseInt(hex.slice(5, 7), 16), parseInt(toward.slice(5, 7), 16));
+  return `#${r}${g}${b}`;
+}
+
+function _themeCardHtml(t, selectedId, nameAttr, liveThemeId, savedThemeId) {
+  const c = t.colors || {};
+  const selected = t.id === selectedId;
+  const isSaved = !!savedThemeId && t.id === savedThemeId;
+  const isLive = !!liveThemeId && t.id === liveThemeId;
+  const isDirty = selected && !isSaved && state.dirty;
+  let badgeClass = '';
+  let badgeText = '';
+  if (isLive) {
+    badgeClass = 'theme-card-live-badge';
+    badgeText = 'Live';
+  } else if (isSaved) {
+    badgeClass = 'theme-card-saved-badge';
+    badgeText = 'Saved';
+  } else if (isDirty) {
+    badgeClass = 'theme-card-dirty-badge';
+    badgeText = 'Unsaved';
+  }
+  return `<label class="appearance-theme-card${selected ? ' is-selected' : ''}${isLive ? ' is-live' : ''}${isSaved ? ' is-saved' : ''}${isDirty ? ' is-dirty' : ''}" title="${escapeAttr(t.label)}">
+    <input type="radio" name="${nameAttr}" value="${escapeAttr(t.id)}" ${selected ? 'checked' : ''} class="sr-only">
+    <div class="theme-card-swatch-row">
+      <span class="theme-swatch-chip" style="background:${c.bg || '#000'}"></span>
+      <span class="theme-swatch-chip" style="background:${c.primary || '#00cfff'}"></span>
+      <span class="theme-swatch-chip" style="background:${c.text || '#fff'}"></span>
+    </div>
+    <span class="theme-card-label">${escapeHtml(t.label)}</span>
+    ${badgeText ? `<span class="${badgeClass}">${badgeText}</span>` : ''}
+  </label>`;
+}
+
+async function saveThemesJson() {
+  const json = JSON.stringify(getThemes(), null, 2) + '\n';
+  if (isApiMode()) {
+    const res = await fetch(`${state.apiEndpoint}/api/data/themes.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: json,
+    });
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    return true;
+  }
+  window.alert('Theme editing requires the API server.\nStart it with: node server.js');
+  return false;
+}
+
+function renderAppearanceForm() {
+  if (!els.appearanceForm) return;
+  const event = state.dataset?.event || null;
+  const themes = getThemes();
+
+  // --- Per-event section ---
+  const eventThemeObj = event?.theme || {};
+  const eventThemeId = eventThemeObj.id || '';
+  const effectiveThemeId = eventThemeId || getCurrentThemeId();
+  const themeColors = getThemeById(effectiveThemeId)?.colors || {};
+  const primaryColor = eventThemeObj.primaryColor || '';
+  const secondaryColor = eventThemeObj.secondaryColor || '';
+  const tertiaryColor = eventThemeObj.tertiaryColor || '';
+  const disabled = !event;
+  const colorDisabledAttr = disabled ? ' disabled' : '';
+  const savedThemeId = state.persistedSnapshot?.dataset?.event?.theme?.id || '';
+
+  const eventThemeCards = themes.map((t) => _themeCardHtml(t, eventThemeId || '__none__', 'eventTheme', _editingThemeId, savedThemeId)).join('');
+  const pickerPrimary = primaryColor || themeColors.primary || '#00cfff';
+  const pickerSecondary = secondaryColor || themeColors.secondary || '#4a90d9';
+  const pickerTertiary = tertiaryColor || themeColors.tertiary || '#7c3aed';
+
+  // --- Theme library section ---
+  const libraryItems = themes.map((t) => {
+    const c = t.colors || {};
+    if (_editingThemeId === t.id) {
+      const colorPairs = _THEME_EDIT_FIELDS.map((f) => {
+        const v = c[f.key] || f.def;
+        return `<div class="appearance-add-field">
+          <span>${f.label}</span>
+          <div class="appearance-color-pair">
+            <input type="color" id="editColor-${f.key}" value="${escapeAttr(v)}">
+            <input type="text" id="editColorHex-${f.key}" value="${escapeAttr(v)}" maxlength="7" class="appearance-hex-input" placeholder="${escapeAttr(f.def)}">
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="appearance-library-item appearance-library-item--editing">
+        <div style="width:100%">
+          <p class="theme-edit-live-note"><span class="theme-edit-live-dot"></span>Previewing live on page — changes apply instantly</p>
+          <div class="appearance-add-theme-fields">
+            <label class="appearance-add-field">
+              <span>Name</span>
+              <input type="text" id="editThemeLabel" value="${escapeAttr(t.label)}" maxlength="32">
+            </label>
+            <label class="appearance-add-field appearance-add-field--check">
+              <input type="checkbox" id="editThemeDark"${t.dark ? ' checked' : ''}>
+              <span>Dark bg</span>
+            </label>
+            ${colorPairs}
+          </div>
+          <div class="flex gap-2 mt-2">
+            <button type="button" id="doneEditTheme" class="appearance-btn-primary">Done</button>
+            <button type="button" id="cancelEditTheme" class="appearance-btn-secondary">Cancel</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    return `<div class="appearance-library-item" data-theme-id="${escapeAttr(t.id)}">
+      <div class="theme-card-swatch-row">
+        <span class="theme-swatch-chip" style="background:${c.bg || '#000'}"></span>
+        <span class="theme-swatch-chip" style="background:${c.primary || '#00cfff'}"></span>
+        <span class="theme-swatch-chip" style="background:${c.secondary || c.primary || '#888'}"></span>
+        <span class="theme-swatch-chip" style="background:${c.text || '#fff'}"></span>
+      </div>
+      <span class="appearance-library-label">${escapeHtml(t.label)}</span>
+      <button type="button" class="appearance-library-edit" data-edit-theme="${escapeAttr(t.id)}" title="Edit theme">
+        <i class="fas fa-pen text-[0.72rem]"></i>
+      </button>
+      <button type="button" class="appearance-library-delete" data-delete-theme="${escapeAttr(t.id)}" title="Delete theme">
+        <i class="fas fa-trash text-[0.72rem]"></i>
+      </button>
+    </div>`;
+  }).join('');
+
+  els.appearanceForm.innerHTML = `
+    <section class="appearance-panel-section">
+      <div class="appearance-panel-header">
+        <div>
+          <h3 class="appearance-panel-title">Event Appearance</h3>
+          <p class="appearance-panel-desc">Theme and accent colours for this event.${disabled ? ' <span class="appearance-hint">Open an event to customise.</span>' : ''}</p>
+        </div>
+      </div>
+      <div class="${disabled ? 'appearance-section--disabled' : ''}">
+        <div class="appearance-section-label">Theme</div>
+        <div class="appearance-theme-selector" id="eventThemeSelector">
+          <label class="appearance-theme-card${!eventThemeId ? ' is-selected' : ''}${!savedThemeId ? ' is-saved' : ''}${!eventThemeId && state.dirty && savedThemeId ? ' is-dirty' : ''}" title="Use global default">
+            <input type="radio" name="eventTheme" value="" ${!eventThemeId ? 'checked' : ''} class="sr-only"${colorDisabledAttr}>
+            <div class="theme-card-swatch-row">
+              <span class="theme-swatch-chip" style="background:#f5f5f5"></span>
+              <span class="theme-swatch-chip" style="background:#006aa9"></span>
+              <span class="theme-swatch-chip" style="background:#1f2937"></span>
+            </div>
+            <span class="theme-card-label">Default</span>
+            ${!savedThemeId ? '<span class="theme-card-saved-badge">Saved</span>' : ''}${!eventThemeId && state.dirty && savedThemeId ? '<span class="theme-card-dirty-badge">Unsaved</span>' : ''}
+          </label>
+          ${eventThemeCards}
+        </div>
+        <div class="appearance-section mt-4">
+          <div class="appearance-section-label">Accent colours</div>
+          <div class="appearance-color-fields">
+            <div class="appearance-color-row">
+              <span class="appearance-color-label">Primary</span>
+              <div class="appearance-color-pair">
+                <input type="color" id="primaryColorPicker" value="${escapeAttr(pickerPrimary)}"${colorDisabledAttr}>
+                <input type="text" id="primaryColorHex" value="${escapeAttr(primaryColor)}" placeholder="${escapeAttr(pickerPrimary)}" maxlength="7"${colorDisabledAttr}>
+                <button type="button" id="clearPrimaryColor" class="appearance-color-reset${primaryColor ? '' : ' hidden'}"${colorDisabledAttr}>Reset</button>
+              </div>
+            </div>
+            <div class="appearance-color-row">
+              <span class="appearance-color-label">Secondary</span>
+              <div class="appearance-color-pair">
+                <input type="color" id="secondaryColorPicker" value="${escapeAttr(pickerSecondary)}"${colorDisabledAttr}>
+                <input type="text" id="secondaryColorHex" value="${escapeAttr(secondaryColor)}" placeholder="${escapeAttr(pickerSecondary)}" maxlength="7"${colorDisabledAttr}>
+                <button type="button" id="clearSecondaryColor" class="appearance-color-reset${secondaryColor ? '' : ' hidden'}"${colorDisabledAttr}>Reset</button>
+              </div>
+            </div>
+            <div class="appearance-color-row">
+              <span class="appearance-color-label">Tertiary</span>
+              <div class="appearance-color-pair">
+                <input type="color" id="tertiaryColorPicker" value="${escapeAttr(pickerTertiary)}"${colorDisabledAttr}>
+                <input type="text" id="tertiaryColorHex" value="${escapeAttr(tertiaryColor)}" placeholder="${escapeAttr(pickerTertiary)}" maxlength="7"${colorDisabledAttr}>
+                <button type="button" id="clearTertiaryColor" class="appearance-color-reset${tertiaryColor ? '' : ' hidden'}"${colorDisabledAttr}>Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="appearance-preview mt-4">
+          <div class="appearance-preview-label">Live preview</div>
+          <div class="appearance-preview-swatches">
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--bg-1)"></div><span>Background</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--surface-1)"></div><span>Surface</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--accent)"></div><span>Primary</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--color-secondary)"></div><span>Secondary</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--color-tertiary)"></div><span>Tertiary</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--text-0)"></div><span>Text</span></div>
+            <div class="appearance-preview-swatch"><div class="appearance-preview-chip" style="background:var(--line-0)"></div><span>Border</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="appearance-panel-section mt-4">
+      <div class="appearance-panel-header">
+        <div>
+          <h3 class="appearance-panel-title">Theme Library</h3>
+          <p class="appearance-panel-desc">Add or remove themes. Changes are saved to <code>data/themes.json</code>.</p>
+        </div>
+      </div>
+      <div id="themeLibraryList" class="appearance-library-list">${libraryItems}</div>
+      <div id="addThemeFormWrap" class="hidden appearance-add-theme-form mt-3">
+        <div class="appearance-add-theme-fields">
+          <label class="appearance-add-field">
+            <span>Name</span>
+            <input type="text" id="newThemeLabel" placeholder="My Theme" maxlength="32">
+          </label>
+          <label class="appearance-add-field appearance-add-field--check">
+            <input type="checkbox" id="newThemeDark" checked>
+            <span>Dark background</span>
+          </label>
+          <div class="appearance-add-field">
+            <span>Background</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeBg" value="#010810">
+              <input type="text" id="newThemeBgHex" value="#010810" maxlength="7" class="appearance-hex-input" placeholder="#010810">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Primary</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemePrimary" value="#00cfff">
+              <input type="text" id="newThemePrimaryHex" value="#00cfff" maxlength="7" class="appearance-hex-input" placeholder="#00cfff">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Secondary</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeSecondary" value="#4a90d9">
+              <input type="text" id="newThemeSecondaryHex" value="#4a90d9" maxlength="7" class="appearance-hex-input" placeholder="#4a90d9">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Tertiary</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeTertiary" value="#7c3aed">
+              <input type="text" id="newThemeTertiaryHex" value="#7c3aed" maxlength="7" class="appearance-hex-input" placeholder="#7c3aed">
+            </div>
+          </div>
+          <div class="appearance-add-field">
+            <span>Text</span>
+            <div class="appearance-color-pair">
+              <input type="color" id="newThemeText" value="#eaf2fc">
+              <input type="text" id="newThemeTextHex" value="#eaf2fc" maxlength="7" class="appearance-hex-input" placeholder="#eaf2fc">
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button type="button" id="confirmAddTheme" class="appearance-btn-primary">Add</button>
+          <button type="button" id="cancelAddTheme" class="appearance-btn-secondary">Cancel</button>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button type="button" id="showAddThemeForm" class="appearance-btn-secondary"><i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add theme</button>
+        <button type="button" id="saveThemesBtn" class="appearance-btn-primary"><i class="fas fa-floppy-disk mr-1.5 text-[0.72rem]"></i>Save themes</button>
+      </div>
+    </section>`;
+
+  applyThemeClass(_editingThemeId || effectiveThemeId);
+  applyEventColors(primaryColor, secondaryColor, tertiaryColor);
+
+  // --- Per-event theme radios ---
+  els.appearanceForm.querySelectorAll('input[name="eventTheme"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      if (!radio.checked || !state.dataset?.event) return;
+      const val = radio.value;
+      if (!state.dataset.event.theme || typeof state.dataset.event.theme !== 'object') state.dataset.event.theme = {};
+      if (val) {
+        state.dataset.event.theme.id = val;
+      } else {
+        delete state.dataset.event.theme.id;
+      }
+      markDirty(true);
+      const newEffective = val || getCurrentThemeId();
+      applyThemeClass(newEffective);
+      applyEventColors(state.dataset.event.theme.primaryColor, state.dataset.event.theme.secondaryColor, state.dataset.event.theme.tertiaryColor);
+      renderAppearanceForm();
+    });
+  });
+
+  // --- Accent color pickers ---
+  if (!disabled) {
+    const primaryPicker = document.getElementById('primaryColorPicker');
+    const primaryHex = document.getElementById('primaryColorHex');
+    const clearPrimary = document.getElementById('clearPrimaryColor');
+    const secondaryPicker = document.getElementById('secondaryColorPicker');
+    const secondaryHex = document.getElementById('secondaryColorHex');
+    const clearSecondary = document.getElementById('clearSecondaryColor');
+
+    primaryPicker?.addEventListener('input', () => {
+      primaryHex.value = primaryPicker.value.toUpperCase();
+      setEventColor('primaryColor', primaryPicker.value);
+    });
+    primaryHex?.addEventListener('input', () => {
+      const v = primaryHex.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { primaryPicker.value = v; setEventColor('primaryColor', v); }
+    });
+    clearPrimary?.addEventListener('click', () => {
+      const c = getThemeById(effectiveThemeId)?.colors || {};
+      clearEventColor('primaryColor', primaryPicker, primaryHex, clearPrimary, c.primary || '#00cfff');
+    });
+    secondaryPicker?.addEventListener('input', () => {
+      secondaryHex.value = secondaryPicker.value.toUpperCase();
+      setEventColor('secondaryColor', secondaryPicker.value);
+    });
+    secondaryHex?.addEventListener('input', () => {
+      const v = secondaryHex.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { secondaryPicker.value = v; setEventColor('secondaryColor', v); }
+    });
+    clearSecondary?.addEventListener('click', () => {
+      const c = getThemeById(effectiveThemeId)?.colors || {};
+      clearEventColor('secondaryColor', secondaryPicker, secondaryHex, clearSecondary, c.secondary || '#4a90d9');
+    });
+    const tertiaryPicker = document.getElementById('tertiaryColorPicker');
+    const tertiaryHex = document.getElementById('tertiaryColorHex');
+    const clearTertiary = document.getElementById('clearTertiaryColor');
+    tertiaryPicker?.addEventListener('input', () => {
+      tertiaryHex.value = tertiaryPicker.value.toUpperCase();
+      setEventColor('tertiaryColor', tertiaryPicker.value);
+    });
+    tertiaryHex?.addEventListener('input', () => {
+      const v = tertiaryHex.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { tertiaryPicker.value = v; setEventColor('tertiaryColor', v); }
+    });
+    clearTertiary?.addEventListener('click', () => {
+      const c = getThemeById(effectiveThemeId)?.colors || {};
+      clearEventColor('tertiaryColor', tertiaryPicker, tertiaryHex, clearTertiary, c.tertiary || '#7c3aed');
+    });
+  }
+
+  // --- Theme library controls ---
+  els.appearanceForm.querySelectorAll('[data-delete-theme]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.deleteTheme;
+      if (getThemes().length <= 1) {
+        window.alert('Cannot delete the last theme.');
+        return;
+      }
+      if (!window.confirm(`Delete theme "${id}"?`)) return;
+      const updated = getThemes().filter((t) => t.id !== id);
+      setThemes(updated);
+      if (_editingThemeId === id) { _editingThemeId = null; _editingThemeSnapshot = null; }
+      renderAppearanceForm();
+    });
+  });
+
+  els.appearanceForm.querySelectorAll('[data-edit-theme]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      _preEditThemeId = _editingThemeId || effectiveThemeId;
+      _editingThemeId = btn.dataset.editTheme;
+      _editingThemeSnapshot = JSON.parse(JSON.stringify(getThemeById(_editingThemeId)));
+      renderAppearanceForm();
+    });
+  });
+
+  document.getElementById('doneEditTheme')?.addEventListener('click', () => {
+    const restoreId = _preEditThemeId || effectiveThemeId;
+    _editingThemeId = null;
+    _editingThemeSnapshot = null;
+    _preEditThemeId = null;
+    applyThemeClass(restoreId);
+    renderAppearanceForm();
+  });
+
+  document.getElementById('cancelEditTheme')?.addEventListener('click', () => {
+    if (_editingThemeSnapshot) {
+      const reverted = getThemes().map((t) => t.id === _editingThemeId ? _editingThemeSnapshot : t);
+      setThemes(reverted);
+    }
+    const restoreId = _preEditThemeId || effectiveThemeId;
+    _editingThemeId = null;
+    _editingThemeSnapshot = null;
+    _preEditThemeId = null;
+    applyThemeClass(restoreId);
+    renderAppearanceForm();
+  });
+
+  // Live color + meta updates while editing a theme
+  _THEME_EDIT_FIELDS.forEach(({ key }) => {
+    const picker = document.getElementById(`editColor-${key}`);
+    const hexInp = document.getElementById(`editColorHex-${key}`);
+    if (!picker) return;
+    picker.addEventListener('input', () => {
+      if (hexInp) hexInp.value = picker.value.toUpperCase();
+      _applyLiveEditColor(key, picker.value);
+    });
+    hexInp?.addEventListener('input', () => {
+      const v = hexInp.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { picker.value = v; _applyLiveEditColor(key, v); }
+    });
+  });
+
+  document.getElementById('editThemeLabel')?.addEventListener('input', _applyLiveEditMeta);
+  document.getElementById('editThemeDark')?.addEventListener('change', _applyLiveEditMeta);
+
+  // Hex↔picker sync for add form
+  [
+    ['newThemeBg', 'newThemeBgHex'],
+    ['newThemePrimary', 'newThemePrimaryHex'],
+    ['newThemeSecondary', 'newThemeSecondaryHex'],
+    ['newThemeTertiary', 'newThemeTertiaryHex'],
+    ['newThemeText', 'newThemeTextHex'],
+  ].forEach(([pickerId, hexId]) => {
+    const picker = document.getElementById(pickerId);
+    const hexInp = document.getElementById(hexId);
+    if (!picker || !hexInp) return;
+    picker.addEventListener('input', () => { hexInp.value = picker.value.toUpperCase(); });
+    hexInp.addEventListener('input', () => {
+      const v = hexInp.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) picker.value = v;
+    });
+  });
+
+  document.getElementById('showAddThemeForm')?.addEventListener('click', () => {
+    document.getElementById('addThemeFormWrap')?.classList.remove('hidden');
+    document.getElementById('showAddThemeForm')?.classList.add('hidden');
+  });
+  document.getElementById('newThemeDark')?.addEventListener('change', () => {
+    const isDark = document.getElementById('newThemeDark')?.checked ?? true;
+    const textPicker = document.getElementById('newThemeText');
+    const textHex = document.getElementById('newThemeTextHex');
+    if (!textPicker || !textHex) return;
+    const defaultText = isDark ? '#eaf2fc' : '#0f172a';
+    textPicker.value = defaultText;
+    textHex.value = defaultText;
+    textHex.placeholder = defaultText;
+  });
+  document.getElementById('cancelAddTheme')?.addEventListener('click', () => {
+    document.getElementById('addThemeFormWrap')?.classList.add('hidden');
+    document.getElementById('showAddThemeForm')?.classList.remove('hidden');
+  });
+  document.getElementById('confirmAddTheme')?.addEventListener('click', () => {
+    const label = document.getElementById('newThemeLabel')?.value.trim();
+    if (!label) { window.alert('Please enter a theme name.'); return; }
+    const id = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (getThemes().some((t) => t.id === id)) {
+      window.alert(`A theme with id "${id}" already exists. Choose a different name.`);
+      return;
+    }
+    const dark = document.getElementById('newThemeDark')?.checked ?? true;
+    const bg = document.getElementById('newThemeBg')?.value || '#010810';
+    const primary = document.getElementById('newThemePrimary')?.value || '#00cfff';
+    const secondary = document.getElementById('newThemeSecondary')?.value || '#4a90d9';
+    const tertiary = document.getElementById('newThemeTertiary')?.value || secondary;
+    const textPicked = document.getElementById('newThemeText')?.value || '';
+    const baseDefaults = dark
+      ? { surface: 'rgba(3,10,22,0.93)', surfaceAlt: 'rgba(7,18,36,0.96)', surfaceDeep: 'rgba(12,28,52,0.84)', text: textPicked || '#eaf2fc', textAlt: '#cdd9ee', textMuted: '#8eaacc', textFaint: '#6a8cb0' }
+      : { surface: 'rgba(255,255,255,0.97)', surfaceAlt: 'rgba(248,250,252,0.99)', surfaceDeep: 'rgba(241,245,249,0.95)', text: textPicked || '#0f172a', textAlt: '#1e293b', textMuted: '#475569', textFaint: '#64748b' };
+    const bgAlt = _blendHex(bg, dark ? '#ffffff' : '#000000', 0.06);
+    const border = dark ? _blendHex(bg, '#ffffff', 0.12) : _blendHex(bg, '#000000', 0.18);
+    const newTheme = { id, label, dark, colors: { bg, bgAlt, primary, secondary, tertiary, border, ...baseDefaults } };
+    setThemes([...getThemes(), newTheme]);
+    renderAppearanceForm();
+  });
+
+  document.getElementById('saveThemesBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('saveThemesBtn');
+    if (btn) btn.disabled = true;
+    try {
+      const ok = await saveThemesJson();
+      if (ok) showSaveToast();
+    } catch (e) {
+      window.alert(`Failed to save themes: ${e.message}`);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+}
+
+function _applyLiveEditColor(key, value) {
+  if (!_editingThemeId) return;
+  const updated = getThemes().map((t) => {
+    if (t.id !== _editingThemeId) return t;
+    const newColors = { ...t.colors, [key]: value };
+    if (key === 'bg') {
+      newColors.bgAlt = _blendHex(value, t.dark ? '#ffffff' : '#000000', 0.06);
+    }
+    return { ...t, colors: newColors };
+  });
+  setThemes(updated);
+}
+
+function _applyLiveEditMeta() {
+  if (!_editingThemeId) return;
+  const label = document.getElementById('editThemeLabel')?.value.trim() || '';
+  const dark = document.getElementById('editThemeDark')?.checked ?? true;
+  const updated = getThemes().map((t) => {
+    if (t.id !== _editingThemeId) return t;
+    return { ...t, label: label || t.label, dark };
+  });
+  setThemes(updated);
+  applyThemeClass(_editingThemeId);
+}
+
 function renderEventMetaForm() {
   const event = state.dataset?.event || {};
   const visibleFields = EVENT_META_FIELDS.filter((field) => !['id', 'name', 'logo', 'flickr'].includes(field));
 
   const html = visibleFields.map((field) => {
     const config = EVENT_META_FIELD_CONFIG[field] || { label: field, description: '' };
-    const isWide = field === 'website' || field === 'scheduleURL' || field === 'other_urls';
+    const isWide = field === 'website' || field === 'scheduleURLs' || field === 'other_urls';
     const spanClass = isWide ? 'md:col-span-2 xl:col-span-3' : '';
 
-    if (field === 'scheduleURL' || field === 'other_urls') {
+    if (field === 'scheduleURLs' || field === 'other_urls') {
       const urls = normalizeUrlArray(event[field]);
       return renderUrlMultifieldHtml('event', field, config, urls);
     }
@@ -1787,6 +3021,21 @@ function renderEventMetaForm() {
       `;
     }
 
+    if (field === 'startDate' || field === 'endDate') {
+      const raw = toStringValue(event[field]);
+      const dateValue = raw ? raw.split('T')[0] : '';
+      return `
+        <label class="editor-form-field ${spanClass}">
+          ${renderFieldIntro('event', field, config)}
+          <input data-event-field="${field}" type="date" value="${escapeAttr(dateValue)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-base font-medium bg-white px-3"${fieldDescriptionAttr(
+            'event',
+            field,
+            config
+          )}>
+        </label>
+      `;
+    }
+
     if (field === 'columns') {
       const value = Number.isFinite(Number(event[field])) ? Number(event[field]) : 3;
       return `
@@ -1817,6 +3066,7 @@ function renderEventMetaForm() {
   els.eventMetaForm.innerHTML = html;
 
   els.eventMetaForm.querySelectorAll('[data-event-field]').forEach((input) => {
+    input.addEventListener('focus', undoPush);
     input.addEventListener('input', () => {
       const field = input.dataset.eventField;
       if (field === 'columns') {
@@ -1836,6 +3086,16 @@ function renderEventMetaForm() {
       if (field === 'designation' || field === 'year' || field === 'location') {
         renderLogoForm();
         renderFlickrForm();
+      }
+      if ((field === 'startDate' || field === 'endDate') && state.activeEditorTab === 'timeline' && els.timelineCanvas) {
+        renderTimeline(els.timelineCanvas, state.dataset, {
+          markDirty: () => markDirty(true),
+          trackQuickSessionChange,
+          undoPush,
+          utcIsoToLocalInput,
+          localInputToUtcIso,
+          getEventTimezone,
+        });
       }
     });
   });
@@ -1956,7 +3216,7 @@ function setSponsorWorkspaceExpanded(expanded) {
 }
 
 function setActiveEditorTab(tab) {
-  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap'].includes(tab) ? tab : 'event';
+  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline', 'appearance'].includes(tab) ? tab : 'event';
   state.activeEditorTab = nextTab;
 
   if (els.eventWorkspacePanel) {
@@ -2008,22 +3268,47 @@ function setActiveEditorTab(tab) {
     els.showSitemapTab.setAttribute('aria-selected', active ? 'true' : 'false');
     if (active) renderSitemap();
   }
+  if (els.sitemapWorkspacePanel) {
+    els.sitemapWorkspacePanel.classList.toggle('hidden', nextTab !== 'sitemap');
+  }
+  if (els.timelineWorkspacePanel) {
+    els.timelineWorkspacePanel.classList.toggle('hidden', nextTab !== 'timeline');
+  }
+  if (els.showTimelineTab) {
+    const active = nextTab === 'timeline';
+    els.showTimelineTab.classList.toggle('is-active', active);
+    els.showTimelineTab.setAttribute('aria-selected', active ? 'true' : 'false');
+    if (active && state.dataset && els.timelineCanvas) {
+      renderTimeline(els.timelineCanvas, state.dataset, {
+        markDirty: () => markDirty(true),
+        trackQuickSessionChange,
+        undoPush,
+        utcIsoToLocalInput,
+        localInputToUtcIso,
+        getEventTimezone,
+      });
+    }
+  }
+  if (els.appearanceWorkspacePanel) {
+    els.appearanceWorkspacePanel.classList.toggle('hidden', nextTab !== 'appearance');
+  }
+  if (els.showAppearanceTab) {
+    const active = nextTab === 'appearance';
+    els.showAppearanceTab.classList.toggle('is-active', active);
+    els.showAppearanceTab.setAttribute('aria-selected', active ? 'true' : 'false');
+    if (active) renderAppearanceForm();
+  }
 }
 
-async function switchEditorTab(tab) {
-  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap'].includes(tab) ? tab : 'event';
-  if (nextTab === state.activeEditorTab) return true;
-  const allowed = await confirmDiscardPendingChanges(`${nextTab} form`);
-  if (!allowed) return false;
+function switchEditorTab(tab) {
+  const nextTab = ['event', 'logo', 'flickr', 'sessions', 'sponsors', 'sitemap', 'timeline', 'appearance'].includes(tab) ? tab : 'event';
+  if (nextTab === state.activeEditorTab) return;
   setActiveEditorTab(nextTab);
-  return true;
 }
 
-async function selectSessionForm(index, options = {}) {
-  const { collapseWorkspace = false, promptLabel = 'another session form' } = options;
-  if (index === state.selectedIndex && !collapseWorkspace) return true;
-  const allowed = await confirmDiscardPendingChanges(promptLabel);
-  if (!allowed) return false;
+function selectSessionForm(index, options = {}) {
+  const { collapseWorkspace = false } = options;
+  if (index === state.selectedIndex && !collapseWorkspace) return;
   state.selectedIndex = index;
   if (!isQuickSessionEditEnabled()) {
     markSessionDirty(false);
@@ -2040,11 +3325,9 @@ async function selectSessionForm(index, options = {}) {
   return true;
 }
 
-async function selectSponsorForm(index, options = {}) {
-  const { collapseWorkspace = false, promptLabel = 'another sponsor form' } = options;
-  if (index === state.selectedSponsorIndex && !collapseWorkspace) return true;
-  const allowed = await confirmDiscardPendingChanges(promptLabel);
-  if (!allowed) return false;
+function selectSponsorForm(index, options = {}) {
+  const { collapseWorkspace = false } = options;
+  if (index === state.selectedSponsorIndex && !collapseWorkspace) return;
   state.selectedSponsorIndex = index;
   if (!isQuickSponsorEditEnabled()) {
     markSponsorDirty(false);
@@ -2182,6 +3465,10 @@ function renderSessionList() {
                 >
                   <i class="fas fa-up-right-from-square mr-1.5 text-[0.72rem]"></i><span>Open</span>
                 </button>
+                <button type="button" data-duplicate-session="${rowIndex}" title="Duplicate session"
+                  class="h-10 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                  <i class="fas fa-copy mr-1.5 text-[0.72rem]"></i><span>Duplicate</span>
+                </button>
                 ${state.sessionListExpanded ? `
                 <button type="button" data-move-top="${rowIndex}" title="Send to top"
                   class="h-10 inline-flex items-center justify-center px-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">↑↑</button>
@@ -2203,6 +3490,10 @@ function renderSessionList() {
               <div class="text-xs text-gray-400 truncate">${escapeHtml([getSessionTimingSummary(rowItem), rowItem?.location || ''].filter(Boolean).join(' | '))}</div>
             </div>
             <div class="flex items-center gap-0.5 shrink-0">
+              <button type="button" data-duplicate-session="${rowIndex}" title="Duplicate session"
+                class="text-xs px-1 py-0.5 rounded text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 bg-gray-900/50">
+                <i class="fas fa-copy"></i>
+              </button>
               ${state.sessionListExpanded ? `
               <button type="button" data-move-top="${rowIndex}" title="Send to top"
                 class="text-xs px-1 py-0.5 rounded text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 bg-gray-900/50">↑↑</button>
@@ -2224,6 +3515,7 @@ function renderSessionList() {
     const items = state.dataset.items;
     const clampedTo = Math.max(0, Math.min(to, items.length - 1));
     if (from === clampedTo) return;
+    undoPush();
     const moved = items.splice(from, 1)[0];
     items.splice(clampedTo, 0, moved);
     moveTrackedIndex(state.quickEditSessionChanges, from, clampedTo);
@@ -2239,7 +3531,7 @@ function renderSessionList() {
 
     row.addEventListener('click', async () => {
       if (index === state.selectedIndex) return;
-      await selectSessionForm(index, { collapseWorkspace: state.sessionListExpanded, promptLabel: 'another session form' });
+      selectSessionForm(index, { collapseWorkspace: state.sessionListExpanded });
     });
 
     row.addEventListener('dragstart', (event) => {
@@ -2269,7 +3561,7 @@ function renderSessionList() {
       const from = state.draggingIndex;
       const to = index;
       if (from < 0 || to < 0 || from === to) return;
-
+      undoPush();
       const moved = state.dataset.items.splice(from, 1)[0];
       state.dataset.items.splice(to, 0, moved);
       moveTrackedIndex(state.quickEditSessionChanges, from, to);
@@ -2298,6 +3590,11 @@ function renderSessionList() {
       const n = parseInt(input, 10);
       if (!isNaN(n)) moveSessionTo(index, n - 1);
     });
+
+    row.querySelector('[data-duplicate-session]')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      duplicateSession(index);
+    });
   });
 
   const syncExpandedSelectionState = () => {
@@ -2315,12 +3612,10 @@ function renderSessionList() {
     const rowIndex = Number.parseInt(input.dataset.sessionIndex || '-1', 10);
     const key = input.dataset.inlineSessionField;
 
-    const selectRow = async () => {
+    const selectRow = () => {
       if (rowIndex === state.selectedIndex) return;
-      const allowed = await selectSessionForm(rowIndex, { promptLabel: 'another session form' });
-      if (!allowed) return false;
+      selectSessionForm(rowIndex);
       syncExpandedSelectionState();
-      return true;
     };
 
     input.addEventListener('click', (event) => {
@@ -2333,7 +3628,10 @@ function renderSessionList() {
 
     input.addEventListener('focus', async (event) => {
       event.stopPropagation();
-      if (isQuickSessionEditEnabled()) return;
+      if (isQuickSessionEditEnabled()) {
+        undoPush();
+        return;
+      }
       await selectRow();
     });
 
@@ -2370,7 +3668,7 @@ function renderSessionList() {
       event.stopPropagation();
       const rowIndex = Number.parseInt(button.dataset.openSessionForm || '-1', 10);
       if (rowIndex < 0) return;
-      await selectSessionForm(rowIndex, { collapseWorkspace: true, promptLabel: 'the full session form' });
+      selectSessionForm(rowIndex, { collapseWorkspace: true });
     });
   });
 }
@@ -2379,14 +3677,41 @@ function renderSessionField(field, item) {
   const spanClass = field.span === 2 ? 'md:col-span-2' : '';
   const describedBy = fieldDescriptionAttr('session', field.key, field);
 
+  if (field.key === 'sponsorIds') {
+    const linkedIds = parseMultiValue(item[field.key] || '');
+    const sponsors = state.dataset?.event?.sponsors || [];
+    const linkedSponsors = linkedIds.map((id) => sponsors.find((s) => s.id === id)).filter(Boolean);
+    const linkedHtml = linkedSponsors.length
+      ? `<div class="space-y-2">${linkedSponsors.map((sponsor) => `
+          <div class="editor-linked-item">
+            <div class="editor-linked-item-copy">
+              <div class="editor-linked-item-title">${escapeHtml(sponsor.title || sponsor.id)}</div>
+              <div class="editor-linked-item-meta">${escapeHtml(sponsor.id)}</div>
+            </div>
+            <button type="button" class="editor-linked-item-action" data-remove-session-sponsor="${escapeAttr(sponsor.id)}" aria-label="Remove ${escapeAttr(sponsor.title || sponsor.id)}">
+              <i class="fas fa-trash"></i><span>Remove</span>
+            </button>
+          </div>
+        `).join('')}</div>`
+      : '';
+    return `
+      <div class="${spanClass}">
+        <div class="rounded-md border border-gray-700 bg-gray-900/30 px-3 py-3 text-sm text-gray-200 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs text-gray-400">${linkedSponsors.length ? `${linkedSponsors.length} linked sponsor${linkedSponsors.length === 1 ? '' : 's'}` : 'No sponsors linked yet.'}</span>
+            <button id="addLinkedSessionSponsor" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add sponsor
+            </button>
+          </div>
+          ${linkedHtml}
+        </div>
+        ${field.description ? `<span id="${escapeAttr(fieldDescriptionId('session', field.key))}" class="editor-field-description">${escapeHtml(field.description)}</span>` : ''}
+      </div>
+    `;
+  }
+
   if (field.type === 'textarea') {
     const value = toStringValue(item[field.key]);
-    const sponsorHelp =
-      field.key === 'sponsorIds'
-        ? `<div class="mt-2 text-xs text-gray-400">Available sponsor IDs: ${escapeHtml(
-            (state.dataset?.event?.sponsors || []).map((sponsor) => sponsor.id).filter(Boolean).join(', ') || 'None yet'
-          )}</div>`
-        : '';
     const markdownPreview =
       field.key === 'full_description'
         ? `<div class="mt-2 p-3 rounded-md border border-gray-700 bg-gray-900/30">
@@ -2400,7 +3725,6 @@ function renderSessionField(field, item) {
           <textarea data-session-field="${field.key}" rows="${field.key.includes('description') ? 7 : 3}" class="w-full rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3 py-2"${describedBy}>${escapeHtml(
           value
         )}</textarea>
-        ${sponsorHelp}
         ${markdownPreview}
       </label>
     `;
@@ -2408,11 +3732,14 @@ function renderSessionField(field, item) {
 
   if (field.type === 'datetime-local') {
     const localValue = utcIsoToLocalInput(item[field.key], getEventTimezone());
+    const tzHint = field.key === 'startTime'
+      ? `<span class="editor-tz-note"><i class="fas fa-clock mr-1"></i>Times are shown in <strong>${escapeHtml(getEventTimezone())}</strong></span>`
+      : '';
     return `
       <label class="editor-form-field ${spanClass}">
         ${renderFieldIntro('session', field.key, field)}
+        ${tzHint}
         <input data-session-field="${field.key}" type="datetime-local" value="${escapeAttr(localValue)}" class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${describedBy}>
-        <span data-utc-preview="${field.key}" class="mt-1 block text-xs text-gray-400">Stored UTC: ${escapeHtml(item[field.key] || '')}</span>
       </label>
     `;
   }
@@ -2426,6 +3753,24 @@ function renderSessionField(field, item) {
       </label>
     `;
   }
+  if (field.key === 'location') {
+    const rooms = [...new Set(
+      (state.dataset?.items || [])
+        .map((s) => String(s.location || '').trim())
+        .filter(Boolean)
+    )].sort();
+    const datalistHtml = rooms.length
+      ? `<datalist id="roomSuggestions">${rooms.map((r) => `<option value="${escapeAttr(r)}">`).join('')}</datalist>`
+      : '';
+    return `
+      <label class="editor-form-field ${spanClass}">
+        ${renderFieldIntro('session', field.key, field)}
+        <input data-session-field="${field.key}" type="text" value="${escapeAttr(value)}"${rooms.length ? ' list="roomSuggestions"' : ''} class="w-full h-11 rounded-md border-gray-300 shadow-sm drupal-blue-focus text-sm bg-white px-3"${describedBy}>
+        ${datalistHtml}
+      </label>
+    `;
+  }
+
   return `
     <label class="editor-form-field ${spanClass}">
       ${renderFieldIntro('session', field.key, field)}
@@ -2460,8 +3805,8 @@ function renderSessionForm() {
     `;
     const openButton = document.getElementById('openSelectedSessionForm');
     if (openButton) {
-      openButton.addEventListener('click', async () => {
-        await selectSessionForm(state.selectedIndex, { collapseWorkspace: true, promptLabel: 'the full session form' });
+      openButton.addEventListener('click', () => {
+        selectSessionForm(state.selectedIndex, { collapseWorkspace: true });
       });
     }
     markSessionDirty(state.sessionDirty);
@@ -2474,19 +3819,18 @@ function renderSessionForm() {
   els.sessionForm.innerHTML = SESSION_FIELDS.map((field) => renderSessionField(field, item)).join('');
 
   els.sessionForm.querySelectorAll('[data-session-field]').forEach((input) => {
+    input.addEventListener('focus', undoPush);
     input.addEventListener('input', () => {
       const key = input.dataset.sessionField;
       const raw = input.value;
 
-      if (key === 'track' || key === 'speaker_usernames' || key === 'speakers' || key === 'sponsorIds') {
+      if (key === 'track' || key === 'speakers') {
         const values = parseMultiValue(raw);
         item[key] = values.length <= 1 ? (values[0] || '') : values;
       } else if (key === 'startTime' || key === 'endTime') {
         const utcIso = localInputToUtcIso(raw, getEventTimezone());
         item[key] = utcIso;
         syncSessionDuration(item);
-        const preview = els.sessionForm.querySelector(`[data-utc-preview="${key}"]`);
-        if (preview) preview.textContent = `Stored UTC: ${utcIso || ''}`;
         const durationField = els.sessionForm.querySelector('[data-session-derived-field="duration"]');
         if (durationField) durationField.value = durationToEditorValue(item.duration);
       } else {
@@ -2501,15 +3845,24 @@ function renderSessionForm() {
       markSessionDirty(true);
       trackQuickSessionChange(state.selectedIndex);
       renderSessionList();
-      if (key === 'sponsorIds') {
-        renderSponsorForm();
-      }
+    });
+  });
+
+  const addLinkedSponsorButton = els.sessionForm.querySelector('#addLinkedSessionSponsor');
+  if (addLinkedSponsorButton) {
+    addLinkedSponsorButton.addEventListener('click', () => openSessionSponsorPicker());
+  }
+
+  els.sessionForm.querySelectorAll('[data-remove-session-sponsor]').forEach((button) => {
+    button.addEventListener('click', () => {
+      removeSponsorFromSession(button.dataset.removeSessionSponsor);
     });
   });
 }
 
 async function addSession() {
   if (!state.dataset) return;
+  undoPush();
   const seed = state.dataset.items[state.selectedIndex] || {};
   const newItem = {
     title: 'New session',
@@ -2517,9 +3870,8 @@ async function addSession() {
     endTime: seed.endTime || '',
     location: seed.location || '',
     duration: '',
-    track: seed.track || '',
-    speakers: '',
-    speaker_usernames: '',
+    track: seed.track || [],
+    speakers: [],
     full_description: '',
     sponsorIds: '',
     link: '',
@@ -2645,7 +3997,7 @@ function renderSponsorList() {
 
     row.addEventListener('click', async () => {
       if (index === state.selectedSponsorIndex) return;
-      await selectSponsorForm(index, { collapseWorkspace: state.sponsorListExpanded, promptLabel: 'another sponsor form' });
+      selectSponsorForm(index, { collapseWorkspace: state.sponsorListExpanded });
     });
 
     row.addEventListener('dragstart', (event) => {
@@ -2702,12 +4054,10 @@ function renderSponsorList() {
     const rowIndex = Number.parseInt(input.dataset.sponsorIndex || '-1', 10);
     const key = input.dataset.inlineSponsorField;
 
-    const selectRow = async () => {
+    const selectRow = () => {
       if (rowIndex === state.selectedSponsorIndex) return;
-      const allowed = await selectSponsorForm(rowIndex, { promptLabel: 'another sponsor form' });
-      if (!allowed) return false;
+      selectSponsorForm(rowIndex);
       syncSponsorSelectionState();
-      return true;
     };
 
     input.addEventListener('click', (event) => {
@@ -2751,7 +4101,7 @@ function renderSponsorList() {
       event.stopPropagation();
       const rowIndex = Number.parseInt(button.dataset.openSponsorForm || '-1', 10);
       if (rowIndex < 0) return;
-      await selectSponsorForm(rowIndex, { collapseWorkspace: true, promptLabel: 'the full sponsor form' });
+      selectSponsorForm(rowIndex, { collapseWorkspace: true });
     });
   });
 }
@@ -2824,7 +4174,7 @@ function renderSponsorForm() {
     const openButton = document.getElementById('openSelectedSponsorForm');
     if (openButton) {
       openButton.addEventListener('click', async () => {
-        await selectSponsorForm(state.selectedSponsorIndex, { collapseWorkspace: true, promptLabel: 'the full sponsor form' });
+        selectSponsorForm(state.selectedSponsorIndex, { collapseWorkspace: true });
       });
     }
     markSponsorDirty(state.sponsorDirty);
@@ -2839,50 +4189,91 @@ function renderSponsorForm() {
   els.sponsorIndexBadge.textContent = `Sponsor ${state.selectedSponsorIndex + 1} of ${state.dataset.event.sponsors.length}`;
   syncSponsorSaveButton();
   els.deleteSponsor.disabled = false;
+
+  if (!state.sponsorEventCounts) {
+    const selectedAtLoad = state.selectedSponsorIndex;
+    buildSponsorEventCounts()
+      .catch(() => { state.sponsorEventCounts = new Map(); })
+      .then(() => { if (state.selectedSponsorIndex === selectedAtLoad) renderSponsorForm(); });
+  }
+
+  const imageSrc = (sponsor.image || '').trim();
+  const bgStyle = sponsor.bgStyle || 'auto';
+  const aspect = sponsor.aspect || 'auto';
+  const eventCount = getSponsorEventCount(sponsor.title);
+  const eventCountDisplay = eventCount === null ? '—' : String(eventCount);
+
   els.sponsorForm.innerHTML = `
-    ${SPONSOR_FIELDS.map((field) => renderSponsorField(field, sponsor)).join('')}
-    <div class="editor-form-field md:col-span-2 xl:col-span-3">
-      <span class="editor-field-label">Sponsor image upload</span>
-      <span class="editor-field-description">Uploads to <code>img/sponsors/${escapeHtml(
-        slugify(state.dataset?.event?.designation || 'event') || 'event'
-      )}</code> and stores a relative path.</span>
-      <div class="flex flex-wrap items-center gap-2">
-        <button id="sponsorImageUpload" type="button" class="h-11 inline-flex items-center justify-center pl-5 pr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-          <i class="fas fa-upload mr-2"></i>Upload Sponsor Image
-        </button>
-        <span class="text-xs text-gray-400">${escapeHtml(getSponsorListLabel(sponsor, state.selectedSponsorIndex))}</span>
-      </div>
-    </div>
-    <div class="editor-form-field md:col-span-2 xl:col-span-3">
-      <span class="editor-field-label">Linked sessions</span>
-      <span class="editor-field-description">Manage sessions currently referencing <code>${escapeHtml(sponsor.id || '(missing id)')}</code>.</span>
-      <div class="rounded-md border border-gray-700 bg-gray-900/30 px-3 py-3 text-sm text-gray-200 space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <span class="text-xs text-gray-400">${linkedSessions.length ? `${linkedSessions.length} linked session${linkedSessions.length === 1 ? '' : 's'}` : 'No sessions linked yet.'}</span>
-          <button id="addLinkedSponsorSession" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add session
-          </button>
+    <div class="col-span-full flex gap-5 items-start">
+      <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+        ${SPONSOR_FIELDS.filter((f) => f.key !== 'enabled').map((field) => renderSponsorField(field, sponsor)).join('')}
+        <div class="editor-form-field md:col-span-2">
+          <span class="editor-field-label">Sponsor image</span>
+          <span class="editor-field-description">Uploads to <code>img/sponsors/${escapeHtml(
+            slugify(state.dataset?.event?.designation || 'event') || 'event'
+          )}</code> and stores a relative path.</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="h-9 inline-flex items-center gap-2.5 rounded-md border border-gray-300 px-3 bg-white cursor-pointer select-none">
+              <input data-sponsor-field="enabled" type="checkbox" class="h-4 w-4" ${sponsor.enabled ? 'checked' : ''}>
+              <span class="text-sm text-gray-700">Enabled</span>
+            </label>
+            <button id="sponsorImageUpload" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+              <i class="fas fa-upload mr-1.5 text-[0.72rem]"></i>Upload image
+            </button>
+            <button id="sponsorImageClear" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors whitespace-nowrap"${!imageSrc ? ' disabled' : ''}>
+              <i class="fas fa-trash mr-1.5 text-[0.72rem]"></i>Delete image
+            </button>
+            <div id="sponsorInlinePreview" class="sponsor-inline-preview sponsor-bg-${escapeAttr(bgStyle)} sponsor-aspect-${escapeAttr(aspect)} ml-auto">
+              ${imageSrc
+                ? `<img src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-inline-image">`
+                : `<i class="fas fa-image sponsor-preview-empty-icon"></i>`}
+            </div>
+          </div>
         </div>
-        <div class="space-y-2">
-          ${
-            linkedSessions.length
-              ? linkedSessions
-                .map(({ item, index }) => `
-                  <div class="editor-linked-item">
-                    <div class="editor-linked-item-copy">
-                      <div class="editor-linked-item-title">${escapeHtml(item?.title || '(Untitled session)')}</div>
-                      <div class="editor-linked-item-meta">${escapeHtml(formatSponsorLinkedSessionMeta(item, index))}</div>
+        <div class="editor-form-field md:col-span-2">
+          <span class="editor-field-label">Linked sessions</span>
+          <span class="editor-field-description">Manage sessions currently referencing <code>${escapeHtml(sponsor.id || '(missing id)')}</code>.</span>
+          <div class="rounded-md border border-gray-700 bg-gray-900/30 px-3 py-3 text-sm text-gray-200 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs text-gray-400">${linkedSessions.length ? `${linkedSessions.length} linked session${linkedSessions.length === 1 ? '' : 's'}` : 'No sessions linked yet.'}</span>
+              <button id="addLinkedSponsorSession" type="button" class="h-9 inline-flex items-center justify-center px-3 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+                <i class="fas fa-plus mr-1.5 text-[0.72rem]"></i>Add session
+              </button>
+            </div>
+            <div class="space-y-2">
+              ${linkedSessions.length
+                ? linkedSessions.map(({ item, index }) => `
+                    <div class="editor-linked-item">
+                      <div class="editor-linked-item-copy">
+                        <div class="editor-linked-item-title">${escapeHtml(item?.title || '(Untitled session)')}</div>
+                        <div class="editor-linked-item-meta">${escapeHtml(formatSponsorLinkedSessionMeta(item, index))}</div>
+                      </div>
+                      <button type="button" class="editor-linked-item-action" data-remove-linked-session="${index}" aria-label="Remove linked session ${escapeAttr(item?.title || '(Untitled session)')}">
+                        <i class="fas fa-trash"></i><span>Remove</span>
+                      </button>
                     </div>
-                    <button type="button" class="editor-linked-item-action" data-remove-linked-session="${index}" aria-label="Remove linked session ${escapeAttr(item?.title || '(Untitled session)')}">
-                      <i class="fas fa-trash"></i><span>Remove</span>
-                    </button>
-                  </div>
-                `)
-                .join('')
-              : '<div class="text-sm text-gray-400">No sessions linked yet.</div>'
-          }
+                  `).join('')
+                : ''}
+            </div>
+          </div>
         </div>
       </div>
+
+      <aside class="sponsor-editor-sidebar">
+        <div id="sponsorPreviewSurface" class="sponsor-preview-surface sponsor-bg-${escapeAttr(bgStyle)} sponsor-aspect-${escapeAttr(aspect)}">
+          ${imageSrc
+            ? `<img id="sponsorImagePreview" src="${escapeAttr(bustSrc(imageSrc))}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-logo-image">`
+            : `<div id="sponsorImagePreview" class="sponsor-preview-empty">
+                 <i class="fas fa-image text-2xl"></i>
+                 <span>No image set</span>
+               </div>`}
+        </div>
+        <div class="sponsor-event-stat">
+          <i class="fas fa-trophy sponsor-event-stat-icon"></i>
+          <span class="sponsor-event-stat-count">${escapeHtml(eventCountDisplay)}</span>
+          <span class="sponsor-event-stat-label">Events Sponsored</span>
+        </div>
+      </aside>
     </div>
   `;
 
@@ -2909,8 +4300,45 @@ function renderSponsorForm() {
         }
       } else if (key === 'title') {
         sponsor[key] = input.value;
+        const countEl = els.sponsorForm.querySelector('.sponsor-event-stat-count');
+        if (countEl) {
+          const c = getSponsorEventCount(input.value);
+          countEl.textContent = c === null ? '—' : String(c);
+        }
       } else {
         sponsor[key] = input.value;
+      }
+      if (key === 'image') {
+        const surface = els.sponsorForm.querySelector('#sponsorPreviewSurface');
+        const inline = els.sponsorForm.querySelector('#sponsorInlinePreview');
+        const newSrc = input.value.trim();
+        if (surface) {
+          surface.innerHTML = newSrc
+            ? `<img id="sponsorImagePreview" src="${escapeAttr(newSrc)}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-logo-image">`
+            : `<div id="sponsorImagePreview" class="sponsor-preview-empty"><i class="fas fa-image text-2xl"></i><span>No image set</span></div>`;
+        }
+        if (inline) {
+          inline.innerHTML = newSrc
+            ? `<img src="${escapeAttr(newSrc)}" alt="${escapeAttr(sponsor.imageAlt || '')}" class="sponsor-inline-image">`
+            : `<i class="fas fa-image sponsor-preview-empty-icon"></i>`;
+        }
+        const clearBtn = els.sponsorForm.querySelector('#sponsorImageClear');
+        if (clearBtn) clearBtn.disabled = !newSrc;
+      }
+      if (key === 'imageAlt') {
+        els.sponsorForm.querySelectorAll('#sponsorImagePreview, #sponsorInlinePreview img').forEach((el) => { el.alt = input.value; });
+      }
+      if (key === 'bgStyle') {
+        const val = input.value || 'auto';
+        els.sponsorForm.querySelectorAll('#sponsorPreviewSurface, #sponsorInlinePreview').forEach((el) => {
+          el.className = el.className.replace(/\bsponsor-bg-\S+/g, `sponsor-bg-${val}`);
+        });
+      }
+      if (key === 'aspect') {
+        const val = input.value || 'auto';
+        els.sponsorForm.querySelectorAll('#sponsorPreviewSurface, #sponsorInlinePreview').forEach((el) => {
+          el.className = el.className.replace(/\bsponsor-aspect-\S+/g, `sponsor-aspect-${val}`);
+        });
       }
       markDirty(true);
       markSponsorDirty(true);
@@ -2937,6 +4365,19 @@ function renderSponsorForm() {
       } catch (error) {
         window.alert(`Sponsor image upload failed: ${error.message}`);
       }
+    });
+  }
+
+  const clearButton = els.sponsorForm.querySelector('#sponsorImageClear');
+  if (clearButton) {
+    clearButton.addEventListener('click', () => {
+      sponsor.image = '';
+      sponsor.imageAlt = '';
+      markDirty(true);
+      markSponsorDirty(true);
+      trackQuickSponsorChange(state.selectedSponsorIndex);
+      renderSponsorList();
+      renderSponsorForm();
     });
   }
 
@@ -3062,8 +4503,92 @@ function removeLinkedSessionFromSponsor(itemIndex) {
   renderSessionForm();
 }
 
+function getAvailableSponsorsForSession(item) {
+  const linkedIds = parseMultiValue(item?.sponsorIds || '');
+  return (state.dataset?.event?.sponsors || [])
+    .map((sponsor, index) => ({ sponsor, index }))
+    .filter(({ sponsor }) => sponsor.id && !linkedIds.includes(sponsor.id));
+}
+
+function openSessionSponsorPicker() {
+  const item = state.dataset?.items?.[state.selectedIndex];
+  if (!item || !els.sessionSponsorPickerModal || !els.sessionSponsorPickerList) return;
+  const availableSponsors = getAvailableSponsorsForSession(item);
+  state.sessionSponsorPickerOpen = true;
+  els.sessionSponsorPickerModal.classList.remove('hidden');
+  els.sessionSponsorPickerModal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('session-modal-open');
+  if (els.sessionSponsorPickerCount) {
+    els.sessionSponsorPickerCount.textContent = `${availableSponsors.length} available`;
+  }
+  els.sessionSponsorPickerList.innerHTML = availableSponsors.length
+    ? availableSponsors.map(({ sponsor, index }) => `
+        <article class="speaker-session-card">
+          <div>
+            <h3 class="speaker-session-title">${escapeHtml(sponsor.title || sponsor.id || '(Untitled sponsor)')}</h3>
+            <p class="speaker-session-meta">${escapeHtml(sponsor.id || '')}</p>
+          </div>
+          <div class="session-modal-links">
+            <button type="button" class="session-modal-link" data-add-session-sponsor="${index}">
+              <i class="fas fa-plus"></i><span>Add sponsor</span>
+            </button>
+          </div>
+        </article>
+      `).join('')
+    : '<p class="speaker-session-summary">All sponsors are already linked to this session.</p>';
+  els.sessionSponsorPickerList.querySelectorAll('[data-add-session-sponsor]').forEach((button) => {
+    button.addEventListener('click', () => {
+      addSponsorToSession(Number.parseInt(button.dataset.addSessionSponsor || '-1', 10));
+    });
+  });
+}
+
+function closeSessionSponsorPicker() {
+  if (!els.sessionSponsorPickerModal) return;
+  state.sessionSponsorPickerOpen = false;
+  els.sessionSponsorPickerModal.classList.add('hidden');
+  els.sessionSponsorPickerModal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('session-modal-open');
+}
+
+function addSponsorToSession(sponsorIndex) {
+  const item = state.dataset?.items?.[state.selectedIndex];
+  const sponsor = state.dataset?.event?.sponsors?.[sponsorIndex];
+  if (!item || !sponsor?.id) return;
+  const ids = parseMultiValue(item?.sponsorIds || '');
+  if (!ids.includes(sponsor.id)) {
+    undoPush();
+    const nextIds = [...ids, sponsor.id].filter(Boolean);
+    item.sponsorIds = nextIds.length <= 1 ? (nextIds[0] || '') : nextIds;
+    markDirty(true);
+    markSessionDirty(true);
+    markSponsorDirty(true);
+    trackQuickSessionChange(state.selectedIndex);
+    trackQuickSponsorChange(state.selectedSponsorIndex);
+  }
+  closeSessionSponsorPicker();
+  renderSessionForm();
+  renderSponsorForm();
+}
+
+function removeSponsorFromSession(sponsorId) {
+  const item = state.dataset?.items?.[state.selectedIndex];
+  if (!item || !sponsorId) return;
+  undoPush();
+  const ids = parseMultiValue(item?.sponsorIds || '');
+  const nextIds = ids.filter((id) => id !== sponsorId);
+  item.sponsorIds = nextIds.length <= 1 ? (nextIds[0] || '') : nextIds;
+  markDirty(true);
+  markSessionDirty(true);
+  markSponsorDirty(true);
+  trackQuickSessionChange(state.selectedIndex);
+  renderSessionForm();
+  renderSponsorForm();
+}
+
 async function addSponsor() {
   if (!state.dataset) return;
+  undoPush();
   const sponsors = state.dataset.event.sponsors || (state.dataset.event.sponsors = []);
   const seed = sponsors[state.selectedSponsorIndex] || {};
   const nextNumber = sponsors.length + 1;
@@ -3097,7 +4622,7 @@ async function deleteSponsor() {
   const sponsor = sponsors[state.selectedSponsorIndex];
   const okay = window.confirm(`Delete sponsor "${sponsor?.title || 'Untitled'}"?`);
   if (!okay) return;
-
+  undoPush();
   const [removed] = sponsors.splice(state.selectedSponsorIndex, 1);
   removeTrackedIndex(state.quickEditSponsorChanges, state.selectedSponsorIndex);
   if (removed?.id) {
@@ -3140,7 +4665,7 @@ async function deleteSession() {
   const item = state.dataset.items[state.selectedIndex];
   const okay = window.confirm(`Delete session "${item?.title || 'Untitled'}"?`);
   if (!okay) return;
-
+  undoPush();
   state.dataset.items.splice(state.selectedIndex, 1);
   removeTrackedIndex(state.quickEditSessionChanges, state.selectedIndex);
   if (state.dataset.items.length === 0) {
@@ -3159,6 +4684,23 @@ async function deleteSession() {
   syncSessionSaveButton();
   els.deleteSession.disabled = state.selectedIndex < 0;
   await saveDataset();
+}
+
+function duplicateSession(index) {
+  if (!state.dataset || index < 0 || index >= state.dataset.items.length) return;
+  undoPush();
+  const copy = cloneJsonValue(state.dataset.items[index]);
+  copy.title = `${copy.title || 'Untitled'} (copy)`;
+  state.dataset.items.splice(index + 1, 0, copy);
+  state.selectedIndex = index + 1;
+  markDirty(true);
+  trackQuickSessionChange(index + 1, true);
+  renderSessionList();
+  scrollToSessionRow(state.selectedIndex);
+  renderSessionForm();
+  renderSponsorForm();
+  syncSessionSaveButton();
+  els.deleteSession.disabled = false;
 }
 
 function datasetJsonText() {
@@ -3190,12 +4732,35 @@ async function writeFileHandle(handle) {
 async function saveAsDataset() {
   if (!state.dataset) return;
 
+  if (isApiMode()) {
+    const suggested = outputBasename(state.outputPath) || state.file || 'new-event.json';
+    const raw = window.prompt('Save As — enter filename (in data/):', suggested);
+    if (!raw) return;
+    const cleanName = String(raw).trim().toLowerCase().replace(/\.json$/i, '').replace(/[^a-z0-9-]/g, '-') + '.json';
+    state.outputPath = `data/${cleanName}`;
+    state.file = cleanName;
+    setCurrentFilenameLabel();
+    await saveViaApi();
+    clearPhotosBackup();
+    clearLogoBackup();
+    markDirty(false);
+    resetSessionQuickEditState();
+    resetSponsorQuickEditState();
+    markSessionDirty(false);
+    markSponsorDirty(false);
+    capturePersistedSnapshot();
+    clearRecoverySnapshot();
+    showSaveToast();
+    return;
+  }
+
   if (typeof window.showSaveFilePicker !== 'function') {
     exportDataset();
     markDirty(false);
     markSessionDirty(false);
     markSponsorDirty(false);
     capturePersistedSnapshot();
+    clearRecoverySnapshot();
     window.alert('File System Access API is unavailable in this browser. Exported JSON instead.');
     return;
   }
@@ -3222,10 +4787,38 @@ async function saveAsDataset() {
   markSessionDirty(false);
   markSponsorDirty(false);
   capturePersistedSnapshot();
+  clearRecoverySnapshot();
+  showSaveToast();
 }
 
 async function saveDataset() {
   if (!state.dataset) return;
+  const { valid, errors } = await validateDataset(state.dataset);
+  if (!valid) {
+    console.error('Validation errors:', errors);
+    const errorDetails = formatValidationErrors(errors, state.dataset);
+    console.error('Formatted errors:', errorDetails);
+    window.alert(
+      `Cannot save: dataset has ${errors.length} schema error${errors.length === 1 ? '' : 's'}.\n\n${errorDetails}`
+    );
+    return;
+  }
+  console.log('Dataset validation passed, saving...');
+  if (isApiMode()) {
+    await saveViaApi();
+    clearPhotosBackup();
+    clearLogoBackup();
+    markDirty(false);
+    resetSessionQuickEditState();
+    resetSponsorQuickEditState();
+    markSessionDirty(false);
+    markSponsorDirty(false);
+    capturePersistedSnapshot();
+    clearRecoverySnapshot();
+    showSaveToast();
+    renderAppearanceForm();
+    return;
+  }
   if (!state.fileHandle) {
     if (state.projectDirHandle) {
       try {
@@ -3240,7 +4833,7 @@ async function saveDataset() {
     }
   }
   if (!state.fileHandle) {
-    window.alert('No linked save target for this dataset path. Click Connect Folder once or use Save As.');
+    window.alert('No save file linked yet. Use "Open project folder" to connect your folder, or use Save As to choose a file.');
     return;
   }
   if (typeof state.fileHandle.queryPermission === 'function') {
@@ -3251,12 +4844,17 @@ async function saveDataset() {
     }
   }
   await writeFileHandle(state.fileHandle);
+  clearPhotosBackup();
+  clearLogoBackup();
   markDirty(false);
   resetSessionQuickEditState();
   resetSponsorQuickEditState();
   markSessionDirty(false);
   markSponsorDirty(false);
   capturePersistedSnapshot();
+  clearRecoverySnapshot();
+  showSaveToast();
+  renderAppearanceForm();
 }
 
 async function saveCurrentSession() {
@@ -3275,6 +4873,100 @@ function promptForNewFilename() {
   const value = window.prompt('New dataset path (.json):', 'data/new-event.json');
   if (value == null) return '';
   return normalizeOutputPath(value, 'data/new-event.json');
+}
+
+async function buildSponsorEventCounts() {
+  const files = eventCatalog
+    .map((e) => e.file)
+    .filter((f) => f && f.endsWith('.json') && f !== 'sponsors.json');
+  const results = await Promise.allSettled(
+    files.map((f) => {
+      const url = isApiMode() ? `${state.apiEndpoint}/api/data/${encodeURIComponent(f)}` : `./data/${f}`;
+      return fetch(url).then((r) => r.json());
+    })
+  );
+  const counts = new Map();
+  for (const result of results) {
+    if (result.status !== 'fulfilled') continue;
+    const sponsors = result.value?.event?.sponsors;
+    if (!Array.isArray(sponsors)) continue;
+    const seen = new Set(
+      sponsors.map((s) => (s.title || '').toLowerCase().trim()).filter(Boolean)
+    );
+    for (const t of seen) counts.set(t, (counts.get(t) || 0) + 1);
+  }
+  state.sponsorEventCounts = counts;
+}
+
+function getSponsorEventCount(title) {
+  if (!state.sponsorEventCounts) return null;
+  return state.sponsorEventCounts.get((title || '').toLowerCase().trim()) || 0;
+}
+
+function bustSrc(src) {
+  if (!src) return src;
+  const ts = state.imageCacheBust.get(src);
+  return ts ? `${src}?cb=${ts}` : src;
+}
+
+function bustDatasetForPreview(dataset) {
+  if (!state.imageCacheBust.size) return dataset;
+  const walk = (obj) => {
+    if (!obj || typeof obj !== 'object') return;
+    for (const key of Object.keys(obj)) {
+      const val = obj[key];
+      if (typeof val === 'string' && key === 'image') {
+        const ts = state.imageCacheBust.get(val);
+        if (ts) obj[key] = `${val}?cb=${ts}`;
+      } else if (Array.isArray(val)) {
+        val.forEach(walk);
+      } else if (val && typeof val === 'object') {
+        walk(val);
+      }
+    }
+  };
+  const clone = JSON.parse(JSON.stringify(dataset));
+  walk(clone);
+  return clone;
+}
+
+function isApiMode() {
+  return Boolean(state.apiEndpoint);
+}
+
+async function saveViaApi() {
+  const filename = outputBasename(state.outputPath) || state.file;
+  if (!filename) throw new Error('No output filename configured.');
+  const res = await fetch(`${state.apiEndpoint}/api/data/${encodeURIComponent(filename)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: datasetJsonText(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+}
+
+async function uploadViaApi(file, relativePath) {
+  const form = new FormData();
+  form.append('file', file, file.name || 'upload');
+  form.append('targetPath', relativePath.replace(/^\.\//, ''));
+  const res = await fetch(`${state.apiEndpoint}/api/upload`, { method: 'POST', body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+}
+
+function syncApiModeUI() {
+  const dot = document.getElementById('apiStatusDot');
+  if (dot) {
+    dot.className = `ml-2 w-2 h-2 rounded-full ${isApiMode() ? 'bg-green-500' : 'bg-gray-300'} inline-block`;
+  }
+  if (els.folderConnectionToggle) {
+    els.folderConnectionToggle.classList.toggle('hidden', isApiMode());
+  }
 }
 
 function escapeHtml(value) {
@@ -3297,8 +4989,7 @@ function renderSitemap() {
   const meta = state.dataset?.event || {};
   const items = state.dataset?.items || [];
 
-  const scheduleUrls = normalizeUrlArray(meta.scheduleURL).filter(Boolean);
-  const rawUrl = String(meta.website || scheduleUrls[0] || '').trim();
+  const rawUrl = String(meta.website || meta.scheduleURLs?.[0] || '').trim();
   if (!rawUrl) {
     container.innerHTML = '<p class="text-sm text-gray-400 py-4">No event website URL is configured. Set the <strong>Website</strong> field in the Event tab.</p>';
     return;
@@ -3313,7 +5004,9 @@ function renderSitemap() {
 
   const eventUrls = [];
   if (meta.website) eventUrls.push(meta.website);
-  scheduleUrls.forEach((u) => { if (u && u !== meta.website && !eventUrls.includes(u)) eventUrls.push(u); });
+  for (const u of meta.scheduleURLs ?? []) {
+    if (u && u !== meta.website) eventUrls.push(u);
+  }
 
   const sessionEntries = [];
   const seen = new Set(eventUrls);
@@ -3392,7 +5085,35 @@ function renderSitemap() {
   });
 }
 
+function doPreview(mode = 'tab') {
+  if (!state.dataset) return;
+  try {
+    localStorage.setItem('__preview__', JSON.stringify(bustDatasetForPreview(state.dataset)));
+    if (mode === 'same') {
+      if (state.file) localStorage.setItem('__editor_return_file__', state.file);
+      window.location.assign('./index.html?preview=1');
+    } else {
+      window.open('./index.html?preview=1', '_blank');
+    }
+  } catch (e) {
+    window.alert('Could not open preview: ' + e.message);
+  }
+}
+
 function bindEvents() {
+  const welcomeSearch = document.getElementById('welcomeEventSearch');
+  if (welcomeSearch) {
+    welcomeSearch.addEventListener('input', () => {
+      const query = welcomeSearch.value.trim().toLowerCase();
+      const eventList = document.getElementById('welcomeEventList');
+      if (!eventList) return;
+      eventList.querySelectorAll('[data-welcome-load]').forEach((btn) => {
+        const label = btn.querySelector('.welcome-btn-label')?.textContent.toLowerCase() ?? '';
+        btn.style.display = Boolean(query) && !label.includes(query) ? 'none' : '';
+      });
+    });
+  }
+
   els.datasetSelect.addEventListener('change', async () => {
     const nextFile = String(els.datasetSelect.value || '').trim();
     const previousValue = state.lastDatasetSelectValue || '';
@@ -3425,19 +5146,189 @@ function bindEvents() {
     createDatasetScaffold(pathValue);
   });
 
+  async function handleConnectFolder() {
+    try {
+      await connectProjectFolder();
+    } catch (error) {
+      if (error && error.name === 'AbortError') return;
+      window.alert(`Could not open folder: ${error.message}`);
+    }
+  }
+
   els.folderConnectionToggle.addEventListener('click', async () => {
     if (state.folderConnectedInSession && state.projectDirHandle) {
       disconnectProjectFolder();
       return;
     }
-    try {
-      await connectProjectFolder();
-      window.alert('Project folder connected.');
-    } catch (error) {
-      if (error && error.name === 'AbortError') return;
-      window.alert(`Connect folder failed: ${error.message}`);
-    }
+    await handleConnectFolder();
   });
+
+  const welcomeConnectBtn = document.getElementById('welcomeConnectFolder');
+  if (welcomeConnectBtn) {
+    welcomeConnectBtn.addEventListener('click', () => handleConnectFolder());
+  }
+
+  const welcomeApiSettingsBtn = document.getElementById('welcomeApiSettings');
+  if (welcomeApiSettingsBtn) {
+    welcomeApiSettingsBtn.addEventListener('click', () => {
+      const modal = document.getElementById('apiSettingsModal');
+      const input = document.getElementById('apiEndpointInput');
+      const result = document.getElementById('apiTestResult');
+      if (input) input.value = state.apiEndpoint;
+      if (result) { result.textContent = ''; result.className = 'text-sm hidden'; }
+      if (modal) { modal.classList.remove('hidden'); modal.setAttribute('aria-hidden', 'false'); }
+    });
+  }
+
+  const welcomeApiContinueBtn = document.getElementById('welcomeApiContinue');
+  if (welcomeApiContinueBtn) {
+    welcomeApiContinueBtn.addEventListener('click', () => showWelcomeScreen2());
+  }
+
+  const welcomeApiDisconnectBtn = document.getElementById('welcomeApiDisconnectBtn');
+  if (welcomeApiDisconnectBtn) {
+    welcomeApiDisconnectBtn.addEventListener('click', () => {
+      state.apiEndpoint = '';
+      localStorage.removeItem('editorApiEndpoint');
+      syncApiModeUI();
+      setFolderConnectionButtonState();
+      syncWelcomeScreen1State();
+    });
+  }
+
+  const apiSettingsBtn = document.getElementById('apiSettingsBtn');
+  const apiSettingsModal = document.getElementById('apiSettingsModal');
+  const closeApiSettingsBtn = document.getElementById('closeApiSettings');
+  const apiEndpointInput = document.getElementById('apiEndpointInput');
+  const apiTestBtn = document.getElementById('apiTestBtn');
+  const apiSaveBtn = document.getElementById('apiSaveBtn');
+  const apiClearBtn = document.getElementById('apiClearBtn');
+  const apiTestResult = document.getElementById('apiTestResult');
+
+  if (apiSettingsBtn && apiSettingsModal) {
+    const openApiModal = () => {
+      if (apiEndpointInput) apiEndpointInput.value = state.apiEndpoint;
+      if (apiTestResult) { apiTestResult.textContent = ''; apiTestResult.className = 'text-sm hidden'; }
+      apiSettingsModal.classList.remove('hidden');
+      apiSettingsModal.setAttribute('aria-hidden', 'false');
+    };
+    const closeApiModal = () => {
+      apiSettingsModal.classList.add('hidden');
+      apiSettingsModal.setAttribute('aria-hidden', 'true');
+    };
+
+    apiSettingsBtn.addEventListener('click', openApiModal);
+    if (closeApiSettingsBtn) closeApiSettingsBtn.addEventListener('click', closeApiModal);
+    apiSettingsModal.addEventListener('click', (e) => { if (e.target === apiSettingsModal) closeApiModal(); });
+
+    if (apiTestBtn && apiEndpointInput && apiTestResult) {
+      apiTestBtn.addEventListener('click', async () => {
+        const endpoint = apiEndpointInput.value.trim().replace(/\/$/, '');
+        if (!endpoint) {
+          apiTestResult.textContent = 'Enter an endpoint URL first.';
+          apiTestResult.className = 'text-sm text-yellow-600';
+          return;
+        }
+        apiTestBtn.disabled = true;
+        apiTestResult.textContent = 'Testing…';
+        apiTestResult.className = 'text-sm text-gray-500';
+        try {
+          const res = await fetch(`${endpoint}/api/health`);
+          if (res.ok) {
+            apiTestResult.textContent = 'Connected successfully.';
+            apiTestResult.className = 'text-sm text-green-600';
+          } else {
+            apiTestResult.textContent = `Server responded with HTTP ${res.status}.`;
+            apiTestResult.className = 'text-sm text-red-600';
+          }
+        } catch (e) {
+          apiTestResult.textContent = `Could not connect: ${e.message}`;
+          apiTestResult.className = 'text-sm text-red-600';
+        }
+        apiTestBtn.disabled = false;
+      });
+    }
+
+    if (apiSaveBtn && apiEndpointInput) {
+      apiSaveBtn.addEventListener('click', async () => {
+        const endpoint = apiEndpointInput.value.trim().replace(/\/$/, '');
+        state.apiEndpoint = endpoint;
+        if (endpoint) {
+          localStorage.setItem('editorApiEndpoint', endpoint);
+        } else {
+          localStorage.removeItem('editorApiEndpoint');
+        }
+        syncApiModeUI();
+        setFolderConnectionButtonState();
+        closeApiModal();
+        if (endpoint && !state.dataset) {
+          await renderDatasetOptionsFromConnectedFolder();
+          setDatasetLoadingEnabled(true);
+          showWelcomeScreen2();
+        } else {
+          syncWelcomeScreen1State();
+        }
+        await refreshEditorSearch();
+      });
+    }
+
+    if (apiClearBtn) {
+      apiClearBtn.addEventListener('click', () => {
+        if (apiEndpointInput) apiEndpointInput.value = '';
+        state.apiEndpoint = '';
+        localStorage.removeItem('editorApiEndpoint');
+        syncApiModeUI();
+        setFolderConnectionButtonState();
+        closeApiModal();
+        if (!state.dataset) {
+          renderDatasetOptionsFromConnectedFolder().then(() => {
+            setDatasetLoadingEnabled(!!(state.projectDirHandle && state.folderConnectedInSession));
+            syncWelcomePanel();
+          });
+        }
+      });
+    }
+  }
+
+  if (els.previewDataset) {
+    els.previewDataset.addEventListener('click', () => doPreview('tab'));
+  }
+
+  if (els.previewDatasetToggle && els.previewDatasetDropdown) {
+    els.previewDatasetToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = !els.previewDatasetDropdown.classList.contains('hidden');
+      els.previewDatasetDropdown.classList.toggle('hidden', open);
+      els.previewDatasetToggle.setAttribute('aria-expanded', String(!open));
+    });
+
+    els.previewDatasetDropdown.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-preview-mode]');
+      if (!item) return;
+      els.previewDatasetDropdown.classList.add('hidden');
+      els.previewDatasetToggle.setAttribute('aria-expanded', 'false');
+      doPreview(item.dataset.previewMode);
+    });
+
+    document.addEventListener('click', () => {
+      els.previewDatasetDropdown.classList.add('hidden');
+      els.previewDatasetToggle.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  if (els.saveDatasetToggle && els.saveDatasetDropdown) {
+    els.saveDatasetToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = !els.saveDatasetDropdown.classList.contains('hidden');
+      els.saveDatasetDropdown.classList.toggle('hidden', open);
+      els.saveDatasetToggle.setAttribute('aria-expanded', String(!open));
+    });
+
+    document.addEventListener('click', () => {
+      els.saveDatasetDropdown.classList.add('hidden');
+      if (els.saveDatasetToggle) els.saveDatasetToggle.setAttribute('aria-expanded', 'false');
+    });
+  }
 
   els.saveDataset.addEventListener('click', async () => {
     try {
@@ -3447,32 +5338,34 @@ function bindEvents() {
     }
   });
 
-  els.saveAsDataset.addEventListener('click', async () => {
-    try {
-      await saveAsDataset();
-    } catch (error) {
-      if (error && error.name === 'AbortError') return;
-      window.alert(`Save As failed: ${error.message}`);
-    }
-  });
+  if (els.saveAsDataset) {
+    els.saveAsDataset.addEventListener('click', async () => {
+      if (els.saveDatasetDropdown) {
+        els.saveDatasetDropdown.classList.add('hidden');
+        if (els.saveDatasetToggle) els.saveDatasetToggle.setAttribute('aria-expanded', 'false');
+      }
+      try {
+        await saveAsDataset();
+      } catch (error) {
+        if (error && error.name === 'AbortError') return;
+        window.alert(`Save As failed: ${error.message}`);
+      }
+    });
+  }
 
   if (els.exportDataset) {
     els.exportDataset.addEventListener('click', exportDataset);
   }
-  els.saveSession.addEventListener('click', async () => {
-    try {
-      await saveCurrentSession();
-    } catch (error) {
-      window.alert(`Save session failed: ${error.message}`);
-    }
-  });
-  els.saveSponsor.addEventListener('click', async () => {
-    try {
-      await saveCurrentSponsor();
-    } catch (error) {
-      window.alert(`Save sponsor failed: ${error.message}`);
-    }
-  });
+  if (els.saveSession) {
+    els.saveSession.addEventListener('click', async () => {
+      try { await saveCurrentSession(); } catch (error) { window.alert(`Save failed: ${error.message}`); }
+    });
+  }
+  if (els.saveSponsor) {
+    els.saveSponsor.addEventListener('click', async () => {
+      try { await saveCurrentSponsor(); } catch (error) { window.alert(`Save failed: ${error.message}`); }
+    });
+  }
   els.addSession.addEventListener('click', async () => {
     try {
       await addSession();
@@ -3529,8 +5422,7 @@ function bindEvents() {
   }
 
   if (els.toggleSessionWorkspace) {
-    els.toggleSessionWorkspace.addEventListener('click', async () => {
-      if (!(await confirmDiscardPendingChanges('the session list view'))) return;
+    els.toggleSessionWorkspace.addEventListener('click', () => {
       setSessionWorkspaceExpanded(!state.sessionListExpanded);
       renderSessionList();
       renderSessionForm();
@@ -3540,17 +5432,15 @@ function bindEvents() {
   }
 
   if (els.toggleQuickSessionEdit) {
-    els.toggleQuickSessionEdit.addEventListener('click', async () => {
+    els.toggleQuickSessionEdit.addEventListener('click', () => {
       if (!state.sessionListExpanded || !isSessionEditorEnabled()) return;
-      if (!(await confirmDiscardPendingChanges('session quick edit'))) return;
       setQuickSessionEditEnabled(!state.sessionQuickEditEnabled);
       renderSessionList();
     });
   }
 
   if (els.toggleSponsorWorkspace) {
-    els.toggleSponsorWorkspace.addEventListener('click', async () => {
-      if (!(await confirmDiscardPendingChanges('the sponsor list view'))) return;
+    els.toggleSponsorWorkspace.addEventListener('click', () => {
       setSponsorWorkspaceExpanded(!state.sponsorListExpanded);
       renderSponsorList();
       renderSponsorForm();
@@ -3560,9 +5450,8 @@ function bindEvents() {
   }
 
   if (els.toggleQuickSponsorEdit) {
-    els.toggleQuickSponsorEdit.addEventListener('click', async () => {
+    els.toggleQuickSponsorEdit.addEventListener('click', () => {
       if (!state.sponsorListExpanded || !isSponsorEditorEnabled()) return;
-      if (!(await confirmDiscardPendingChanges('sponsor quick edit'))) return;
       setQuickSponsorEditEnabled(!state.sponsorQuickEditEnabled);
       renderSponsorList();
     });
@@ -3570,37 +5459,49 @@ function bindEvents() {
 
   if (els.showEventTab) {
     els.showEventTab.addEventListener('click', async () => {
-      await switchEditorTab('event');
+      switchEditorTab('event');
     });
   }
 
   if (els.showSessionsTab) {
     els.showSessionsTab.addEventListener('click', async () => {
-      await switchEditorTab('sessions');
+      switchEditorTab('sessions');
     });
   }
 
   if (els.showLogoTab) {
     els.showLogoTab.addEventListener('click', async () => {
-      await switchEditorTab('logo');
+      switchEditorTab('logo');
     });
   }
 
   if (els.showFlickrTab) {
     els.showFlickrTab.addEventListener('click', async () => {
-      await switchEditorTab('flickr');
+      switchEditorTab('flickr');
     });
   }
 
   if (els.showSponsorsTab) {
     els.showSponsorsTab.addEventListener('click', async () => {
-      await switchEditorTab('sponsors');
+      switchEditorTab('sponsors');
     });
   }
 
   if (els.showSitemapTab) {
     els.showSitemapTab.addEventListener('click', async () => {
-      await switchEditorTab('sitemap');
+      switchEditorTab('sitemap');
+    });
+  }
+
+  if (els.showTimelineTab) {
+    els.showTimelineTab.addEventListener('click', async () => {
+      switchEditorTab('timeline');
+    });
+  }
+
+  if (els.showAppearanceTab) {
+    els.showAppearanceTab.addEventListener('click', () => {
+      switchEditorTab('appearance');
     });
   }
 
@@ -3625,26 +5526,236 @@ function bindEvents() {
     });
   }
 
+  if (els.closeSessionSponsorPicker) {
+    els.closeSessionSponsorPicker.addEventListener('click', closeSessionSponsorPicker);
+  }
+
+  if (els.closeSessionSponsorPickerBack) {
+    els.closeSessionSponsorPickerBack.addEventListener('click', closeSessionSponsorPicker);
+  }
+
+  if (els.sessionSponsorPickerModal) {
+    els.sessionSponsorPickerModal.addEventListener('click', (event) => {
+      if (event.target === els.sessionSponsorPickerModal) {
+        closeSessionSponsorPicker();
+      }
+    });
+    els.sessionSponsorPickerModal.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeSessionSponsorPicker();
+      }
+    });
+  }
+
+  if (els.undoAction) {
+    els.undoAction.addEventListener('click', async () => {
+      await performUndo();
+    });
+  }
+
+  if (els.revertDataset) {
+    els.revertDataset.addEventListener('click', async () => {
+      if (!state.persistedSnapshot) return;
+      const okay = window.confirm('Revert all unsaved changes and restore the last saved version?');
+      if (!okay) return;
+      await restorePersistedSnapshot();
+    });
+  }
+
+  document.addEventListener('keydown', async (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+      event.preventDefault();
+      try { await saveDataset(); } catch (e) { window.alert(e?.message || String(e)); }
+      return;
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      event.preventDefault();
+      await performUndo();
+    }
+  });
+
   window.addEventListener('beforeunload', (event) => {
-    if (!state.dirty) return;
+    if (!state.dirty || !state.dataset) return;
+    saveRecoverySnapshot();
     event.preventDefault();
     event.returnValue = '';
   });
 }
 
+function _mapApiSearchRecords(records) {
+  return records
+    .filter((r) => isEditorDatasetFile(r.file))
+    .map((r) => ({
+      file: r.file,
+      category: r.designation || 'Other',
+      designation: r.designation,
+      location: r.location,
+      year: r.year,
+      region: r.region,
+      venue: r.venue,
+      label: r.label,
+      enabled: r.enabled,
+    }))
+    .sort((a, b) => {
+      const ya = Number.parseInt(a.year, 10);
+      const yb = Number.parseInt(b.year, 10);
+      if (Number.isFinite(ya) && Number.isFinite(yb) && ya !== yb) return yb - ya;
+      return a.label.localeCompare(b.label);
+    });
+}
+
+async function buildApiSearchCatalog() {
+  try {
+    if (isApiMode()) {
+      // Single request returns metadata for all files — no items arrays transferred.
+      const res = await fetch(`${state.apiEndpoint}/api/meta`);
+      if (!res.ok) return [];
+      const metas = await res.json();
+      if (!Array.isArray(metas) || metas.length === 0) return [];
+      return metas
+        .filter((m) => m && isEditorDatasetFile(m.file))
+        .map((m) => ({
+          file: m.file,
+          category: m.designation || 'Other',
+          designation: m.designation,
+          location: m.location,
+          year: m.year,
+          region: m.region,
+          venue: m.venue,
+          label: buildDatasetOptionLabel(m.file, m),
+          enabled: m.enabled,
+        }))
+        .sort((a, b) => {
+          const ya = Number.parseInt(a.year, 10);
+          const yb = Number.parseInt(b.year, 10);
+          if (Number.isFinite(ya) && Number.isFinite(yb) && ya !== yb) return yb - ya;
+          return a.label.localeCompare(b.label);
+        });
+    }
+
+    // Non-API mode (no folder connected): fetch index and individual metadata via static URLs.
+    // (handles the case where loadEventCatalog() failed or was memoized before the server was reachable)
+    const res = await fetch('./data/index.json');
+    if (!res.ok) return [];
+    const payload = await res.json();
+    const files = (Array.isArray(payload?.files) ? payload.files : [])
+      .map((e) => (typeof e === 'string' ? e : e?.file))
+      .filter((f) => f && isEditorDatasetFile(f));
+    if (files.length === 0) return [];
+    const records = await loadDatasetMetaForGroupingViaFetch(files);
+    return _mapApiSearchRecords(records);
+  } catch {
+    return [];
+  }
+}
+
+async function buildConnectedFolderSearchCatalog() {
+  const files = await listDatasetFilesFromConnectedFolder();
+  const dataDir = await getDataDirectoryHandle(false);
+  if (!dataDir || files.length === 0) return [];
+
+  const entries = await Promise.all(
+    files.map(async (file) => {
+      try {
+        const handle = await dataDir.getFileHandle(file);
+        const blob = await handle.getFile();
+        const text = await blob.text();
+        const parsed = JSON.parse(text);
+        const meta = parsed?.event || {};
+        const designation = String(meta.designation || '').trim();
+        const year = String(meta.year || '').trim();
+        const location = String(meta.location || '').trim();
+        const label =
+          designation && year && location
+            ? `${designation} ${year}: ${location}`
+            : [designation, year, location].filter(Boolean).join(' ') ||
+              file.replace(/\.json$/i, '');
+        return {
+          file,
+          category: designation || 'Other',
+          designation,
+          location,
+          year,
+          region: String(meta.region || '').trim(),
+          venue: String(meta.venue || '').trim(),
+          label,
+          enabled: meta.enabled !== false,
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return entries
+    .filter(Boolean)
+    .sort((a, b) => {
+      const ya = Number.parseInt(a.year, 10);
+      const yb = Number.parseInt(b.year, 10);
+      if (Number.isFinite(ya) && Number.isFinite(yb) && ya !== yb) return yb - ya;
+      return a.label.localeCompare(b.label);
+    });
+}
+
+async function refreshEditorSearch() {
+  const hasFolder = state.projectDirHandle && state.folderConnectedInSession;
+
+  try {
+    const searchableEvents = hasFolder
+      ? await buildConnectedFolderSearchCatalog()
+      : await buildApiSearchCatalog();
+
+    configureEventSearch({
+      getEvents: () => searchableEvents,
+      onSelect: async (_category, file) => {
+        if (!state.dataset || (await confirmDiscardPendingChanges(`dataset ${file}`))) {
+          try {
+            els.datasetSelect.value = file;
+            await loadDataset(file);
+          } catch (error) {
+            els.datasetSelect.value = state.lastDatasetSelectValue || '';
+            window.alert(`Could not load dataset: ${error.message}`);
+          }
+        }
+      },
+    });
+  } catch (e) {
+    console.error('[refreshEditorSearch]', e);
+    configureEventSearch({ getEvents: () => [], onSelect: async () => {} });
+  }
+
+  // Always enable the search button so users can quickly access the search modal
+  if (els.editorSearchEvents) els.editorSearchEvents.disabled = false;
+}
+
+function revealPage() {
+  document.documentElement.style.opacity = '1';
+}
+
 async function init() {
+  await loadThemes();
+  applyThemeClass(getCurrentThemeId());
+
   if (!isLocalhost()) {
     els.blocked.classList.remove('hidden');
     els.app.classList.add('hidden');
+    revealPage();
     return;
   }
 
   eventCatalog = await loadEventCatalog().catch(() => []);
   buildTimezoneList();
-  // Require explicit "Connect Folder" each session before loading datasets.
-  // We keep stored handles for save-linking, but do not auto-activate folder loading.
+  if (els.editorSearchEvents) {
+    els.editorSearchEvents.addEventListener('click', openEventSearchModal);
+  }
+  // In API mode, populate select from catalog and enable loading immediately.
+  // In FS mode, require explicit "Connect Folder" each session.
   await renderDatasetOptionsFromConnectedFolder();
-  setDatasetLoadingEnabled(false);
+  setDatasetLoadingEnabled(isApiMode());
+  syncApiModeUI();
+  await refreshEditorSearch();
   bindEvents();
   markDirty(false);
   resetSessionQuickEditState();
@@ -3659,13 +5770,23 @@ async function init() {
   setActiveEditorTab('event');
   setFolderConnectionButtonState();
   if (els.logoForm) {
-    els.logoForm.innerHTML = '<p class="text-sm text-gray-400">Connect folder to begin.</p>';
+    els.logoForm.innerHTML = '<p class="text-sm text-gray-400">Open a project folder to get started.</p>';
   }
   if (els.flickrForm) {
-    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Connect folder to begin.</p>';
+    els.flickrForm.innerHTML = '<p class="text-sm text-gray-400">Open a project folder to get started.</p>';
   }
-  els.sponsorList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Connect folder to begin.</li>';
+  els.sponsorList.innerHTML = '<li class="text-sm text-gray-400 px-3 py-2 border border-dashed border-gray-700 rounded-md">Open a project folder to get started.</li>';
   els.sponsorForm.innerHTML = '<p class="text-sm text-gray-400">Select a sponsor row to edit it.</p>';
+
+  const pendingRecovery = loadRecoverySnapshot();
+  if (pendingRecovery) showRecoveryBar(pendingRecovery);
+
+  setInterval(() => {
+    if (state.dirty && state.dataset) saveRecoverySnapshot();
+  }, 30_000);
+
+  syncWelcomePanel();
+  revealPage();
 }
 
 void init();

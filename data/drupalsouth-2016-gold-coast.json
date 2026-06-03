@@ -5,7 +5,6 @@
     "year": "2016",
     "website": "https://goldcoast2016.drupal.org.au/",
     "region": "Australia – Gold Coast",
-    "scheduleURL": "https://goldcoast2016.drupal.org.au/conference/schedule/wed",
     "venue": "Gold Coast",
     "timezone": "Australia/Brisbane",
     "startDate": "2016-10-25T22:30:00Z",
@@ -131,6 +130,9 @@
         "aspect": "auto",
         "enabled": true
       }
+    ],
+    "scheduleURLs": [
+      "https://goldcoast2016.drupal.org.au/conference/schedule/wed"
     ]
   },
   "items": [

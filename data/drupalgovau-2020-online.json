@@ -7,7 +7,6 @@
     "region": "Online",
     "endDate": "2020-11-05T06:00:00Z",
     "startDate": "2020-11-04T21:55:00Z",
-    "scheduleURL": "https://drupalsouth.org/events/drupalgov-2020/schedule",
     "venue": "Online",
     "timezone": "Australia/Sydney",
     "enabled": true,
@@ -219,7 +218,10 @@
         "enabled": true
       }
     ],
-    "columns": 3
+    "columns": 3,
+    "scheduleURLs": [
+      "https://drupalsouth.org/events/drupalgov-2020/schedule"
+    ]
   },
   "items": [
     {
@@ -232,7 +234,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -245,7 +247,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -273,7 +275,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -331,7 +333,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -344,7 +346,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -359,9 +361,6 @@
       ],
       "speakers": [
         "Alanna Burke"
-      ],
-      "speaker_usernames": [
-        "aburke626"
       ],
       "sponsorIds": ""
     },
@@ -378,9 +377,6 @@
       "speakers": [
         "Andre Kakos",
         "Queenie Robertson"
-      ],
-      "speaker_usernames": [
-        "andrekakos"
       ],
       "sponsorIds": ""
     },
@@ -409,7 +405,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -422,7 +418,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -572,7 +568,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -600,7 +596,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -613,7 +609,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -686,7 +682,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -760,7 +756,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -791,9 +787,6 @@
       "speakers": [
         "Chris Skene"
       ],
-      "speaker_usernames": [
-        "xtfer"
-      ],
       "sponsorIds": ""
     },
     {
@@ -821,7 +814,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -834,7 +827,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -865,9 +858,6 @@
       "speakers": [
         "Arjen Lentz"
       ],
-      "speaker_usernames": [
-        "arjen"
-      ],
       "sponsorIds": ""
     },
     {
@@ -882,9 +872,6 @@
       ],
       "speakers": [
         "Murray Woodman"
-      ],
-      "speaker_usernames": [
-        "murrayw"
       ],
       "sponsorIds": ""
     },
@@ -928,7 +915,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1002,7 +989,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1030,7 +1017,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     },
     {
@@ -1043,7 +1030,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "sponsorIds": ""
     }
   ],

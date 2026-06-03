@@ -629,9 +629,10 @@ function renderEventCard(event, { keywordsFilter, isDrupalConDesign, timeSlotBgC
     : 'track-pill text-xs text-gray-600 bg-white bg-opacity-60 px-2 py-1 rounded-sm inline-flex';
   const trackLabels = normalizeTracks(event.track);
   const highlightedTrack = trackLabels
-    .map((track) => highlightKeywords(escapeHtml(track), keywordsFilter))
-    .map((track) => `<span class="${trackClass}">${track}</span>`)
+    .map((track) => ({ raw: track, text: highlightKeywords(escapeHtml(track), keywordsFilter) }))
+    .map(({ raw, text }) => `<span class="${trackClass}" data-track="${escapeHtml(raw)}">${text}</span>`)
     .join('');
+  const primaryTrack = trackLabels[0] || '';
   const durationText = formatDuration(event, event.duration);
   const [colorA, colorB] = getEventPalette(event);
   const bgColor = isSelected ? 'drupal-blue-bg-light' : timeSlotBgColor;
@@ -642,6 +643,7 @@ function renderEventCard(event, { keywordsFilter, isDrupalConDesign, timeSlotBgC
 
   return `
     <div class="event-card relative h-full p-4 rounded-md transition-colors cursor-pointer border ${cardExtraClass} ${bgColor} ${hoverColor} ${isSelected ? 'drupal-blue-border-light' : 'border-gray-300'}"
+         data-primary-track="${escapeHtml(primaryTrack)}"
          role="button" tabindex="0" aria-haspopup="dialog"
          aria-label="${escapeHtml(event.title || 'Session')}. Open session details."
          data-event-id="${event.id}" ${cardStyle}>
@@ -652,7 +654,11 @@ function renderEventCard(event, { keywordsFilter, isDrupalConDesign, timeSlotBgC
         </label>
         ${selectedBadge}
       </div>
-      <span class="absolute bottom-3 right-3 text-xs text-gray-500 whitespace-nowrap">${durationText}</span>
+      <div class="absolute bottom-3 right-3 flex items-center gap-1.5">
+        ${event.video_url ? '<span class="session-card-indicator" title="Recording available"><i class="fab fa-youtube"></i></span>' : ''}
+        ${event.link ? '<span class="session-card-indicator session-card-indicator-link" title="Session page available"><i class="fas fa-external-link-alt"></i></span>' : ''}
+        <span class="text-xs text-gray-500 whitespace-nowrap">${durationText}</span>
+      </div>
       <div class="flex items-start space-x-3 flex-1 self-stretch">
         <div class="flex-1 flex flex-col h-full pr-16">
           <h3 class="text-[0.96rem] leading-[1.32] font-medium text-gray-900 mb-1">${highlightedSummary}</h3>
@@ -662,8 +668,6 @@ function renderEventCard(event, { keywordsFilter, isDrupalConDesign, timeSlotBgC
             ? `<p class="text-xs text-gray-500 mb-1"><i class="far fa-clock mr-1" aria-hidden="true"></i>${timelineTime}</p>`
             : `<p class="text-sm text-gray-600 mb-1"><i class="far fa-clock mr-1" aria-hidden="true"></i>${fullDateTime}</p>`}
           ${descriptionText ? `<div class="session-description-preview text-sm text-gray-700 mb-1">${highlightedDescription}</div>` : '<div class="mb-1"></div>'}
-          ${event.link && hasDescription ? `<p class="text-sm mb-1"><a href="${event.link}" target="_blank" class="schedule-link"><span>View Session Details</span> <i class="fas fa-external-link-alt ml-1"></i></a></p>` : ''}
-          ${event.video_url ? `<p class="text-sm mb-1"><a href="${event.video_url}" target="_blank" class="schedule-link inline-flex items-center"><i class="fab fa-youtube mr-1"></i><span>Watch recording</span></a></p>` : ''}
           ${trackLabels.length > 0 ? `<div class="mt-auto pt-[5px] flex flex-wrap gap-1">${highlightedTrack}</div>` : ''}
         </div>
       </div>
@@ -675,7 +679,7 @@ export function displayListView(events, container) {
   container.innerHTML = '';
 
   const keywordsFilter = document.getElementById('keywordsFilter').value;
-  const isDrupalConDesign = state.designMode === 'drupalcon';
+  const isDrupalConDesign = true;
   const timeSlotColors = ['slot-bg-a', 'slot-bg-b'];
   const gridCols = 'grid grid-cols-1 md:grid-cols-2 lg:[grid-template-columns:repeat(var(--slot-columns),minmax(0,1fr))] gap-2';
 

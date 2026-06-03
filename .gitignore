@@ -1,4 +1,10 @@
-.codex
+node_modules/*
 cache/*
+.codegraph/*
 .idea/*
+documents/*
 scripts/*
+planner/*
+receipts/*
+package.json
+package-lock.json

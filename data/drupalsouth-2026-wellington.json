@@ -7,14 +7,14 @@
     "region": "New Zealand – Wellington",
     "endDate": "2026-05-14T04:30:00Z",
     "startDate": "2026-05-11T21:00:00Z",
-    "scheduleURL": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule",
     "venue": "Harbourside Function Venue",
     "timezone": "Pacific/Auckland",
-    "sourceCache": "manual/2026-05-01/drupalsouth-wellington-2026",
+    "sourceCache": "manual/2026-05-13/drupalsouth-wellington-2026",
     "columns": 3,
     "enabled": true,
     "flickr": {
       "enabled": true,
+      "provider": "",
       "groupUrl": "https://flic.kr/g/3gCxkw",
       "image": "./img/flickr/drupalsouth/2026-wellington.jpg",
       "imageAlt": "DrupalSouth logo"
@@ -271,8 +271,29 @@
         "bgStyle": "auto",
         "aspect": "auto",
         "enabled": true
+      },
+      {
+        "id": "sponsor-20",
+        "title": "The Drop Times",
+        "tier": "Media",
+        "row": 6,
+        "priority": 200,
+        "image": "./img/sponsors/drupalsouth/2026-wellington/sponsor-20.png",
+        "imageAlt": "Sponsor 20The Drop Times logo",
+        "link": "https://drupalsouth.org/sponsors/thedroptimes",
+        "bgStyle": "auto",
+        "aspect": "auto",
+        "enabled": true
       }
-    ]
+    ],
+    "scheduleURLs": [
+      "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule"
+    ],
+    "theme": {
+      "primaryColor": "#9D00FF",
+      "secondaryColor": "#C5FD36",
+      "tertiaryColor": "#fdf8e0"
+    }
   },
   "items": [
     {
@@ -285,7 +306,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -296,9 +317,8 @@
       "endTime": "2026-05-12T21:00:00Z",
       "location": "",
       "duration": "P60M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -310,9 +330,8 @@
       "endTime": "2026-05-12T21:30:00Z",
       "location": "",
       "duration": "P30M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -324,7 +343,7 @@
       "duration": "P40M",
       "title": "Death to the Black Box: Winning in 2026 through personal agency, financial prudence and community",
       "location": "Te Aro",
-      "link": "",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4494",
       "track": [
         "Keynote"
       ],
@@ -332,7 +351,7 @@
         "Serge van Dam"
       ],
       "full_description": "Serge van Dam challenges attendees to reject default approaches as AI proliferates and budgets tighten. His presentation emphasizes resisting vendor consolidation through independent decision-making, prudent resource allocation, and investment in community strength. The talk advocates for transparency over opaque systems and sustainable, accountable practices rather than closed-off solutions.",
-      "video_url": "",
+      "video_url": "https://youtu.be/t3-r6xXpc_k",
       "sponsorIds": ""
     },
     {
@@ -349,7 +368,7 @@
         "Dave Sparks"
       ],
       "full_description": "Dave Sparks will deliver a retrospective covering \"1 Team, 2 Decades of delivery, 3 Quick thoughts for the future.\" The presenter plans to offer \"a brief debunking of dearly held beliefs, rapid-fire reckons from a personal perspective,\" along with musical references spanning multiple decades. Attendees should expect an unconventional presentation style rather than traditional corporate messaging.",
-      "video_url": "",
+      "video_url": "https://youtu.be/-qX1kiSzu8U",
       "sponsorIds": "sponsor-1"
     },
     {
@@ -396,7 +415,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-18"
@@ -462,7 +481,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -481,7 +500,7 @@
         "Alex Skrypnyk"
       ],
       "full_description": "The session explores a practical, production-tested approach where developers maintain control while AI agents execute well-defined tasks. Key topics covered include feature planning before prompting, using AI agents for scoped implementations, generating tests and integrations, and code review processes. The presenter emphasizes treating AI as an accelerator rather than autonomous builder, showing \"where AI fits into modern Drupal development - and where it absolutely does not.\"",
-      "video_url": "",
+      "video_url": "https://youtu.be/vhEJThnAKj8",
       "sponsorIds": ""
     },
     {
@@ -528,7 +547,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -547,7 +566,7 @@
         "Jason Kiss"
       ],
       "full_description": "The session explores CWAC (Centralised Web Accessibility Checker), an open-source tool developed by New Zealand's Chief Digital Officer. This software \"scans websites for accessibility issues to help ensure that government web content can be used by disabled people.\" The presentation covers CWAC's focus on Web Content Accessibility Guidelines (WCAG) 2.2 compliance, its community-driven development model, and how scan results are published as open data. A key discussion point involves the challenge of \"presenting and translating the results into action for agencies.\"",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=V5US0ul_Qow",
       "sponsorIds": ""
     },
     {
@@ -594,7 +613,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -660,7 +679,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -732,23 +751,26 @@
         "Emily Mills"
       ],
       "full_description": "The session addresses how discovery workshops can be designed to \"directly inform development decisions, content and UI—not just high-level ideas.\" Emily demonstrates techniques for \"turning discovery outputs into actionable inputs\" for Drupal projects, covering workshop planning, facilitation strategies, and practical activities that produce \"build-ready outcomes\" rather than vague discussions.",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=cNiHOQwUHGo",
       "sponsorIds": ""
     },
     {
       "startTime": "2026-05-13T03:10:00Z",
       "endTime": "2026-05-13T03:40:00Z",
       "duration": "P30M",
-      "title": "Drupal CMS2: What's in the box?",
+      "title": "DrupalSouth Steering Committee Panel",
       "location": "Waterfront",
-      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4311",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4496",
       "track": [
-        "Drupal Development"
+        "People & Culture"
       ],
       "speakers": [
-        "Stewart West"
+        "Julia Topliss",
+        "Chris Burgess",
+        "Margery Tongway",
+        "Vladimir Roudakov"
       ],
-      "full_description": "A brief presentation introducing Drupal CMS 2.0 features, including the installation process and new Site Templates. The session covers Canvas with its drag-and-drop capabilities, AI assistants and tools within CKEditor, and using an AI Builder agent to create Canvas layouts. Described as \"a very quick exposé for those who haven't tried it yet.\"",
+      "full_description": "The DrupalSouth Steering Committee serves as a vital standing sub-committee of Linux Australia. Our primary mission is to provide stable, long-term governance and oversight for the DrupalSouth conferences - the premier events for the Drupal community in Australia and New Zealand.\n\nWhy This Session Matters\nAs the digital landscape evolves, so must our community. This panel is not just a reporting session; it is an open forum about leadership and the community. We are at a point where the roadmap for future conferences, local community engagement, and the regional health of the Drupal ecosystem are being redefined.\n\nWhat We Will Discuss\n💧 The Conference Roadmap: Insights into how we select locations, manage budgets, and maintain the high standard of DrupalSouth events.\n💧 Sustainability & Growth: How we can better support local meetups and sprints between the big annual gatherings.\n💧 Community Governance: Understanding the relationship between DrupalSouth, Linux Australia, and the global Drupal Association.\n💧 General Drupal Trends: An open-mic environment to discuss the technical and professional future of Drupal in our region.\n💧 Upcoming DrupalSouth committee elections",
       "video_url": "",
       "sponsorIds": ""
     },
@@ -766,7 +788,7 @@
         "Simon Hobbs"
       ],
       "full_description": "The session explores using Drupal as the operational backend powering Shopify storefronts. Rather than deploying multiple custom Shopify apps with separate React frontends and Node backends, this approach consolidates business logic in Drupal, which handles operations while Shopify manages storefront, checkout, and payments. The speaker demonstrates how The Diggers Club implements this strategy for specialized processes like custom picking/quarantine workflows and seed packet label generation. The talk covers integration strategies, user experience optimization, and leveraging existing Drupal capabilities to reduce system complexity.",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=A3xox7WIfFM",
       "sponsorIds": ""
     },
     {
@@ -779,7 +801,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-18"
@@ -798,7 +820,7 @@
         "Jonnie Haddon"
       ],
       "full_description": "The session explores evolving government practices, examining \"where we have come from, what's changed, what hasn't and why working with Government might be worth another look.\" It addresses perceptions of slow government processes and difficult procurement while highlighting new infrastructure and openness to local tech collaboration.",
-      "video_url": "",
+      "video_url": "https://youtu.be/ve6LlBv937g",
       "sponsorIds": ""
     },
     {
@@ -807,9 +829,8 @@
       "endTime": "2026-05-13T04:40:00Z",
       "location": "",
       "duration": "P10M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -825,7 +846,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -840,7 +861,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-17"
@@ -850,10 +871,9 @@
       "startTime": "2026-05-13T07:00:00Z",
       "endTime": "2026-05-13T07:00:00Z",
       "location": "",
-      "duration": "",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "duration": "P0M",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -865,9 +885,8 @@
       "endTime": "2026-05-13T20:30:00Z",
       "location": "",
       "duration": "P30M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -879,9 +898,8 @@
       "endTime": "2026-05-13T21:00:00Z",
       "location": "",
       "duration": "P10M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "",
       "link": "",
@@ -893,9 +911,8 @@
       "endTime": "2026-05-13T20:50:00Z",
       "location": "",
       "duration": "P20M",
-      "track": "",
-      "speakers": "",
-      "speaker_usernames": "",
+      "track": [],
+      "speakers": [],
       "full_description": "",
       "sponsorIds": "sponsor-18",
       "link": "",
@@ -905,15 +922,17 @@
       "startTime": "2026-05-13T21:00:00Z",
       "endTime": "2026-05-13T21:30:00Z",
       "duration": "P30M",
-      "title": "The Case for Drupal CMS",
+      "title": "The Case for Drupal CMS: Growing adoption and expanding our focus for a new digital era",
       "location": "Te Aro",
       "link": "",
       "track": [
         "Keynote"
       ],
-      "speakers": "Pamela Barone",
+      "speakers": [
+        "Pamela Barone"
+      ],
       "full_description": "When Drupal CMS was announced almost two years ago, the focus on user experience for less technical users may have felt like a pivot for a project that has largely prioritised developers in recent years. But rather than changing the focus, the introduction of a product-ised release is all about growing adoption by expanding Drupal's reach. This is more than just marketing -- although that's important too! -- and the convergence of new developments in the last year or so does feel like the start of a new era for Drupal, not only for newbies but for all of us.\n\nNow that we are a few months on from the release of Drupal CMS 2.0, it's a good time to reflect on the initiative and see where things stand. In this session, I will:\n\nRevisit the strategy for Drupal CMS and how fits in with the larger project\nExplain what Drupal CMS actually is and touch on some of the highlights from the latest release\nProvide some observations about outcomes so far\nLook ahead to what's coming up",
-      "video_url": "",
+      "video_url": "https://youtu.be/tT5xOX-GRnI",
       "sponsorIds": ""
     },
     {
@@ -926,7 +945,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -945,7 +964,7 @@
         "Owen Lansbury"
       ],
       "full_description": "The presentation examines how Drupal has adapted amid significant market shifts, including budget constraints, increased competition from SaaS and enterprise solutions, and AI-driven disruption. The speaker will discuss strategic decisions behind recent developments like Drupal CMS, Core 11.3, and the global Drupal AI Initiative, analyzing implications for both digital agencies and organizations considering or currently using Drupal.",
-      "video_url": "",
+      "video_url": "https://youtu.be/pOUDMEQmZG0",
       "sponsorIds": ""
     },
     {
@@ -979,7 +998,7 @@
         "Marji Cermak"
       ],
       "full_description": "This presentation addresses content moderation workflows in Drupal, focusing on how automated testing with Cypress can validate complex approval processes. The speaker explains that \"Content Moderation is the technical approach taken to enforce workflows between editors and approvers\" and demonstrates testing methods for different user roles and access levels. Key topics include peer review concepts, government information security requirements, common misconfiguration issues, and an open-source helper library from Morpht.",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=zNiBmTB2KbM",
       "sponsorIds": ""
     },
     {
@@ -992,7 +1011,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-18"
@@ -1011,7 +1030,7 @@
         "Suchi Garg"
       ],
       "full_description": "The session addresses how AI can produce outputs aligned with organizational standards. It introduces Drupal's Context Control Center Module as a centralized system for managing \"rules, policies and guidelines\" that connect to AI features. The presentation covers practical applications like maintaining brand consistency, ensuring government compliance, and managing content accessibility standards.",
-      "video_url": "",
+      "video_url": "https://youtu.be/Bg5PW_NbYCw",
       "sponsorIds": ""
     },
     {
@@ -1045,7 +1064,7 @@
         "Morgan Goulding"
       ],
       "full_description": "Morgan explores how practical service design methodologies enable cross-disciplinary collaboration and client alignment. The presentation demonstrates leveraging continuous, lightweight research insights across teams to clarify design choices earlier, balancing both user satisfaction and organizational objectives.",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=mhVTUOlH8w0",
       "sponsorIds": "sponsor-2"
     },
     {
@@ -1058,7 +1077,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1104,7 +1123,7 @@
       "startTime": "2026-05-13T23:10:00Z",
       "endTime": "2026-05-13T23:40:00Z",
       "duration": "P30M",
-      "title": "Eventa: The Drupal based ticketing platform that you used to get here",
+      "title": "Eventa: A Drupal based ticketing platform",
       "location": "Loft",
       "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4338",
       "track": [
@@ -1114,7 +1133,7 @@
         "Rox Flame"
       ],
       "full_description": "Learn all about Eventa, a Drupal commerce based ticketing platform with support for complex seated events and fast check-ins,\n\nI'll take you through a tour of all our favorite features, from biometric check-ins, to advanced seating plans and fast check-ins, and show you how we made it and share stories of some of our biggest challenges including scaling for thousands of ticket sales and check-ins fo the World-press photo exhibit and meeting complex needs across a variety of event clients.\n\nWhether you want to know more about the ways Drupal can meet commerce and ticketing needs, or interested in hearing a story success overcoming on-the-ground challenges with event ticketing, or, if you just want to make sense of the process in which you purchased your own conference ticket, this talk is for you!",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=NuZPufVzYtc",
       "sponsorIds": "sponsor-5"
     },
     {
@@ -1127,7 +1146,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1180,7 +1199,7 @@
         "Sanjay D'Souza"
       ],
       "full_description": "Sanjay reflects on cultivating client relationships beyond winning contracts. Drawing from recent sales experience, he articulates how open source philosophy—centered on openness, autonomy, and collective participation—directly mirrors what organizations genuinely seek in vendor partnerships and solutions.",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=3GVOYqu7zLc",
       "sponsorIds": "sponsor-3"
     },
     {
@@ -1193,7 +1212,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1223,7 +1242,7 @@
       "location": "Waterfront",
       "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4493",
       "track": [
-        "Other"
+        "People & Culture"
       ],
       "speakers": [
         "Simon Howard"
@@ -1246,7 +1265,7 @@
         "Toby Bellwood"
       ],
       "full_description": "The presentation outlines a novel approach where organizers prioritized building robust AI infrastructure before developing use cases. The speaker explains how amazee.ai created an open-source platform utilizing LiteLLM that supports multiple AI providers while maintaining data sovereignty and ensuring no information is used for model training. Key topics include architectural decisions around authentication, vector databases, and multi-region deployment. Practical Drupal integrations include a custom AI Provider module, compatibility with Drupal CMS 2.0, batch alt-text generation for large product catalogs, and vector database-powered chatbots.",
-      "video_url": "",
+      "video_url": "https://www.youtube.com/watch?v=bKMP7taT10M",
       "sponsorIds": "sponsor-4"
     },
     {
@@ -1259,7 +1278,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1268,7 +1287,7 @@
       "startTime": "2026-05-14T02:00:00Z",
       "endTime": "2026-05-14T02:30:00Z",
       "duration": "P30M",
-      "title": "Navigating the Dual Frontier: Securing Drupal Against Malicious Bots while Optimizing for AEO",
+      "title": "Converting Lovable Design to Drupal Canvas",
       "location": "Te Aro",
       "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4328",
       "track": [
@@ -1277,7 +1296,7 @@
       "speakers": [
         "Naveen Prakash Duraisamy"
       ],
-      "full_description": "The session addresses a strategic challenge facing modern Drupal sites. \"Automated AI traffic surges—straining server performance and increasing infrastructure costs\" while legitimate human traffic declines. The presentation covers two complementary approaches: blocking aggressive crawlers that exploit faceted search and query parameters, and simultaneously optimizing for Answer Engine Optimization to capture valuable referral traffic. Key topics include implementing Web Application Firewall defenses, configuring robots.txt strategically, using the llms.txt standard, and adopting \"Answer-First\" architecture with Schema.org markup and LLM-friendly content formatting.",
+      "full_description": "Converting Lovable Design to Drupal Canvas explores how AI-powered design prototypes created in Lovable can be transformed into enterprise-ready Drupal CMS 2.0 websites using Drupal Canvas, the new visual page-building experience. This session walks through both manual and AI-assisted migration approaches, covering component exports, structured content modelling, page assembly, and Drupal configuration. Attendees will gain practical insights into bridging rapid AI-driven prototyping with scalable, governed, and production-ready Drupal implementations.",
       "video_url": "",
       "sponsorIds": ""
     },
@@ -1302,21 +1321,17 @@
       "startTime": "2026-05-14T02:00:00Z",
       "endTime": "2026-05-14T02:30:00Z",
       "duration": "P30M",
-      "title": "DrupalSouth Steering Committee Panel",
+      "title": "Engineering for the Agentic Web When 50% of Your Traffic is Robots",
       "location": "Loft",
-      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4476",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4483",
       "track": [
-        "Sponsor"
+        "Web Tools & Complementary Technologies"
       ],
       "speakers": [
-        "Julia Topliss",
-        "Chris Burgess",
-        "Margery Tongway",
-        "Ashleigh King",
-        "Vladimir Roudakov"
+        "Janna Malikova"
       ],
-      "full_description": "The DrupalSouth Steering Committee serves as a vital standing sub-committee of Linux Australia. Our primary mission is to provide stable, long-term governance and oversight for the DrupalSouth conferences - the premier events for the Drupal community in Australia and New Zealand.\n\nWhy This Session Matters\nAs the digital landscape evolves, so must our community. This panel is not just a reporting session; it is an open forum about leadership and the community. We are at a point where the roadmap for future conferences, local community engagement, and the regional health of the Drupal ecosystem are being redefined.\n\nWhat We Will Discuss\n💧 The Conference Roadmap: Insights into how we select locations, manage budgets, and maintain the high standard of DrupalSouth events.\n💧 Sustainability & Growth: How we can better support local meetups and sprints between the big annual gatherings.\n💧 Community Governance: Understanding the relationship between DrupalSouth, Linux Australia, and the global Drupal Association.\n💧 General Drupal Trends: An open-mic environment to discuss the technical and professional future of Drupal in our region.\n💧 Upcoming DrupalSouth committee elections",
-      "video_url": "",
+      "full_description": "The presentation addresses how organizations must adapt their web infrastructure as AI agents comprise approximately half of incoming traffic. Rather than traditional SEO practices, the focus shifts toward presenting content in machine-readable formats suitable for autonomous systems and language models. Key topics include distinguishing agent traffic, restructuring content delivery, supporting dual experiences for human users versus data streams, and strategic decisions around embracing AI agent access. The four main discussion points: (1) identifying and separating agent traffic, (2) balancing website modifications with structured markdown and specialized endpoints, (3) creating parallel experiences for humans and machines, (4) deciding whether to block or welcome agent traffic.",
+      "video_url": "https://www.youtube.com/watch?v=v0qa4A7UeLY",
       "sponsorIds": ""
     },
     {
@@ -1329,7 +1344,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""
@@ -1395,7 +1410,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": "sponsor-18"
@@ -1404,16 +1419,16 @@
       "startTime": "2026-05-14T03:30:00Z",
       "endTime": "2026-05-14T04:00:00Z",
       "duration": "P30M",
-      "title": "Engineering for the Agentic Web When 50% of Your Traffic is Robots",
+      "title": "Back to the Future: A look at web development around the millenium",
       "location": "Te Aro",
-      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4483",
+      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4219",
       "track": [
         "Web Tools & Complementary Technologies"
       ],
       "speakers": [
-        "Janna Malikova"
+        "Alistair O'Neill"
       ],
-      "full_description": "The presentation addresses how organizations must adapt their web infrastructure as AI agents comprise approximately half of incoming traffic. Rather than traditional SEO practices, the focus shifts toward presenting content in machine-readable formats suitable for autonomous systems and language models. Key topics include distinguishing agent traffic, restructuring content delivery, supporting dual experiences for human users versus data streams, and strategic decisions around embracing AI agent access. The four main discussion points: (1) identifying and separating agent traffic, (2) balancing website modifications with structured markdown and specialized endpoints, (3) creating parallel experiences for humans and machines, (4) deciding whether to block or welcome agent traffic.",
+      "full_description": "The presenter plans to explore vintage web development by utilizing \"a virtualised old school Windows setup\" to demonstrate how the web functioned in earlier eras. Key questions addressed include whether legacy tools remain functional, how older browsers interact with contemporary websites, and whether historical hard drives can be recovered or require virtual recreation.",
       "video_url": "",
       "sponsorIds": ""
     },
@@ -1431,24 +1446,7 @@
         "Yi Jiang"
       ],
       "full_description": "Yi Jiang explores Web Components and Single Directory Components (SDC), examining how \"reusable, tested components help site builders safely create richer pages.\" The session examines what occurs when demonstration code meets production environments.",
-      "video_url": "",
-      "sponsorIds": ""
-    },
-    {
-      "startTime": "2026-05-14T03:30:00Z",
-      "endTime": "2026-05-14T04:00:00Z",
-      "duration": "P30M",
-      "title": "Back to the Future: A look at web development around the millenium",
-      "location": "Loft",
-      "link": "https://drupalsouth.org/events/drupalsouth-wellington-2026/schedule/4219",
-      "track": [
-        "Web Tools & Complementary Technologies"
-      ],
-      "speakers": [
-        "Alistair O'Neill"
-      ],
-      "full_description": "The presenter plans to explore vintage web development by utilizing \"a virtualised old school Windows setup\" to demonstrate how the web functioned in earlier eras. Key questions addressed include whether legacy tools remain functional, how older browsers interact with contemporary websites, and whether historical hard drives can be recovered or require virtual recreation.",
-      "video_url": "",
+      "video_url": "https://youtu.be/p0lqGXIFzG8",
       "sponsorIds": ""
     },
     {
@@ -1461,7 +1459,7 @@
       "track": [
         "Other"
       ],
-      "speakers": null,
+      "speakers": [],
       "full_description": "",
       "video_url": "",
       "sponsorIds": ""

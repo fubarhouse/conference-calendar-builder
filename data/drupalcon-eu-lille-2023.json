@@ -7,7 +7,6 @@
     "region": "Europe",
     "startDate": "2023-10-17T07:00:00Z",
     "endDate": "2023-10-20T16:00:00Z",
-    "scheduleURL": "https://events.drupal.org/lille2023/schedule",
     "venue": "Lille Grand Palais",
     "timezone": "Europe/Paris",
     "columns": 3,
@@ -15,7 +14,11 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://events.drupal.org/lille2023/schedule"
+    ],
+    "flickr": null
   },
   "items": [
     {

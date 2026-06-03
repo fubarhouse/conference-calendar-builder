@@ -67,7 +67,7 @@ export function formatDateForICS(dateString) {
 }
 
 export function escapeHtml(text) {
-  return String(text)
+  return String(text ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -180,7 +180,7 @@ export function formatHoursDuration(floatHours) {
 
 export function deriveOfficialWebsite(eventMeta = null) {
   const website = String(eventMeta?.website || '').trim();
-  const scheduleURL = String(eventMeta?.scheduleURL || '').trim();
+  const scheduleURL = String(eventMeta?.scheduleURLs?.[0] || '').trim();
   const candidate = website || scheduleURL;
   if (!candidate) return '';
   return normalizeEventWebsiteUrl(candidate);

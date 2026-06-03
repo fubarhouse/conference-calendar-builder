@@ -7,7 +7,6 @@
     "region": "Europe",
     "startDate": "2024-09-24T07:30:00Z",
     "endDate": "2024-09-27T16:00:00Z",
-    "scheduleURL": "https://events.drupal.org/barcelona2024/session-schedule",
     "venue": "International Barcelona Convention Center",
     "timezone": "Europe/Madrid",
     "columns": 3,
@@ -15,7 +14,11 @@
     "logo": {
       "image": "./img/logos/drupalcon-logo.svg",
       "imageAlt": "DrupalCon logo"
-    }
+    },
+    "scheduleURLs": [
+      "https://events.drupal.org/barcelona2024/session-schedule"
+    ],
+    "flickr": null
   },
   "items": [
     {

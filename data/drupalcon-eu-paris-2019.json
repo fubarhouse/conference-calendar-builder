@@ -7,13 +7,6 @@
     "region": "France",
     "startDate": "2009-09-01T07:00:00Z",
     "endDate": "2009-09-05T16:00:00Z",
-    "scheduleURL": [
-      "http://paris2009.drupalcon.org/schedule/program/day1.html",
-      "http://paris2009.drupalcon.org/schedule/program/day2.html",
-      "http://paris2009.drupalcon.org/schedule/program/day3.html",
-      "http://paris2009.drupalcon.org/schedule/program/day4.html",
-      "http://paris2009.drupalcon.org/schedule/program/day5.html"
-    ],
     "venue": "Cite Internationale Universitaire de Paris (CIUP)",
     "timezone": "Europe/Paris",
     "columns": 5,
@@ -304,7 +297,14 @@
         "enabled": true
       }
     ],
-    "other_urls": []
+    "other_urls": [],
+    "scheduleURLs": [
+      "http://paris2009.drupalcon.org/schedule/program/day1.html",
+      "http://paris2009.drupalcon.org/schedule/program/day2.html",
+      "http://paris2009.drupalcon.org/schedule/program/day3.html",
+      "http://paris2009.drupalcon.org/schedule/program/day4.html",
+      "http://paris2009.drupalcon.org/schedule/program/day5.html"
+    ]
   },
   "items": [
     {
