@@ -145,7 +145,7 @@
       "startTime": "2022-09-20T15:15:00Z",
       "endTime": "2022-09-20T16:00:00Z",
       "duration": "P45M",
-      "title": "Mapping & Geolocalition",
+      "title": "Mapping & Geolocation",
       "location": "Room D2",
       "link": "https://events.drupal.org/sessions/mapping-geolocalition.html",
       "track": [
@@ -157,7 +157,7 @@
       "startTime": "2022-09-20T16:15:00Z",
       "endTime": "2022-09-20T17:15:00Z",
       "duration": "P60M",
-      "title": "Opening  Reception",
+      "title": "Opening Reception",
       "location": "Exhibition Halls",
       "link": "https://events.drupal.org/sessions/opening-reception.html",
       "track": [
@@ -505,7 +505,7 @@
       "startTime": "2022-09-22T10:15:00Z",
       "endTime": "2022-09-22T11:15:00Z",
       "duration": "P60M",
-      "title": "Women in  Drupal",
+      "title": "Women in Drupal",
       "location": "Room C2 + C3",
       "link": "https://events.drupal.org/sessions/women-drupal.html",
       "track": [
@@ -613,7 +613,7 @@
       "startTime": "2022-09-22T18:30:00Z",
       "endTime": "2022-09-22T21:45:00Z",
       "duration": "P195M",
-      "title": "Trivia  Night",
+      "title": "Trivia Night",
       "location": "Retro Music Hall (outside of the venue)",
       "link": "https://events.drupal.org/sessions/trivia-night.html",
       "track": [
