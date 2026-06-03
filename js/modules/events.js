@@ -20,14 +20,18 @@ import {
   toggleEventSelection
 } from './calendar.js';
 import { configureEventSearch, openEventSearchModal } from './eventSearch.js';
+import {
+  loadThemes,
+  THEME_STORAGE_KEY,
+  normalizeThemeId,
+  setCurrentThemeId,
+  applyThemeClass,
+  applyEventColors,
+} from './theme.js';
 
-const DESIGN_STORAGE_KEY = 'scheduleDesignMode';
-const THEME_STORAGE_KEY = 'scheduleThemeMode';
 const SHARE_MODAL_ID = 'shareScheduleModal';
 const SHARE_CURRENT_SCHEDULE_PARAM = 'currentSchedule';
 const MOBILE_VIEWPORT_MEDIA_QUERY = '(max-width: 639px)';
-// Hard-coded default layout mode. Toggle this between 'drupalsouth' and 'drupalcon'.
-const DEFAULT_DESIGN_MODE = 'drupalcon';
 
 let updateSelectionOverview = () => {};
 let updateStageStats = () => {};
@@ -40,7 +44,6 @@ let hasBoundViewportScheduleLockUi = false;
 
 function parseModeFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  const design = String(params.get('design') || params.get('layout') || '').toLowerCase();
   const theme = String(params.get('theme') || '').toLowerCase();
   const id = String(params.get('id') || '').trim().toLowerCase();
   const currentSchedule =
@@ -51,30 +54,9 @@ function parseModeFromUrl() {
         params.get('schedule_only')
     ) === true;
   const preview = params.get('preview') === '1';
-  return { design, theme, id, currentSchedule, preview };
+  return { theme, id, currentSchedule, preview };
 }
 
-function normalizeDesignMode(design) {
-  if (design === 'drupalcon') return 'drupalcon';
-  if (design === 'drupalsouth') return 'drupalsouth';
-  if (design === 'default') return 'drupalsouth';
-  return 'drupalcon';
-}
-
-function normalizeThemeMode(theme) {
-  return theme === 'light' ? 'light' : 'dark';
-}
-
-function applyDesignClass(designMode) {
-  const body = document.body;
-  body.classList.toggle('design-drupalcon', designMode === 'drupalcon');
-  body.classList.toggle('design-drupalsouth', designMode === 'drupalsouth');
-}
-
-function applyThemeClass(themeMode) {
-  const body = document.body;
-  body.classList.toggle('theme-dark', themeMode === 'dark');
-}
 
 function isMobileViewport() {
   mobileViewportMediaQuery ||= window.matchMedia(MOBILE_VIEWPORT_MEDIA_QUERY);
@@ -253,7 +235,6 @@ export function getSearchableEvents() {
 export async function selectEventFromSearch(category, file) {
   state.currentEventCategory = category;
   setActiveTab(category);
-  populateEventSelector(category, file);
   localStorage.setItem('selectedEventFile', file);
   await loadEvent(file);
 }
@@ -382,10 +363,10 @@ function normalizeFlickrMeta(eventMeta = null) {
   if (flickr) {
     return {
       enabled: flickr.enabled !== false && String(flickr.enabled || '').toLowerCase() !== 'false',
+      provider: String(flickr.provider || '').trim() || 'Flickr',
       groupUrl: String(flickr.groupUrl || '').trim(),
       image: String(flickr.image || '').trim(),
-      imageAlt: String(flickr.imageAlt || '').trim(),
-      platform: 'flickr'
+      imageAlt: String(flickr.imageAlt || '').trim()
     };
   }
 
@@ -393,10 +374,10 @@ function normalizeFlickrMeta(eventMeta = null) {
   if (!promo || typeof promo !== 'object') return null;
   return {
     enabled: true,
+    provider: String(promo.platform || 'Flickr').trim() || 'Flickr',
     groupUrl: String(promo.groupUrl || '').trim(),
     image: String(promo.image || '').trim(),
-    imageAlt: String(promo.imageAlt || '').trim(),
-    platform: String(promo.platform || 'flickr').trim() || 'flickr'
+    imageAlt: String(promo.imageAlt || '').trim()
   };
 }
 
@@ -440,17 +421,18 @@ function getEventLabel(eventMeta = null) {
   return [designation, year, location].filter(Boolean).join(' ').trim() || 'Event';
 }
 
-function getFlickrDefaults(eventMeta = null, events = []) {
+function getFlickrDefaults(eventMeta = null, events = [], provider = 'Flickr') {
   const mode = getFlickrMode(eventMeta, events);
   const eventLabel = getEventLabel(eventMeta);
+  const p = String(provider || '').trim() || 'Flickr';
   return {
     mode,
     title: mode === 'archive' ? `${eventLabel} Photo Archive` : `Share Your ${eventLabel} Photos`,
     text:
       mode === 'archive'
-        ? `Browse the official Flickr group for photos from ${eventLabel}.`
-        : 'Join the official Flickr group and share your photos before, during, and after the event.',
-    buttonLabel: mode === 'archive' ? 'View Photo Archive' : 'Open Flickr Group'
+        ? `Browse the official ${p} page for photos from ${eventLabel}.`
+        : `Upload and share your photos on ${p} before, during, and after the event.`,
+    buttonLabel: mode === 'archive' ? 'View Photo Archive' : `Open on ${p}`
   };
 }
 
@@ -475,11 +457,11 @@ function renderEventMediaPromo(eventMeta = null, events = []) {
 
   const finalizeRender = (imageLoaded) => {
     if (hasPromo) {
-    const defaults = getFlickrDefaults(eventMeta, events);
+    const defaults = getFlickrDefaults(eventMeta, events, flickr.provider);
     const title = defaults.title;
     const text = defaults.text;
     const buttonLabel = defaults.buttonLabel;
-    const platformLabel = (flickr.platform || 'flickr').toUpperCase();
+    const platformLabel = flickr.provider.toUpperCase();
 
     const card = document.createElement('div');
     card.className = 'event-promo-card rounded-lg border border-gray-300 bg-white p-3 sm:p-4';
@@ -629,6 +611,7 @@ export function setActiveTab(category) {
 
 export function populateEventSelector(category, preferredFile) {
   const eventSelector = document.getElementById('eventSelector');
+  if (!eventSelector) return;
   const categoryEvents = getManifestForCategory(category);
   eventSelector.innerHTML = '';
 
@@ -935,7 +918,7 @@ export async function fetchEvents(filename) {
     }
   }
   try {
-    const response = await fetch(`./data/${filename}`);
+    const response = await fetch(`./data/${filename}`, { cache: 'no-cache' });
     const data = await response.json();
     state.eventMeta = data.event;
     return processEventItems(data.items);
@@ -974,6 +957,14 @@ export async function loadEvent(filename) {
     updateHeaderBranding(state.currentEventCategory);
   }
   const meta = state.eventMeta || {};
+  const themeVal = meta.theme;
+  const themeId = typeof themeVal === 'object' ? themeVal?.id : themeVal;
+  applyThemeClass(themeId ? normalizeThemeId(themeId) : state.themeMode);
+  applyEventColors(
+    typeof themeVal === 'object' ? themeVal?.primaryColor : meta.primaryColor,
+    typeof themeVal === 'object' ? themeVal?.secondaryColor : meta.secondaryColor,
+    typeof themeVal === 'object' ? themeVal?.tertiaryColor : meta.tertiaryColor
+  );
   state.eventColumns = Number(meta.columns) > 0 ? Number(meta.columns) : 3;
   const eventDisplayName = updateDocumentTitle(meta, manifestItem);
 
@@ -1088,55 +1079,38 @@ export function setupEventListeners() {
 
 function parseAndApplyStartupModes(urlModes) {
   state.scheduleLockedToCurrentEvent = urlModes.currentSchedule;
-  const savedDesign = localStorage.getItem(DESIGN_STORAGE_KEY) || '';
   const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || '';
-  state.designMode = normalizeDesignMode(urlModes.design || savedDesign || DEFAULT_DESIGN_MODE);
-  state.themeMode = normalizeThemeMode(urlModes.theme || savedTheme || 'dark');
-  localStorage.setItem(DESIGN_STORAGE_KEY, state.designMode);
-  localStorage.setItem(THEME_STORAGE_KEY, state.themeMode);
-  applyDesignClass(state.designMode);
+  state.themeMode = setCurrentThemeId(normalizeThemeId(urlModes.theme || savedTheme));
   applyThemeClass(state.themeMode);
 }
 
-function wireEventListeners(eventSelector) {
-  eventSelector.addEventListener('change', () => {
-    localStorage.setItem('selectedEventFile', eventSelector.value);
-    loadEvent(eventSelector.value);
-  });
-
-  const eventCategorySelect = document.getElementById('eventCategorySelect');
-  if (eventCategorySelect) {
-    eventCategorySelect.addEventListener('change', async () => {
-      const category = eventCategorySelect.value;
-      if (!category || category === state.currentEventCategory) return;
-
-      state.currentEventCategory = category;
-      setActiveTab(category);
-
-      const currentSavedEvent = localStorage.getItem('selectedEventFile');
-      populateEventSelector(category, currentSavedEvent);
-
-      if (eventSelector.value) {
-        localStorage.setItem('selectedEventFile', eventSelector.value);
-        await loadEvent(eventSelector.value);
-      }
-    });
-  }
-
+function wireEventListeners() {
   setupEventListeners();
 }
 
 function showPreviewBanner() {
   const banner = document.createElement('div');
   banner.className = 'preview-banner';
-  banner.innerHTML = `<i class="fas fa-eye"></i><span><strong>Preview mode</strong> — these changes have not been saved yet.</span><a href="./editor.html" class="preview-banner-link">Back to editor</a>`;
+  const canReturn = Boolean(window.opener && !window.opener.closed);
+  const backControl = canReturn
+    ? `<button type="button" class="preview-banner-link" id="previewBannerBack">Back to editor</button>`
+    : `<a href="./editor.html" class="preview-banner-link">Back to editor</a>`;
+  banner.innerHTML = `<i class="fas fa-eye"></i><span><strong>Preview mode</strong> — these changes have not been saved yet.</span>${backControl}`;
   document.body.prepend(banner);
   document.body.classList.add('has-preview-banner');
+  document.getElementById('searchEvents')?.classList.add('hidden');
+  if (canReturn) {
+    document.getElementById('previewBannerBack')?.addEventListener('click', () => {
+      window.opener.focus();
+      window.close();
+    });
+  }
 }
 
 export async function init() {
   setupEditorAccessButton();
   bindViewportScheduleLockUi();
+  await loadThemes();
   const urlModes = parseModeFromUrl();
 
   if (urlModes.preview) {
@@ -1149,6 +1123,7 @@ export async function init() {
         state.currentEventCategory = designation.includes('drupalcon') ? 'DrupalCon' : (data?.event?.designation || 'Conference');
       } catch { /* use defaults */ }
     }
+    wireEventListeners();
     await loadEvent('__preview__');
     showPreviewBanner();
     return;
@@ -1157,15 +1132,11 @@ export async function init() {
   parseAndApplyStartupModes(urlModes);
   await hydrateManifestCategories();
 
-  const eventSelector = document.getElementById('eventSelector');
   const fileFromUrl = getEventFileById(urlModes.id);
   const savedEvent = localStorage.getItem('selectedEventFile');
   const savedEventIsValid = savedEvent && eventCatalog.some((e) => e.file === savedEvent);
   const defaultEvent = eventCatalog.find((e) => e.default) || eventCatalog[0];
-  if (!defaultEvent) {
-    eventSelector.innerHTML = '';
-    return;
-  }
+  if (!defaultEvent) return;
 
   const initialFile = fileFromUrl || (savedEventIsValid ? savedEvent : defaultEvent.file);
   const initialManifestItem = eventCatalog.find((e) => e.file === initialFile) || defaultEvent;
@@ -1175,27 +1146,15 @@ export async function init() {
     ? initialCategory
     : availableCategories[0] || '';
 
-  renderCategoryOptions(availableCategories);
-
-  if (!safeInitialCategory) {
-    eventSelector.innerHTML = '';
-    return;
-  }
+  if (!safeInitialCategory) return;
 
   state.currentEventCategory = safeInitialCategory;
   setActiveTab(safeInitialCategory);
-  populateEventSelector(safeInitialCategory, initialFile);
   applyScheduleLockUi();
 
-  if (eventSelector.value) {
-    localStorage.setItem('selectedEventFile', eventSelector.value);
-  }
-
-  wireEventListeners(eventSelector);
-
-  if (eventSelector.value) {
-    await loadEvent(eventSelector.value);
-  }
+  localStorage.setItem('selectedEventFile', initialFile);
+  wireEventListeners();
+  await loadEvent(initialFile);
 }
 
 export function toggleEventSelectionPublic(eventId) {

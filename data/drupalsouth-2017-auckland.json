@@ -5,7 +5,6 @@
     "year": "2017",
     "website": "https://drupalsouth2017.drupal.org.nz/",
     "region": "New Zealand – Auckland",
-    "scheduleURL": "https://drupalsouth2017.drupal.org.nz/conference/schedule",
     "venue": "Aotea Centre",
     "timezone": "Pacific/Auckland",
     "enabled": true,
@@ -207,7 +206,10 @@
         "enabled": true
       }
     ],
-    "columns": 3
+    "columns": 3,
+    "scheduleURLs": [
+      "https://drupalsouth2017.drupal.org.nz/conference/schedule"
+    ]
   },
   "items": [
     {
@@ -497,9 +499,6 @@
       "speakers": [
         "Murray Woodman"
       ],
-      "speaker_usernames": [
-        "murrayw"
-      ],
       "full_description": "Modifiers and Looks are two new contrib modules which open up new creative possibilities to editors and designers. When used together they combine to provide a powerful, reusable system enabling modifications to be made to individual entities as well as site wide components. Typical modifiers include typography, color, background images, parallax, video, corners, shadows and many others. It is possible to define collections of modifiers as Looks in the UI and then apply them to different parts of the site as required.",
       "video_url": "https://www.youtube.com/watch?v=Jd5FEKwpZkI",
       "sponsorIds": ""
@@ -533,9 +532,6 @@
       ],
       "speakers": [
         "Sean Hamlin"
-      ],
-      "speaker_usernames": [
-        "wiifm"
       ],
       "full_description": "Traditional site auditing tools all have their flaws, from having to install them into your codebase, to their inability to customise how the check runs.\n\nDrutiny is an open source Symfony Console based application used to audit Drupal 7 or Drupal 8 sites. All checks are run from the outside looking in, and require no special code or modules to be enabled on the remote site. This means you can audit all environments from development to production and not leave any lasting performance degradation. Your definition of best practice can evolve outside your Drupal sites, and the checks that you run against the site will always be up to date.\n\nWho this session is for:\n\n- Developers looking to see how they can save time and costly mistakes, e.g. on pre-launch checklists\n- Technical leads looking to improve team processes and standardise site builds within the team\n- Business and product owners looking to see what automated reports exist to help prove the quality of sites\n- Anyone tasked with support of a lot of sites long term\n\nThe high level topics covered are:\n\n- Problems with existing techniques\n- Introduction to the tool and why it was written\n- How to write your own custom profiles and checks\n- Auto-remediation of certain checks\n- How other people are making use of site audit, such as govCMS\n- Live demonstration\n- How to contribute",
       "video_url": "https://www.youtube.com/watch?v=RhaHQvLswho",
@@ -673,9 +669,6 @@
       ],
       "speakers": [
         "Christopher Skene"
-      ],
-      "speaker_usernames": [
-        "xtfer"
       ],
       "full_description": "Every web professional knows the challenge of being asked to deliver in a shorter time frame, or to do more in the time available, or watched as timelines slip away through endless bugs or rework, yet there are development teams out there which eclipse their peers and somehow deliver more. What are the secrets of these “high-performing” development teams, what are the roadblocks to implementing them, and how can you take your development process from good to brilliant?",
       "video_url": "https://www.youtube.com/watch?v=kBF4bxg9drw",
@@ -866,9 +859,6 @@
         "Ben Chad",
         "Sean Hamlin"
       ],
-      "speaker_usernames": [
-        "wiifm"
-      ],
       "full_description": "This session is going to shed light on security issues that we’ve seen in Drupal projects, and critically what you can do to avoid them. We hope that this talk will be fun and entertaining while we share some painful and depressing experiences.",
       "video_url": "",
       "sponsorIds": ""
@@ -988,9 +978,6 @@
       ],
       "speakers": [
         "Simon Hobbs"
-      ],
-      "speaker_usernames": [
-        "sime"
       ],
       "full_description": "Component driven design has become common in frontend development, providing the brand consistency within robust CSS frameworks. Drupal 8 projects running living styleguides on KSS and Pattern Lab are becoming common. This talks discusses both the technical and non-technical advantages of this approach, and explores emerging patterns of styleguide integration in Drupal 8.",
       "video_url": "https://www.youtube.com/watch?v=quK0-tgL16s",

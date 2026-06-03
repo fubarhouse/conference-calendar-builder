@@ -126,6 +126,7 @@ function _addRoom() {
   _ensureEventRooms();
   const dayRooms = _dataset.event.rooms[_activeDay];
   if (!dayRooms.includes(trimmed)) {
+    _cbs.undoPush();
     dayRooms.push(trimmed);
     _cbs.markDirty();
   }
@@ -137,6 +138,7 @@ function _renameRoom(idx, newName) {
   const dayRooms = _dataset.event.rooms[_activeDay];
   const oldName = dayRooms[idx];
   if (newName === oldName) return;
+  _cbs.undoPush();
   dayRooms[idx] = newName;
   for (const list of Object.values(_dataset.event.rooms)) {
     const i = list.indexOf(oldName);
@@ -160,6 +162,7 @@ function _deleteRoom(idx) {
     if (!window.confirm(`Remove "${room}" from ${fmtDayLabel(_activeDay)}? ${affected.length} session(s) on this day will have their location cleared.`)) return;
     for (const item of affected) item.location = '';
   }
+  _cbs.undoPush();
   dayRooms.splice(idx, 1);
   _cbs.markDirty();
   _redraw();
@@ -168,6 +171,7 @@ function _deleteRoom(idx) {
 function _reorderRoom(fromIdx, toIdx) {
   _ensureEventRooms();
   const rooms = _dataset.event.rooms[_activeDay];
+  _cbs.undoPush();
   const [moved] = rooms.splice(fromIdx, 1);
   rooms.splice(toIdx, 0, moved);
   _cbs.markDirty();
@@ -333,10 +337,15 @@ function buildRoomColumn(room, dayItems, minMins, totalSlots) {
           ${spk ? `<div class="tl-session-speakers">${esc(spk)}</div>` : ''}
           <div class="tl-session-time">${esc(fmtMins(startMins))}–${esc(fmtMins(endMins))}</div>
         </div>
-        <div class="tl-drag-handle"><i class="fas fa-grip-vertical"></i></div>
-        <button class="tl-session-delete" data-index="${index}" type="button" title="Delete session">
-          <i class="fas fa-times" aria-hidden="true"></i>
-        </button>
+        <div class="tl-session-actions">
+          <div class="tl-drag-handle" aria-hidden="true"><i class="fas fa-grip-vertical"></i></div>
+          <button class="tl-session-span-toggle" data-index="${index}" type="button" title="Make spanning (all rooms)">
+            <i class="fas fa-expand-alt" aria-hidden="true"></i>
+          </button>
+          <button class="tl-session-delete" data-index="${index}" type="button" title="Delete session">
+            <i class="fas fa-times" aria-hidden="true"></i>
+          </button>
+        </div>
         <div class="tl-resize-handle" data-index="${index}"></div>
       </div>`;
   }
@@ -365,10 +374,15 @@ function buildSpanningSession(item, index, minMins) {
         ${spk ? `<div class="tl-session-speakers">${esc(spk)}</div>` : ''}
         <div class="tl-session-time">${esc(fmtMins(startMins))}–${esc(fmtMins(endMins))}</div>
       </div>
-      <div class="tl-drag-handle"><i class="fas fa-grip-vertical"></i></div>
-      <button class="tl-session-delete" data-index="${index}" type="button" title="Delete session">
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
+      <div class="tl-session-actions">
+        <div class="tl-drag-handle" aria-hidden="true"><i class="fas fa-grip-vertical"></i></div>
+        <button class="tl-session-span-toggle" data-index="${index}" type="button" title="Pin to a room">
+          <i class="fas fa-compress-alt" aria-hidden="true"></i>
+        </button>
+        <button class="tl-session-delete" data-index="${index}" type="button" title="Delete session">
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
       <div class="tl-resize-handle" data-index="${index}"></div>
     </div>`;
 }
@@ -451,12 +465,24 @@ function _bindAll() {
     h.addEventListener('mousedown', _onResizeStart));
   _el.querySelectorAll('.tl-session-delete').forEach(btn =>
     btn.addEventListener('click', _onDelete));
+  _el.querySelectorAll('.tl-session-span-toggle').forEach(btn =>
+    btn.addEventListener('click', _onSpanToggle));
 
   _el.querySelectorAll('.tl-room-col').forEach(col => {
     col.addEventListener('click', _onColClick);
     col.addEventListener('mousemove', _onColHover);
     col.addEventListener('mouseleave', _onColLeave);
   });
+
+  const scrollWrap = _el.querySelector('.tl-scroll-wrap');
+  if (scrollWrap) {
+    scrollWrap.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault();
+        window.scrollBy({ top: e.deltaY, behavior: 'instant' });
+      }
+    }, { passive: false });
+  }
 }
 
 let _roomDragIdx = null;
@@ -538,7 +564,7 @@ function _startRenameRoom(chip, idx) {
 // ── Move drag ──────────────────────────────────────────────────────────────
 
 function _onMoveStart(e) {
-  if (e.target.closest('.tl-session-delete') || e.target.closest('.tl-resize-handle')) return;
+  if (e.target.closest('.tl-session-delete') || e.target.closest('.tl-resize-handle') || e.target.closest('.tl-session-span-toggle')) return;
   e.preventDefault();
 
   const block = e.currentTarget;
@@ -594,6 +620,7 @@ function _onMoveUp(e) {
   const newStartMins = Math.max(_drag.minMins, _drag.origStartMins + snappedSlotDelta * SNAP_MINS);
 
   const item = _dataset.items[_drag.index];
+  _cbs.undoPush();
   item.startTime = _minsToUtc(_activeDay, newStartMins);
   item.endTime = _minsToUtc(_activeDay, newStartMins + durMins);
   if (!_drag.isSpanning) item.location = _drag.targetRoom;
@@ -646,6 +673,7 @@ function _onResizeUp(e) {
   );
 
   const item = _dataset.items[_drag.index];
+  _cbs.undoPush();
   item.endTime = _minsToUtc(_activeDay, newEndMins);
 
   _cbs.markDirty();
@@ -670,6 +698,7 @@ function _onColClick(e) {
   if (title === null || !title.trim()) return;
 
   _dataset.items = _dataset.items || [];
+  _cbs.undoPush();
   _dataset.items.push({
     title: title.trim(),
     startTime: _minsToUtc(_activeDay, slotMins),
@@ -689,7 +718,23 @@ function _onDelete(e) {
   const index = parseInt(e.currentTarget.dataset.index, 10);
   const item = _dataset.items[index];
   if (!window.confirm(`Delete "${item.title || 'Untitled'}"?`)) return;
+  _cbs.undoPush();
   _dataset.items.splice(index, 1);
+  _cbs.markDirty();
+  _redraw();
+}
+
+function _onSpanToggle(e) {
+  e.stopPropagation();
+  const index = parseInt(e.currentTarget.dataset.index, 10);
+  const item = _dataset.items[index];
+  _cbs.undoPush();
+  if (item.location) {
+    item.location = '';
+  } else {
+    const rooms = _getRooms();
+    item.location = rooms[0] || '';
+  }
   _cbs.markDirty();
   _redraw();
 }

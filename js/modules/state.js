@@ -4,7 +4,6 @@ const state = {
   eventMeta: null,
   eventColumns: 3,
   scheduleLockedToCurrentEvent: false,
-  designMode: 'drupalsouth',
   themeMode: 'dark',
   selectedEvents: new Set(),
   allEvents: [],
