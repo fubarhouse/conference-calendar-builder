@@ -2,6 +2,8 @@
 // Display grid: 15-minute slots at ROW_H px each.
 // Drag/add snaps to 5-minute increments (SNAP_MINS).
 
+import { escapeHtml } from './utils.js';
+
 const SLOT_MINS = 15;                              // display granularity
 const SNAP_MINS = 5;                               // drag/add snap granularity
 const ROW_H = 64;                                  // px per SLOT_MINS (4×64=256px/hr)
@@ -48,11 +50,7 @@ function _minsToUtc(datePart, totalMins) {
   return _toUtc(`${datePart}T${h}:${m}`);
 }
 
-function esc(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+const esc = escapeHtml;
 
 // ── Day extraction (event range + session dates) ───────────────────────────
 
